@@ -1,0 +1,161 @@
+<!DOCTYPE html><html lang="en"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In - Omnia</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;0,7..72,700;1,7..72,400&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            serif: ['Literata', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f1f7f2',
+              100: '#deece0',
+              200: '#bfdac4',
+              500: '#4a7c59',
+              600: '#3d6749',
+              700: '#32543c',
+              800: '#2a4332',
+              900: '#23372b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .font-brand {
+      font-family: 'Literata', serif;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-[#f7faf4] text-slate-800 flex flex-col justify-between selection:bg-[#4a7c59]/20 selection:text-[#32543c]">
+  <!-- Background subtle decorative shapes -->
+  <div class="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+    <div class="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-[#deece0]/40 blur-3xl"></div>
+    <div class="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-[#bfdac4]/30 blur-3xl"></div>
+  </div>
+
+  <!-- Top bar minimal link -->
+  <header class="w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
+    <div class="flex items-center gap-2.5">
+      <div class="w-9 h-9 rounded-xl bg-[#4a7c59] flex items-center justify-center text-white shadow-sm shadow-[#4a7c59]/20">
+        <span class="material-symbols-outlined text-[20px]">grid_view</span>
+      </div>
+      <span class="font-brand font-bold text-xl tracking-tight text-slate-900">Omnia</span>
+    </div>
+    <a href="#" class="text-xs text-slate-500 hover:text-slate-900 transition-colors flex items-center gap-1 font-medium">
+      <span>Need help?</span>
+      <span class="material-symbols-outlined text-[16px]">help</span>
+    </a>
+  </header>
+
+  <!-- Centered Sign-In Card Container -->
+  <main class="flex-1 flex items-center justify-center px-4 py-8">
+    <div class="w-full max-w-[440px] bg-white rounded-3xl p-8 sm:p-10 shadow-[0_4px_30px_rgba(74,124,89,0.06),0_1px_3px_rgba(0,0,0,0.04)] border border-slate-200/80">
+      
+      <!-- Brand & Heading -->
+      <div class="text-center mb-8">
+        <div class="inline-flex w-14 h-14 rounded-2xl bg-[#4a7c59] text-white items-center justify-center shadow-md shadow-[#4a7c59]/25 mb-4">
+          <span class="material-symbols-outlined text-[28px]">grid_view</span>
+        </div>
+        <h1 class="font-brand font-bold text-2xl sm:text-[26px] text-slate-900 tracking-tight">Welcome back to Omnia</h1>
+        <p class="text-sm text-slate-500 mt-1.5">Sign in to access your classes, schedule, and term events.</p>
+      </div>
+
+      <!-- Google Sign In Button -->
+      <button type="button" class="w-full h-12 bg-white hover:bg-slate-50 active:bg-slate-100 text-slate-700 font-medium text-sm rounded-xl border border-slate-300/90 flex items-center justify-center gap-3 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-[#4a7c59]/30">
+        <svg class="w-5 h-5" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"></path>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"></path>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"></path>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"></path>
+        </svg>
+        <span>Continue with Google</span>
+      </button>
+
+      <!-- Divider -->
+      <div class="relative my-6 flex items-center justify-center">
+        <div class="w-full border-t border-slate-200"></div>
+        <span class="absolute bg-white px-3 text-xs uppercase tracking-wider text-slate-400 font-semibold">or email</span>
+      </div>
+
+      <!-- Email & Password Form -->
+      <form class="space-y-4" onsubmit="event.preventDefault();">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider" for="email">
+            Email address
+          </label>
+          <div class="relative">
+            <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">mail</span>
+            <input id="email" type="email" placeholder="evelyn.vance@university.edu" value="evelyn.vance@university.edu" class="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4a7c59] focus:border-transparent transition-all">
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider" for="password">
+              Password
+            </label>
+            <a href="#" class="text-xs text-[#4a7c59] hover:text-[#32543c] font-medium hover:underline">
+              Forgot password?
+            </a>
+          </div>
+          <div class="relative">
+            <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">lock</span>
+            <input id="password" type="password" placeholder="••••••••••••" value="StudentPassword123" class="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4a7c59] focus:border-transparent transition-all">
+            <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+              <span class="material-symbols-outlined text-[18px]">visibility</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center pt-1">
+          <label class="flex items-center gap-2 cursor-pointer select-none">
+            <input type="checkbox" checked="" class="w-4 h-4 rounded text-[#4a7c59] focus:ring-[#4a7c59] border-slate-300">
+            <span class="text-xs text-slate-600">Remember this device for 30 days</span>
+          </label>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="w-full h-11 bg-[#4a7c59] hover:bg-[#3d6749] active:bg-[#32543c] text-white font-medium text-sm rounded-xl transition-all shadow-md shadow-[#4a7c59]/20 flex items-center justify-center gap-2 pt-0.5">
+          <span>Sign In</span>
+          <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+        </button>
+      </form>
+
+      <!-- Create Account Footer Link -->
+      <div class="mt-8 pt-6 border-t border-slate-100 text-center">
+        <p class="text-sm text-slate-600">
+          Don't have an account yet? 
+          <a href="#" class="font-semibold text-[#4a7c59] hover:text-[#32543c] hover:underline ml-1">
+            Create an account
+          </a>
+        </p>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Clean footer -->
+  <footer class="w-full max-w-7xl mx-auto px-6 py-6 text-center text-xs text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-slate-200/40">
+    <p>© 2026 Omnia Academic Systems. All rights reserved.</p>
+    <div class="flex gap-4">
+      <a href="#" class="hover:text-slate-600 transition-colors">Privacy Policy</a>
+      <a href="#" class="hover:text-slate-600 transition-colors">Terms of Service</a>
+      <a href="#" class="hover:text-slate-600 transition-colors">Campus Support</a>
+    </div>
+  </footer>
+
+</body></html>

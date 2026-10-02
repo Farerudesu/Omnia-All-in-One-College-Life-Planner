@@ -1,0 +1,210 @@
+<!DOCTYPE html><html lang="en" style="width: 1732px; height: 1024px; overflow: hidden; position: relative;"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_dashboard" name="shell-type"><link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,200..900;1,7..72,200..900&amp;family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "on-error-container": "#93000a",
+          "error": "#ba1a1a",
+          "inverse-primary": "#9dd3aa",
+          "inverse-surface": "#2d312e",
+          "surface": "#f7faf4",
+          "surface-dim": "#d8dbd5",
+          "on-tertiary-container": "#fff6ed",
+          "on-secondary-fixed": "#201b12",
+          "secondary-fixed-dim": "#d0c5b8",
+          "on-background": "#191d19",
+          "secondary-container": "#e9ded0",
+          "surface-container-low": "#f1f5ef",
+          "primary-fixed-dim": "#9dd3aa",
+          "tertiary-container": "#886e38",
+          "primary-fixed": "#b9efc5",
+          "on-secondary-container": "#696156",
+          "on-tertiary": "#ffffff",
+          "tertiary-fixed": "#ffdea0",
+          "on-primary": "#ffffff",
+          "on-surface-variant": "#414942",
+          "on-primary-container": "#e1ffe5",
+          "on-primary-fixed": "#00210e",
+          "background": "#f7faf4",
+          "outline-variant": "#c1c9bf",
+          "error-container": "#ffdad6",
+          "inverse-on-surface": "#eff2ec",
+          "secondary-fixed": "#ece1d3",
+          "on-tertiary-fixed-variant": "#594311",
+          "surface-container-lowest": "#ffffff",
+          "on-secondary": "#ffffff",
+          "on-surface": "#191d19",
+          "secondary": "#655d52",
+          "surface-tint": "#376847",
+          "surface-container-high": "#e6e9e3",
+          "tertiary": "#6d5622",
+          "tertiary-fixed-dim": "#e2c284",
+          "outline": "#717971",
+          "surface-bright": "#f7faf4",
+          "primary-container": "#4a7c59",
+          "surface-container-highest": "#e0e3de",
+          "on-tertiary-fixed": "#261a00",
+          "surface-container": "#ecefe9",
+          "on-error": "#ffffff",
+          "on-primary-fixed-variant": "#1e5031",
+          "primary": "#316342",
+          "on-secondary-fixed-variant": "#4d463c",
+          "surface-variant": "#e0e3de",
+          "cat-classes": "#2563eb",
+          "cat-exams": "#dc2626",
+          "cat-deadlines": "#0891b2",
+          "cat-personal": "#7c3aed"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.25rem",
+          "lg": "0.5rem",
+          "xl": "0.75rem",
+          "full": "9999px"
+        },
+        "spacing": {
+          "space-sm": "0.5rem",
+          "gutter": "1.5rem",
+          "space-xl": "2.5rem",
+          "space-xs": "0.25rem",
+          "margin": "2rem",
+          "space-md": "1rem",
+          "space-lg": "1.5rem"
+        },
+        "fontFamily": {
+          "label-md": [
+            "Nunito Sans"
+          ],
+          "label-sm": [
+            "Nunito Sans"
+          ],
+          "label-lg": [
+            "Nunito Sans"
+          ],
+          "headline-xl": [
+            "Literata"
+          ],
+          "headline-lg": [
+            "Literata"
+          ],
+          "headline-md": [
+            "Literata"
+          ],
+          "headline-sm": [
+            "Literata"
+          ],
+          "body-md": [
+            "Nunito Sans"
+          ],
+          "body-sm": [
+            "Nunito Sans"
+          ]
+        },
+        "fontSize": {
+          "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+          "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "600"}],
+          "label-md": [
+            "14px",
+            {
+              "lineHeight": "20px",
+              "fontWeight": "600"
+            }
+          ],
+          "label-lg": [
+            "14px",
+            {
+              "lineHeight": "20px",
+              "fontWeight": "600"
+            }
+          ],
+          "headline-sm": [
+            "20px",
+            {
+              "lineHeight": "26px",
+              "fontWeight": "600"
+            }
+          ],
+          "headline-lg": [
+            "32px",
+            {
+              "lineHeight": "40px",
+              "fontWeight": "600"
+            }
+          ],
+          "headline-xl": [
+            "36px",
+            {
+              "lineHeight": "44px",
+              "fontWeight": "600"
+            }
+          ],
+          "body-md": [
+            "16px",
+            {
+              "lineHeight": "24px",
+              "fontWeight": "400"
+            }
+          ]
+        }
+      },
+    },
+  }
+</script></head><body class="bg-surface font-body-md text-on-surface"><button aria-label="Expand sidebar" class="fixed left-3 top-3.5 z-50 hidden p-2 rounded-xl bg-surface-container-lowest shadow-md hover:bg-surface-container-high text-on-surface transition-all flex items-center gap-2" id="open-sidebar-btn" title="Expand sidebar" type="button"><span class="material-symbols-outlined text-[20px] text-primary">menu_open</span><span class="font-label-sm text-label-sm font-semibold pr-1">Sidebar</span></button><aside class="fixed left-0 top-0 h-full w-72 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between transition-all" id="main-sidebar"><div class="flex flex-col flex-1 overflow-y-auto"><div class="h-16 px-6 flex items-center justify-between"><div class="flex items-center gap-3"><button aria-label="Collapse sidebar" class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" id="toggle-sidebar-btn" title="Collapse sidebar" type="button"><span class="material-symbols-outlined text-[20px]">dock_to_right</span></button><span class="font-headline-xl text-headline-sm text-on-surface font-bold tracking-tight">Omnia</span></div></div><div class="px-4 py-2"><button class="w-full h-10 px-4 rounded-lg bg-primary-container text-on-primary font-label-lg text-label-lg flex items-center justify-center gap-2 shadow-[0_1px_8px_rgba(74,124,89,0.25)] hover:opacity-95 transition-opacity" type="button"><span class="material-symbols-outlined text-[18px]">add</span><span class="">Create Event</span></button></div><nav class="px-4 py-1 space-y-1" data-active-classes="bg-[#e8efe6] text-primary font-semibold"><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface font-label-lg text-label-lg transition-colors" data-path="schedule" href="#"><span class="material-symbols-outlined text-[20px]">calendar_today</span><span class="">Schedule</span></a><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface font-label-lg text-label-lg transition-colors" data-path="assignments" href="#"><span class="material-symbols-outlined text-[20px]">assignment</span><span class="">Assignments</span></a><a aria-current="page" class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors bg-[#e8efe6] text-primary font-semibold" data-path="calendar" href="#"><span class="material-symbols-outlined text-[20px] text-primary">calendar_month</span><span class="">Calendar</span></a><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface font-label-lg text-label-lg transition-colors" data-path="finance" href="#"><span class="material-symbols-outlined text-[20px]">payments</span><span class="">Finance</span></a><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface font-label-lg text-label-lg transition-colors" data-path="settings" href="#"><span class="material-symbols-outlined text-[20px]">settings</span><span class="">Settings</span></a></nav><div class="mt-6 px-4"><div class="flex items-center justify-between px-3 py-1"><span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">My Calendars</span><button class="w-6 h-6 rounded flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[16px]">expand_more</span></button></div><div class="mt-1 space-y-1"><div class="flex items-center justify-between px-3 py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors cursor-pointer"><div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-[2px] bg-cat-classes flex-shrink-0" title="Classes: Square"></span><span class="font-body-sm text-body-sm text-on-surface">Classes</span></div><span class="material-symbols-outlined text-[16px] text-outline">visibility</span></div><div class="flex items-center justify-between px-3 py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors cursor-pointer"><div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rotate-45 bg-cat-exams flex-shrink-0" title="Exams: Diamond"></span><span class="font-body-sm text-body-sm text-on-surface">Exams</span></div><span class="material-symbols-outlined text-[16px] text-outline">visibility</span></div><div class="flex items-center justify-between px-3 py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors cursor-pointer"><div class="flex items-center gap-2"><span class="w-2.5 h-2.5 border-2 border-cat-deadlines bg-transparent flex-shrink-0" title="Deadlines: Hexagon/Square Ring"></span><span class="font-body-sm text-body-sm text-on-surface">Deadlines</span></div><span class="material-symbols-outlined text-[16px] text-outline">visibility</span></div><div class="flex items-center justify-between px-3 py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors cursor-pointer"><div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-cat-personal flex-shrink-0" title="Personal: Circle"></span><span class="font-body-sm text-body-sm text-on-surface">Personal</span></div><span class="material-symbols-outlined text-[16px] text-outline">visibility</span></div></div></div><div class="mt-5 px-4 pb-3"><div class="flex items-center justify-between px-3 py-1 mb-2"><div class="flex items-center gap-1.5"><span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Upcoming &amp; Pinned</span><span class="px-1.5 py-0.5 rounded-full bg-[#e8efe6] text-primary font-semibold text-[11px] leading-none">2</span></div><button class="w-6 h-6 rounded flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" title="Pin Options" type="button"><span class="material-symbols-outlined text-[16px]">push_pin</span></button></div><div class="space-y-2"><div class="p-2.5 rounded-xl bg-surface-container-low hover:bg-surface-container-high/60 transition-colors border border-outline-variant/30 flex flex-col gap-1.5 group cursor-pointer"><div class="flex items-center justify-between"><span class="text-primary font-label-sm text-[11px] font-semibold flex items-center gap-1.5 uppercase tracking-wider"><span class="w-2 h-2 rounded-[2px] bg-cat-classes flex-shrink-0"></span>Next Up</span><button class="w-5 h-5 rounded flex items-center justify-center text-outline hover:text-primary transition-colors opacity-70 group-hover:opacity-100" title="Pin this event" type="button"><span class="material-symbols-outlined text-[15px]">push_pin</span></button></div><div class="flex items-start justify-between gap-1"><div class="flex flex-col"><span class="font-label-md text-label-md text-on-surface font-semibold truncate">CS 101 Lecture</span><span class="font-body-sm text-[12px] text-on-surface-variant">Sep 29 · 10:00 AM</span></div></div></div><div class="p-2.5 rounded-xl bg-surface-container-low hover:bg-surface-container-high/60 transition-colors border border-outline-variant/30 flex flex-col gap-1.5 group cursor-pointer"><div class="flex items-center justify-between"><span class="text-cat-exams font-label-sm text-[11px] font-semibold flex items-center gap-1.5 uppercase tracking-wider"><span class="w-2 h-2 rotate-45 bg-cat-exams flex-shrink-0"></span>Pinned</span><button class="w-5 h-5 rounded flex items-center justify-center text-outline hover:text-cat-exams transition-colors" title="Unpin event" type="button"><span class="material-symbols-outlined text-[15px]">push_pin</span></button></div><div class="flex items-start justify-between gap-1"><div class="flex flex-col"><span class="font-label-md text-label-md text-on-surface font-semibold truncate">Math Midterm</span><span class="font-body-sm text-[12px] text-on-surface-variant">Sep 29 · 2:00 PM</span></div></div></div><button class="w-full py-1.5 px-2 rounded-lg border border-dashed border-outline-variant/60 hover:border-primary text-outline hover:text-primary text-[12px] font-label-sm font-medium flex items-center justify-center gap-1.5 transition-colors group" type="button"><span class="material-symbols-outlined text-[15px] group-hover:scale-110 transition-transform">add</span><span class="">Pin an event</span></button></div></div></div><div class="p-4 bg-surface-container-low"><div class="flex items-center justify-between p-2 rounded-lg bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.02)]"><div class="flex items-center gap-2"><div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="flex flex-col"><span class="font-label-md text-label-md text-on-surface leading-tight font-semibold">Evelyn Vance</span></div></div><button class="text-outline hover:text-on-surface transition-colors p-1" type="button"><span class="material-symbols-outlined text-[18px]">more_vert</span></button></div></div></aside><div class="pl-72 transition-all" id="main-content-wrapper"><header class="fixed top-0 left-72 right-0 z-40 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] transition-all" id="main-header"><div class="h-16 w-full px-8 flex items-center justify-between"><div class="flex items-center gap-6"><div class="flex items-center gap-2"><button class="px-3.5 py-1.5 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-label-md text-label-md transition-colors" type="button">Today</button><div class="flex items-center bg-surface-container-low rounded-lg p-0.5"><button class="p-1.5 rounded-md hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">chevron_left</span></button><button class="p-1.5 rounded-md hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">chevron_right</span></button></div></div><div class="h-4 w-[1px] bg-surface-container-highest"></div><nav class="flex items-center bg-surface-container-low p-1 rounded-lg gap-1" data-active-classes="bg-primary-container text-on-primary font-label-md rounded-md"><a aria-current="page" class="px-3 py-1 transition-colors bg-primary-container text-on-primary font-label-md rounded-md" data-path="month-view" href="#">Month</a><a class="px-3 py-1 rounded-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface font-label-md text-label-md transition-colors" data-path="week-view" href="#">Week</a><a class="px-3 py-1 rounded-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface font-label-md text-label-md transition-colors" data-path="day-view" href="#">Day</a><a class="px-3 py-1 rounded-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface font-label-md text-label-md transition-colors" data-path="agenda-view" href="#">Agenda</a></nav></div><div class="flex items-center gap-4"><div class="flex items-center bg-surface-container-low rounded-lg px-3 py-1.5 gap-2 w-64"><span class="material-symbols-outlined text-on-surface-variant text-[18px]">search</span><input class="bg-transparent border-none outline-none font-body-sm text-body-sm text-on-surface placeholder:text-on-surface-variant w-full" placeholder="Search events, dates, tags..." type="text"></div><div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-16 bg-surface h-screen flex flex-col overflow-hidden"><div class="flex flex-col w-full h-full justify-between pb-3"><div class="px-8 pt-4 pb-2 flex flex-col gap-3"><div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4"><div class="flex items-center justify-between w-full"><h1 class="font-headline-xl text-headline-xl text-on-surface tracking-tight" id="display-month-year">September 2026</h1><div class="flex items-center gap-3 text-on-surface-variant font-label-md"><span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-[2px] bg-cat-classes flex-shrink-0"></span>Classes</span><span class="flex items-center gap-1.5 ml-3"><span class="w-2.5 h-2.5 rotate-45 bg-cat-exams flex-shrink-0"></span>Exams</span><span class="flex items-center gap-1.5 ml-3"><span class="w-2.5 h-2.5 border-2 border-cat-deadlines bg-transparent flex-shrink-0"></span>Deadlines</span><span class="flex items-center gap-1.5 ml-3"><span class="w-2.5 h-2.5 rounded-full bg-cat-personal flex-shrink-0"></span>Personal</span></div></div></div></div><div class="px-8 flex-1 flex flex-col min-h-0 justify-between pb-2"><div class="bg-surface-container-lowest rounded-2xl shadow-sm overflow-hidden flex flex-col flex-1 min-h-0"><div class="grid grid-cols-7 bg-surface-container-low text-center py-2"><div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest font-semibold">Mon</div><div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest font-semibold">Tue</div><div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest font-semibold">Wed</div><div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest font-semibold">Thu</div><div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest font-semibold">Fri</div><div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest font-semibold">Sat</div><div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest font-semibold">Sun</div></div><div class="grid grid-cols-7 grid-rows-5 gap-px bg-surface-container-high flex-1 min-h-0"><div class="bg-surface-container-lowest/60 p-2.5 flex flex-col justify-between"><span class="font-label-md text-outline-variant font-medium">31</span><div class="flex-1"></div></div><div class="bg-surface-container-lowest p-2.5 flex flex-col justify-between hover:bg-surface-container-low transition-colors cursor-pointer"><div class="flex justify-between items-center"><span class="font-label-md text-on-surface font-semibold">1</span><span class="font-label-sm text-primary uppercase font-bold tracking-wider">Sep</span></div><div class="mt-1 flex items-center gap-1.5 text-on-surface"><span class="w-2 h-2 rounded-[2px] bg-cat-classes flex-shrink-0"></span><span class="font-body-sm text-body-sm truncate">CS 101 Lecture</span></div></div><div class="bg-surface-container-lowest p-2.5 flex flex-col justify-between hover:bg-surface-container-low transition-colors cursor-pointer"><span class="font-label-md text-on-surface font-semibold">2</span><div class="mt-1 flex items-center gap-1.5 text-on-surface-variant"><span class="w-2 h-2 rounded-full bg-cat-personal flex-shrink-0"></span><span class="font-body-sm text-body-sm truncate">Study Group</span></div></div><div class="bg-surface-container-lowest p-2.5 flex flex-col justify-between hover:bg-surface-container-low transition-colors cursor-pointer"><span class="font-label-md text-on-surface font-semibold">3</span><div class="mt-1 flex items-center gap-1.5 text-on-surface"><span class="w-2 h-2 rounded-[2px] bg-cat-classes flex-shrink-0"></span><span class="font-body-sm text-body-sm truncate">Physics Lab</span></div></div><div class="bg-surface-container-lowest p-2.5 flex flex-col justify-between hover:bg-surface-container-low transition-colors cursor-pointer"><span class="font-label-md text-on-surface font-semibold">4</span><div class="mt-1 flex items-center gap-1.5 text-on-surface-variant"><span class="w-2 h-2 border-2 border-cat-deadlines bg-transparent flex-shrink-0"></span><span class="font-body-sm text-body-sm truncate">Problem Set 1</span></div></div><div class="bg-surface-container-lowest p-2.5 flex flex-col justify-between hover:bg-surface-container-low transition-colors cursor-pointer"><span class="font-label-md text-on-surface font-semibold">5</span><div class="flex-1"></div></div><div class="bg-surface-container-lowest p-2.5 flex flex-col justify-between hover:bg-surface-container-low transition-colors cursor-pointer"><span class="font-label-md text-on-surface font-semibold">6</span><div class="flex-1"></div></div><div class="bg-surface-container-lowest p-2.5 flex flex-col justify-between hover:bg-surface-container-low transition-colors cursor-pointer"><span class="font-label-md text-on-surface font-semibold">7</span><div class="mt-1 flex items-center gap-1.5 text-on-surface"><span class="w-2 h-2 rounded-[2px] bg-cat-classes flex-shrink-0"></span><span class="font-body-sm text-body-sm truncate">Math Seminar</span></div></div><div class="bg-surface-container-lowest p-2.5 flex flex-col justify-between hover:bg-surface-container-low transition-colors cursor-pointer"><span class="font-label-md text-on-surface font-semibold">8</span><div class="flex-1"></div></div><div class="bg-surface-container-lowest p-2.5 flex flex-col justify-between hover:bg-surface-container-low transition-colors cursor-pointer"><span class="font-label-md text-on-surface font-semibold">9</span><div class="mt-1 flex items-center gap-1.5 text-on-surface"><span class="w-2 h-2 rounded-[2px] bg-cat-classes flex-shrink-0"></span><span class="font-body-sm text-body-sm truncate">CS 101 Lab</span></div></div><div class="bg-surface-container-lowest p-2.5 flex flex-col justify-between hover:bg-surface-container-low transition-colors cursor-pointer"><span class="font-label-md text-on-surface font-semibold">10</span><div class="flex-1"></div></div><div class="bg-surface-container-lowest p-2.5 flex flex-col justify-between hover:bg-surface-container-low transition-colors cursor-pointer"><span class="font-label-md text-on-surface font-semibold">11</span><div class="mt-1 flex items-center gap-1.5 text-on-surface-variant"><span class="w-2 h-2 border-2 border-cat-deadlines bg-transparent flex-shrink-0"></span><span class="font-body-sm text-body-sm truncate">Essay Draft Due</span></div></div><div class="bg-surface-container-lowest p-2.5 flex flex-col justify-between hover:bg-surface-container-low transition-colors cursor-pointer"><span class="font-label-md text-on-surface font-semibold">12</span><div class="flex-1"></div></div><div class="bg-surface-container-lowest p-2.5 flex flex-col justify-between hover:bg-surface-container-low transition-colors cursor-pointer"><span class="font-label-md text-on-surface font-semibold">13</span><div class="flex-1"></div></div><div class="bg-surface-container-lowest p-2.5 flex flex-col justify-between hover:bg-surface-container-low transition-colors cursor-pointer"><span class="font-label-md text-on-surface font-semibold">14</span><div class="mt-1 flex items-center gap-1.5 text-on-surface"><span class="w-2 h-2 rounded-[2px] bg-cat-classes flex-shrink-0"></span><span class="font-body-sm text-body-sm truncate">Design Systems</span></div></div><div class="bg-surface-container-lowest p-2.5 flex flex-col justify-between hover:bg-surface-container-low transition-colors cursor-pointer"><span class="font-label-md text-on-surface font-semibold">15</span><div class="mt-1 flex items-center gap-1.5 text-on-surface"><span class="w-2 h-2 rotate-45 bg-cat-exams flex-shrink-0"></span><span class="font-body-sm text-body-sm truncate">Physics Quiz</span></div></div><div class="bg-surface-container-lowest p-2.5 flex flex-col justify-between hover:bg-surface-container-low transition-colors cursor-pointer"><span class="font-label-md text-on-surface font-semibold">16</span><div class="flex-1"></div></div><div class="bg-surface-container-lowest p-2.5 flex flex-col justify-between hover:bg-surface-container-low transition-colors cursor-pointer"><span class="font-label-md text-on-surface font-semibold">17</span><div class="mt-1 flex items-center gap-1.5 text-on-surface"><span class="w-2 h-2 rounded-[2px] bg-cat-classes flex-shrink-0"></span><span class="font-body-sm text-body-sm truncate">Workshop</span></div></div><div class="bg-surface-container-lowest p-2.5 flex flex-col justify-between hover:bg-surface-container-low transition-colors cursor-pointer"><span class="font-label-md text-on-surface font-semibold">18</span><div class="mt-1 flex items-center gap-1.5 text-on-surface-variant"><span class="w-2 h-2 border-2 border-cat-deadlines bg-transparent flex-shrink-0"></span><span class="font-body-sm text-body-sm truncate">Project Proposal</span></div></div><div class="bg-surface-container-lowest p-2.5 flex flex-col justify-between hover:bg-surface-container-low transition-colors cursor-pointer"><span class="font-label-md text-on-surface font-semibold">19</span><div class="flex-1"></div></div><div class="bg-surface-container-lowest p-2.5 flex flex-col justify-between hover:bg-surface-container-low transition-colors cursor-pointer"><span class="font-label-md text-on-surface font-semibold">20</span><div class="flex-1"></div></div><div class="bg-surface-container-lowest p-2.5 flex flex-col justify-between hover:bg-surface-container-low transition-colors cursor-pointer"><span class="font-label-md text-on-surface font-semibold">21</span><div class="mt-1 flex items-center gap-1.5 text-on-surface"><span class="w-2 h-2 rounded-[2px] bg-cat-classes flex-shrink-0"></span><span class="font-body-sm text-body-sm truncate">CS 101 Lecture</span></div></div><div class="bg-surface-container-lowest p-2.5 flex flex-col justify-between hover:bg-surface-container-low transition-colors cursor-pointer"><span class="font-label-md text-on-surface font-semibold">22</span><div class="mt-1 flex items-center gap-1.5 text-on-surface"><span class="w-2 h-2 rotate-45 bg-cat-exams flex-shrink-0"></span><span class="font-body-sm text-body-sm truncate">Midterm Review</span></div></div><div class="bg-surface-container-lowest p-2.5 flex flex-col justify-between hover:bg-surface-container-low transition-colors cursor-pointer"><span class="font-label-md text-on-surface font-semibold">23</span><div class="flex-1"></div></div><div class="bg-surface-container-lowest p-2.5 flex flex-col justify-between hover:bg-surface-container-low transition-colors cursor-pointer"><span class="font-label-md text-on-surface font-semibold">24</span><div class="mt-1 flex items-center gap-1.5 text-on-surface"><span class="w-2 h-2 rounded-[2px] bg-cat-classes flex-shrink-0"></span><span class="font-body-sm text-body-sm truncate">Advisor Sync</span></div></div><div class="bg-surface-container-lowest p-2.5 flex flex-col justify-between hover:bg-surface-container-low transition-colors cursor-pointer"><span class="font-label-md text-on-surface font-semibold">25</span><div class="mt-1 flex items-center gap-1.5 text-on-surface-variant"><span class="w-2 h-2 rounded-full bg-cat-personal flex-shrink-0"></span><span class="font-body-sm text-body-sm truncate">Campus Social</span></div></div><div class="bg-surface-container-lowest p-2.5 flex flex-col justify-between hover:bg-surface-container-low transition-colors cursor-pointer"><span class="font-label-md text-on-surface font-semibold">26</span><div class="flex-1"></div></div><div class="bg-surface-container-lowest p-2.5 flex flex-col justify-between hover:bg-surface-container-low transition-colors cursor-pointer"><span class="font-label-md text-on-surface font-semibold">27</span><div class="flex-1"></div></div><div class="bg-surface-container-low/70 p-2.5 flex flex-col justify-between relative cursor-pointer"><div class="flex justify-between items-center"><div class="w-6 h-6 rounded-full bg-primary-container flex items-center justify-center"><span class="font-label-sm text-label-sm text-on-primary font-bold">28</span></div><span class="font-label-sm text-primary font-semibold">Today</span></div><div class="mt-1 flex items-center gap-1.5 text-on-surface"><span class="w-2 h-2 rounded-[2px] bg-cat-classes flex-shrink-0"></span><span class="font-body-sm text-body-sm truncate">Classes &amp; Labs</span></div></div><div class="bg-surface-container-lowest p-2.5 flex flex-col justify-between hover:bg-surface-container-low transition-colors cursor-pointer"><span class="font-label-md text-on-surface font-semibold">29</span><div class="mt-1 flex items-center gap-1.5 text-on-surface"><span class="w-2 h-2 rotate-45 bg-cat-exams flex-shrink-0"></span><span class="font-body-sm text-body-sm truncate">Math Midterm</span></div></div><div class="bg-surface-container-lowest p-2.5 flex flex-col justify-between hover:bg-surface-container-low transition-colors cursor-pointer"><span class="font-label-md text-on-surface font-semibold">30</span><div class="mt-1 flex items-center gap-1.5 text-on-surface-variant"><span class="w-2 h-2 border-2 border-cat-deadlines bg-transparent flex-shrink-0"></span><span class="font-body-sm text-body-sm truncate">Final Submission</span></div></div><div class="bg-surface-container-lowest/60 p-2.5 flex flex-col justify-between"><div class="flex justify-between items-center"><span class="font-label-md text-outline-variant font-medium">1</span><span class="font-label-sm text-outline-variant">Oct</span></div><div class="flex-1"></div></div><div class="bg-surface-container-lowest/60 p-2.5 flex flex-col justify-between"><span class="font-label-md text-outline-variant font-medium">2</span><div class="flex-1"></div></div><div class="bg-surface-container-lowest/60 p-2.5 flex flex-col justify-between"><span class="font-label-md text-outline-variant font-medium">3</span><div class="flex-1"></div></div><div class="bg-surface-container-lowest/60 p-2.5 flex flex-col justify-between"><span class="font-label-md text-outline-variant font-medium">4</span><div class="flex-1"></div></div></div></div><div class="mt-2 flex items-center justify-between text-outline text-label-sm"><div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span><span class="">Synced</span></div><span class="">Press <kbd class="px-1.5 py-0.5 rounded bg-surface-container-high font-mono text-[11px]">C</kbd> to add</span></div></div></div></main></div>
+<script>
+(function() {
+  const sidebar = document.getElementById('main-sidebar');
+  const contentWrapper = document.getElementById('main-content-wrapper');
+  const header = document.getElementById('main-header');
+  const toggleBtn = document.getElementById('toggle-sidebar-btn');
+  const openBtn = document.getElementById('open-sidebar-btn');
+
+  function collapseSidebar() {
+    if (!sidebar) return;
+    sidebar.style.transform = 'translateX(-100%)';
+    if (contentWrapper) {
+      contentWrapper.classList.remove('pl-72');
+      contentWrapper.classList.add('pl-0');
+    }
+    if (header) {
+      header.classList.remove('left-72');
+      header.classList.add('left-0');
+      header.querySelector('.px-8')?.classList.add('pl-28');
+    }
+    if (openBtn) {
+      openBtn.classList.remove('hidden');
+    }
+  }
+
+  function expandSidebar() {
+    if (!sidebar) return;
+    sidebar.style.transform = 'translateX(0)';
+    if (contentWrapper) {
+      contentWrapper.classList.remove('pl-0');
+      contentWrapper.classList.add('pl-72');
+    }
+    if (header) {
+      header.classList.remove('left-0');
+      header.classList.add('left-72');
+      header.querySelector('.px-8')?.classList.remove('pl-28');
+    }
+    if (openBtn) {
+      openBtn.classList.add('hidden');
+    }
+  }
+
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', collapseSidebar);
+  }
+  if (openBtn) {
+    openBtn.addEventListener('click', expandSidebar);
+  }
+})();
+</script>
+
+
+
+
+<div id="snapdom-sandbox" data-snapdom-sandbox="true" aria-hidden="true" style="position: absolute; left: -9999px; top: -9999px; width: 0px; height: 0px; overflow: hidden;"></div>
+
+</body></html>

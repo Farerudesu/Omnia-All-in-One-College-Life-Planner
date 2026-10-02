@@ -1,0 +1,261 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_dashboard" name="shell-type"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,200..900;1,7..72,200..900&amp;family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "tertiary-container": "#886e38", "on-secondary-container": "#696156", "on-primary": "#ffffff", "primary-fixed-dim": "#9dd3aa", "secondary-fixed": "#ece1d3", "error-container": "#ffdad6", "on-background": "#191d19", "on-surface": "#191d19", "surface": "#f7faf4", "on-error": "#ffffff", "on-error-container": "#93000a", "surface-container-lowest": "#ffffff", "on-tertiary": "#ffffff", "on-secondary-fixed": "#201b12", "inverse-primary": "#9dd3aa", "inverse-surface": "#2d312e", "secondary-fixed-dim": "#d0c5b8", "on-tertiary-fixed-variant": "#594311", "tertiary-fixed": "#ffdea0", "on-secondary": "#ffffff", "secondary": "#655d52", "primary-fixed": "#b9efc5", "primary-container": "#4a7c59", "on-secondary-fixed-variant": "#4d463c", "secondary-container": "#e9ded0", "surface-dim": "#d8dbd5", "on-primary-container": "#e1ffe5", "surface-variant": "#e0e3de", "outline": "#717971", "error": "#ba1a1a", "on-surface-variant": "#414942", "on-tertiary-fixed": "#261a00", "tertiary": "#6d5622", "surface-tint": "#376847", "inverse-on-surface": "#eff2ec", "tertiary-fixed-dim": "#e2c284", "surface-container-high": "#e6e9e3", "surface-container-highest": "#e0e3de", "primary": "#316342", "outline-variant": "#c1c9bf", "background": "#f7faf4", "surface-bright": "#f7faf4", "on-tertiary-container": "#fff6ed", "on-primary-fixed-variant": "#1e5031", "surface-container": "#ecefe9", "on-primary-fixed": "#00210e", "surface-container-low": "#f1f5ef" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-md": "1rem", "space-xs": "0.25rem", "margin": "2rem", "space-sm": "0.5rem", "space-xl": "2.5rem", "space-lg": "1.5rem", "gutter": "1.5rem" }, "fontFamily": { "body-md": ["Nunito Sans"], "headline-lg": ["Literata"], "label-md": ["Nunito Sans"] }, "fontSize": { "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }], "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }], "label-md": ["14px", { "lineHeight": "20px", "fontWeight": "600" }] } } } }</script></head><body class="bg-background font-body-md text-body-md text-on-surface" style="width: 1440px; height: 810px; max-width: 100vw; max-height: 100vh; aspect-ratio: 16 / 9; margin: 0px auto; overflow: hidden; position: relative;"><aside class="fixed left-0 top-0 h-full w-72 bg-surface-container-low z-50 flex flex-col justify-between shadow-[0_1px_8px_rgba(0,0,0,0.04)] overflow-y-auto" style="height: 810px; max-height: 100%; position: absolute;"><div class="flex flex-col p-space-md"><div class="flex items-center justify-between px-space-xs py-space-sm mb-space-md"><button aria-label="Collapse sidebar" class="p-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[20px]">menu_open</span></button><div class="flex items-center gap-space-sm"><span class="font-headline-lg text-headline-lg text-primary tracking-tight font-bold">Omnia</span></div></div><div class="mb-space-md"><button class="w-full flex items-center justify-center gap-space-xs py-space-sm px-space-md rounded-lg bg-primary-container text-on-primary font-label-md text-label-md hover:bg-primary transition-colors shadow-sm"><span class="material-symbols-outlined text-[18px]">add</span>Create Event</button></div><nav class="flex flex-col gap-space-xs" data-active-classes="bg-surface-container-high text-on-surface font-semibold rounded-lg"><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="schedule" href="#"><span class="material-symbols-outlined text-[20px]">schedule</span><span class="font-label-md text-label-md">Schedule</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="assignments" href="#"><span class="material-symbols-outlined text-[20px]">assignment</span><span class="font-label-md text-label-md">Assignments</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="calendar" href="#"><span class="material-symbols-outlined text-[20px]">calendar_today</span><span class="font-label-md text-label-md">Calendar</span></a><a aria-current="page" class="flex items-center gap-space-sm px-space-md py-space-sm transition-colors bg-surface-container-high text-on-surface font-semibold rounded-lg" data-path="finance" href="#"><span class="material-symbols-outlined text-[20px]">account_balance_wallet</span><span class="font-label-md text-label-md">Finance</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="settings" href="#"><span class="material-symbols-outlined text-[20px]">settings</span><span class="font-label-md text-label-md">Settings</span></a></nav><div class="mt-space-lg pt-space-md"><div class="flex items-center justify-between px-space-xs mb-space-xs"><span class="text-[11px] font-bold tracking-wider uppercase text-on-surface-variant">My Calendars</span><button class="text-on-surface-variant hover:text-on-surface"><span class="material-symbols-outlined text-[16px]">add</span></button></div><div class="flex flex-col gap-space-xs"><div class="flex items-center gap-space-sm px-space-md py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors cursor-pointer"><span class="w-3 h-3 rounded-[2px] bg-primary"></span><span class="font-label-md text-label-md text-on-surface">Classes</span></div><div class="flex items-center gap-space-sm px-space-md py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors cursor-pointer"><span class="w-2.5 h-2.5 rotate-45 bg-tertiary"></span><span class="font-label-md text-label-md text-on-surface">Exams</span></div><div class="flex items-center gap-space-sm px-space-md py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors cursor-pointer"><span class="w-3 h-3 rounded-[2px] border-2 border-primary-container bg-transparent"></span><span class="font-label-md text-label-md text-on-surface">Deadlines</span></div><div class="flex items-center gap-space-sm px-space-md py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors cursor-pointer"><span class="w-3 h-3 rounded-full bg-secondary"></span><span class="font-label-md text-label-md text-on-surface">Personal</span></div></div></div><div class="mt-space-lg pt-space-md"><div class="flex items-center justify-between px-space-xs mb-space-xs"><span class="text-[11px] font-bold tracking-wider uppercase text-on-surface-variant">Upcoming &amp; Pinned</span><span class="material-symbols-outlined text-[16px] text-on-surface-variant">push_pin</span></div><div class="flex flex-col gap-space-xs"><div class="p-space-sm bg-surface-container rounded-lg"><div class="flex items-center justify-between text-on-surface-variant text-[12px] mb-1"><span class="">Tomorrow • 09:00 AM</span><span class="w-2 h-2 rounded-full bg-primary"></span></div><div class="font-label-md text-label-md text-on-surface font-medium truncate">Linear Algebra Midterm</div></div><div class="p-space-sm bg-surface-container rounded-lg"><div class="flex items-center justify-between text-on-surface-variant text-[12px] mb-1"><span class="">Friday • 11:59 PM</span><span class="w-2 h-2 rounded-full bg-tertiary"></span></div><div class="font-label-md text-label-md text-on-surface font-medium truncate">Philosophy Paper Draft</div></div></div></div></div><div class="p-space-md border-t border-outline-variant/30"><div class="flex items-center justify-between p-space-xs rounded-lg hover:bg-surface-container transition-colors cursor-pointer"><div class="flex items-center gap-space-sm"><div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="flex flex-col"><span class="font-label-md text-label-md text-on-surface font-semibold leading-tight">Evelyn Vance</span><span class="text-[12px] text-on-surface-variant leading-tight">Academic Senior</span></div></div><button aria-label="Profile menu" class="text-on-surface-variant hover:text-on-surface p-1 rounded"><span class="material-symbols-outlined text-[20px]">more_vert</span></button></div></div></aside><div class="pl-72"><header class="fixed top-0 left-72 right-0 h-16 bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-gutter" style="position: absolute; left: 18rem; right: 0px; top: 0px;"><div class="flex items-center gap-space-md w-96"><div class="relative w-full flex items-center"><span class="material-symbols-outlined absolute left-space-sm text-on-surface-variant text-[20px]">search</span><input class="w-full pl-9 pr-space-md py-1.5 rounded-lg bg-surface-container-low text-on-surface placeholder:text-on-surface-variant text-[14px] outline-none focus:ring-1 focus:ring-primary transition-all" placeholder="Search courses, notes, events..." type="text"></div></div><div class="flex items-center gap-space-lg"><div class="hidden md:flex items-center gap-space-xs text-on-surface-variant font-label-md text-label-md"><span class="material-symbols-outlined text-[18px]">calendar_month</span><span class="">Tuesday, Oct 24</span></div><button aria-label="Notifications" class="relative p-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-error"></span></button><div class="flex items-center gap-space-sm pl-space-xs"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-16 bg-surface"><div class="flex flex-col w-full relative">
+<!-- Finance Dashboard Underlay Layer (Context Backdrop behind modal) -->
+<div class="w-full px-gutter py-space-lg opacity-40 blur-[2px] pointer-events-none select-none transition-all duration-300">
+<!-- Top KPI row -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-gutter mb-space-lg">
+<div class="p-space-md rounded-xl bg-surface-container-low shadow-sm flex flex-col justify-between">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Monthly Budget</span>
+<div class="my-space-xs font-headline-lg text-headline-lg text-on-surface">$1,450.00</div>
+<div class="w-full bg-surface-container-high h-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[68%] rounded-full"></div>
+</div>
+</div>
+<div class="p-space-md rounded-xl bg-surface-container-low shadow-sm flex flex-col justify-between">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Total Spent (Oct)</span>
+<div class="my-space-xs font-headline-lg text-headline-lg text-on-surface">$986.40</div>
+<span class="font-label-md text-label-md text-tertiary font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">trending_up</span> +4.2% vs last month
+        </span>
+</div>
+<div class="p-space-md rounded-xl bg-surface-container-low shadow-sm flex flex-col justify-between">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Remaining Allowance</span>
+<div class="my-space-xs font-headline-lg text-headline-lg text-primary">$463.60</div>
+<span class="font-label-md text-label-md text-on-surface-variant">11 days left in billing cycle</span>
+</div>
+<div class="p-space-md rounded-xl bg-surface-container-low shadow-sm flex flex-col justify-between">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Discretionary Goal</span>
+<div class="my-space-xs font-headline-lg text-headline-lg text-secondary">$120.00</div>
+<span class="font-label-md text-label-md text-on-surface-variant">Emergency Fund Safe</span>
+</div>
+</div>
+<!-- Background Table Mock -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-md">
+<div class="flex items-center justify-between pb-space-sm mb-space-sm">
+<span class="font-headline-lg text-headline-lg text-on-surface">Recent Student Transactions</span>
+<span class="font-label-md text-label-md text-primary font-semibold">View All Receipts</span>
+</div>
+<div class="space-y-space-sm">
+<div class="flex items-center justify-between p-space-sm bg-surface-container-low rounded-lg">
+<div class="flex items-center gap-space-sm">
+<span class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center text-primary material-symbols-outlined">menu_book</span>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Campus Bookstore (Anthology)</p>
+<p class="font-body-md text-body-md text-on-surface-variant text-xs">Academics • Oct 03</p>
+</div>
+</div>
+<span class="font-label-md text-label-md text-on-surface font-semibold">-$64.50</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Focused Modal Overlay Backing Scrim -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-space-md sm:p-gutter bg-on-surface/40 backdrop-blur-md transition-opacity duration-300" id="modalOverlay" style="position: absolute; inset: 0px; padding: 1rem;">
+<!-- Modal Card Shell -->
+<div class="relative w-full max-w-2xl bg-surface-container-lowest rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[942px] transform transition-transform duration-300" id="modalContent" style="max-height: 750px;">
+<!-- Modal Header -->
+<div class="flex items-start justify-between p-space-lg pb-space-md bg-surface-container-low">
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs mb-1">
+<span class="material-symbols-outlined text-primary text-[22px]" style="font-variation-settings: 'FILL' 1;">receipt_long</span>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Add Expense</h2>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">Log a new student expense or scan physical receipt.</p>
+</div>
+<button aria-label="Close dialog" class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors cursor-pointer" id="closeModalBtn">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Scrollable Form Container -->
+<form class="p-space-lg space-y-space-md overflow-y-auto" id="expenseForm">
+<!-- Scan Receipt Feature & OCR Banner -->
+<div class="rounded-xl bg-surface-container-low p-space-md space-y-space-sm shadow-sm">
+<div class="flex flex-wrap items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[20px]">document_scanner</span>
+<span class="font-label-md text-label-md text-on-surface font-semibold">Receipt Recognition Engine</span>
+</div>
+<button class="flex items-center gap-space-xs px-space-sm py-1.5 rounded-lg bg-surface-container-high text-on-surface hover:bg-surface-container-highest transition-colors font-label-md text-label-md cursor-pointer" id="scanTriggerBtn" type="button">
+<span class="material-symbols-outlined text-[18px]">photo_camera</span>
+<span class="">Scan receipt</span>
+</button>
+</div>
+<!-- File Picker & Detected Status Pill -->
+<div class="flex flex-wrap items-center justify-between gap-space-xs p-space-xs px-space-sm rounded-lg bg-surface-container-lowest">
+<div class="flex items-center gap-space-xs min-w-0">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">image</span>
+<span class="font-label-md text-label-md text-on-surface truncate">Receipt scanned: TJ_Groceries_Oct04.jpg</span>
+</div>
+<span class="inline-flex items-center gap-1 px-space-xs py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed text-[12px] font-semibold">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+              Auto-detected via Receipt OCR
+            </span>
+</div>
+<!-- Dynamic Status & Privacy Notice Box -->
+<div class="p-space-sm rounded-lg bg-secondary-container/40 space-y-1.5">
+<div class="flex items-center gap-space-xs text-on-secondary-container font-label-md text-label-md font-semibold">
+<span class="material-symbols-outlined text-[18px] animate-pulse text-primary">auto_read_play</span>
+<span class="">Reading receipt... Extracted 3 data points.</span>
+</div>
+<div class="flex items-start gap-space-xs text-on-secondary-variant font-body-md text-body-md text-[13px] leading-snug">
+<span class="material-symbols-outlined text-[16px] mt-0.5 text-secondary shrink-0">shield</span>
+<p class="text-on-secondary-container">Image is not saved. Only numerical and merchant text data are recorded locally for your privacy.</p>
+</div>
+</div>
+</div>
+<!-- Two Column Inputs: Amount & Merchant -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<!-- 1. Amount -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface" for="expenseAmount">Amount</label>
+<div class="relative flex items-center">
+<span class="absolute left-space-md text-on-surface-variant font-label-md text-label-md font-bold select-none">$</span>
+<input class="w-full pl-8 pr-space-md py-2.5 rounded-lg bg-surface-container text-on-surface font-label-md text-label-md focus:bg-surface-container-lowest focus:shadow-sm outline-none transition-all" id="expenseAmount" placeholder="0.00" type="text" value="46.20">
+</div>
+</div>
+<!-- 2. Merchant -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface" for="expenseMerchant">Merchant</label>
+<div class="relative flex items-center">
+<input class="w-full px-space-md py-2.5 rounded-lg bg-surface-container text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:shadow-sm outline-none transition-all" id="expenseMerchant" placeholder="e.g. University Store" type="text" value="Trader Joe's Campus Market">
+<span class="material-symbols-outlined absolute right-space-sm text-primary text-[18px]">verified</span>
+</div>
+</div>
+</div>
+<!-- Two Column Inputs: Category & Date -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<!-- 3. Category -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface" for="expenseCategory">Category</label>
+<div class="relative flex items-center">
+<select class="w-full appearance-none px-space-md py-2.5 rounded-lg bg-surface-container text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:shadow-sm outline-none cursor-pointer pr-10" id="expenseCategory">
+<option selected="" value="Food">Food</option>
+<option value="Books">Books</option>
+<option value="Rent">Rent</option>
+<option value="Transport">Transport</option>
+<option value="Other">Other</option>
+</select>
+<span class="material-symbols-outlined absolute right-space-md text-on-surface-variant pointer-events-none text-[20px]">keyboard_arrow_down</span>
+</div>
+</div>
+<!-- 4. Date -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface" for="expenseDate">Date</label>
+<div class="relative flex items-center">
+<input class="w-full px-space-md py-2.5 rounded-lg bg-surface-container text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:shadow-sm outline-none transition-all" id="expenseDate" type="text" value="Oct 04, 2026">
+<span class="material-symbols-outlined absolute right-space-md text-on-surface-variant text-[20px] pointer-events-none">calendar_month</span>
+</div>
+</div>
+</div>
+<!-- 5. Payment Method -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface" for="expensePayment">Payment Method</label>
+<div class="relative flex items-center">
+<select class="w-full appearance-none px-space-md py-2.5 rounded-lg bg-surface-container text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:shadow-sm outline-none cursor-pointer pr-10" id="expensePayment">
+<option selected="" value="Student Debit Card ···· 4821">Student Debit Card •••• 4821</option>
+<option value="Campus Dining Points">Campus Dining Points (Balance: $184.00)</option>
+<option value="Cash / Personal Note">Cash / Personal Pocket</option>
+</select>
+<span class="material-symbols-outlined absolute right-space-md text-on-surface-variant pointer-events-none text-[20px]">credit_card</span>
+</div>
+</div>
+<!-- 6. Notes -->
+<div class="flex flex-col gap-1.5">
+<div class="flex justify-between items-center">
+<label class="font-label-md text-label-md text-on-surface" for="expenseNotes">Notes</label>
+<span class="text-on-surface-variant font-label-md text-xs">Optional student memo</span>
+</div>
+<textarea class="w-full px-space-md py-2.5 rounded-lg bg-surface-container text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:shadow-sm outline-none transition-all resize-none" id="expenseNotes" rows="2">Weekly groceries (oat milk, fruit, quick study snacks)</textarea>
+</div>
+</form>
+<!-- Modal Footer Actions -->
+<div class="flex flex-col sm:flex-row items-center justify-between p-space-md sm:px-space-lg bg-surface-container-low gap-space-sm">
+<button class="w-full sm:w-auto px-space-md py-2 rounded-lg text-on-surface-variant hover:text-error hover:bg-error-container/30 transition-colors font-label-md text-label-md flex items-center justify-center gap-1 cursor-pointer" id="clearFieldsBtn" type="button">
+<span class="material-symbols-outlined text-[18px]">restart_alt</span>
+<span class="">Clear Fields</span>
+</button>
+<div class="flex items-center gap-space-sm w-full sm:w-auto justify-end">
+<button class="w-1/2 sm:w-auto px-space-md py-2 rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors font-label-md text-label-md cursor-pointer" id="cancelBtn" type="button">
+            Cancel
+          </button>
+<button class="w-1/2 sm:w-auto px-space-lg py-2 rounded-lg bg-primary-container text-on-primary hover:bg-primary transition-all font-label-md text-label-md flex items-center justify-center gap-space-xs shadow-sm cursor-pointer" id="saveExpenseBtn" type="button">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="">Save Expense</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<script>
+    (function initExpenseModalInteractions() {
+      const modalOverlay = document.getElementById('modalOverlay');
+      const closeBtn = document.getElementById('closeModalBtn');
+      const cancelBtn = document.getElementById('cancelBtn');
+      const clearBtn = document.getElementById('clearFieldsBtn');
+      const saveBtn = document.getElementById('saveExpenseBtn');
+      const scanBtn = document.getElementById('scanTriggerBtn');
+
+      const amountInput = document.getElementById('expenseAmount');
+      const merchantInput = document.getElementById('expenseMerchant');
+      const categorySelect = document.getElementById('expenseCategory');
+      const dateInput = document.getElementById('expenseDate');
+      const notesTextarea = document.getElementById('expenseNotes');
+
+      const dismissModal = () => {
+        modalOverlay.classList.add('opacity-0', 'pointer-events-none');
+        setTimeout(() => {
+          modalOverlay.style.display = 'none';
+        }, 250);
+      };
+
+      if (closeBtn) closeBtn.addEventListener('click', dismissModal);
+      if (cancelBtn) cancelBtn.addEventListener('click', dismissModal);
+
+      // Dismiss on clicking background scrim
+      if (modalOverlay) {
+        modalOverlay.addEventListener('click', (e) => {
+          if (e.target === modalOverlay) {
+            dismissModal();
+          }
+        });
+      }
+
+      // Clear Form Fields
+      if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+          if (amountInput) amountInput.value = '';
+          if (merchantInput) merchantInput.value = '';
+          if (notesTextarea) notesTextarea.value = '';
+          if (categorySelect) categorySelect.selectedIndex = 0;
+          if (amountInput) amountInput.focus();
+        });
+      }
+
+      // Save Confirmation
+      if (saveBtn) {
+        saveBtn.addEventListener('click', () => {
+          const originalText = saveBtn.innerHTML;
+          saveBtn.innerHTML = '<span class="material-symbols-outlined text-[18px] animate-spin">refresh</span><span>Saving...</span>';
+          setTimeout(() => {
+            saveBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">done_all</span><span>Logged!</span>';
+            setTimeout(dismissModal, 500);
+          }, 600);
+        });
+      }
+
+      // Mock Scan Feedback
+      if (scanBtn) {
+        scanBtn.addEventListener('click', () => {
+          scanBtn.innerHTML = '<span class="material-symbols-outlined text-[18px] animate-spin">sync</span><span>Scanning...</span>';
+          setTimeout(() => {
+            scanBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">photo_camera</span><span>Scan receipt</span>';
+          }, 900);
+        });
+      }
+    })();
+  </script>
+</div></main></div>
+
+
+
+</body></html>

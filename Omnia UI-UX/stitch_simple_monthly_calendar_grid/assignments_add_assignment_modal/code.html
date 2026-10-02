@@ -1,0 +1,271 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_dashboard" name="shell-type"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,200..900;1,7..72,200..900&amp;family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "tertiary-container": "#886e38", "on-secondary-container": "#696156", "on-primary": "#ffffff", "primary-fixed-dim": "#9dd3aa", "secondary-fixed": "#ece1d3", "error-container": "#ffdad6", "on-background": "#191d19", "on-surface": "#191d19", "surface": "#f7faf4", "on-error": "#ffffff", "on-error-container": "#93000a", "surface-container-lowest": "#ffffff", "on-tertiary": "#ffffff", "on-secondary-fixed": "#201b12", "inverse-primary": "#9dd3aa", "inverse-surface": "#2d312e", "secondary-fixed-dim": "#d0c5b8", "on-tertiary-fixed-variant": "#594311", "tertiary-fixed": "#ffdea0", "on-secondary": "#ffffff", "secondary": "#655d52", "primary-fixed": "#b9efc5", "primary-container": "#4a7c59", "on-secondary-fixed-variant": "#4d463c", "secondary-container": "#e9ded0", "surface-dim": "#d8dbd5", "on-primary-container": "#e1ffe5", "surface-variant": "#e0e3de", "outline": "#717971", "error": "#ba1a1a", "on-surface-variant": "#414942", "on-tertiary-fixed": "#261a00", "tertiary": "#6d5622", "surface-tint": "#376847", "inverse-on-surface": "#eff2ec", "tertiary-fixed-dim": "#e2c284", "surface-container-high": "#e6e9e3", "surface-container-highest": "#e0e3de", "primary": "#316342", "outline-variant": "#c1c9bf", "background": "#f7faf4", "surface-bright": "#f7faf4", "on-tertiary-container": "#fff6ed", "on-primary-fixed-variant": "#1e5031", "surface-container": "#ecefe9", "on-primary-fixed": "#00210e", "surface-container-low": "#f1f5ef" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-md": "1rem", "space-xs": "0.25rem", "margin": "2rem", "space-sm": "0.5rem", "space-xl": "2.5rem", "space-lg": "1.5rem", "gutter": "1.5rem" }, "fontFamily": { "body-md": ["Nunito Sans"], "headline-lg": ["Literata"], "label-md": ["Nunito Sans"] }, "fontSize": { "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }], "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }], "label-md": ["14px", { "lineHeight": "20px", "fontWeight": "600" }] } } } }</script></head><body class="bg-background font-body-md text-body-md text-on-surface min-h-screen"><aside class="fixed left-0 top-0 h-full w-72 bg-surface-container-low z-50 flex flex-col justify-between shadow-[0_1px_8px_rgba(0,0,0,0.04)] overflow-y-auto"><div class="flex flex-col p-space-md"><div class="flex items-center justify-between px-space-xs py-space-sm mb-space-md"><button aria-label="Collapse sidebar" class="p-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[20px]">menu_open</span></button><div class="flex items-center gap-space-sm"><span class="font-headline-lg text-headline-lg text-primary tracking-tight font-bold">Omnia</span></div></div><div class="mb-space-md"><button class="w-full flex items-center justify-center gap-space-xs py-space-sm px-space-md rounded-lg bg-primary-container text-on-primary font-label-md text-label-md hover:bg-primary transition-colors shadow-sm"><span class="material-symbols-outlined text-[18px]">add</span>Create Event</button></div><nav class="flex flex-col gap-space-xs" data-active-classes="bg-surface-container-high text-on-surface font-semibold rounded-lg"><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="schedule" href="#"><span class="material-symbols-outlined text-[20px]">schedule</span><span class="font-label-md text-label-md">Schedule</span></a><a aria-current="page" class="flex items-center gap-space-sm px-space-md py-space-sm transition-colors bg-surface-container-high text-on-surface font-semibold rounded-lg" data-path="assignments" href="#"><span class="material-symbols-outlined text-[20px]">assignment</span><span class="font-label-md text-label-md">Assignments</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="calendar" href="#"><span class="material-symbols-outlined text-[20px]">calendar_today</span><span class="font-label-md text-label-md">Calendar</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="finance" href="#"><span class="material-symbols-outlined text-[20px]">account_balance_wallet</span><span class="font-label-md text-label-md">Finance</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="settings" href="#"><span class="material-symbols-outlined text-[20px]">settings</span><span class="font-label-md text-label-md">Settings</span></a></nav><div class="mt-space-lg pt-space-md"><div class="flex items-center justify-between px-space-xs mb-space-xs"><span class="text-[11px] font-bold tracking-wider uppercase text-on-surface-variant">My Calendars</span></div><div class="flex flex-col gap-space-xs"><div class="flex items-center gap-space-sm px-space-md py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors cursor-pointer"><span class="w-3 h-3 rounded-[2px] bg-primary"></span><span class="font-label-md text-label-md text-on-surface">Classes</span></div><div class="flex items-center gap-space-sm px-space-md py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors cursor-pointer"><span class="w-2.5 h-2.5 rotate-45 bg-tertiary"></span><span class="font-label-md text-label-md text-on-surface">Exams</span></div><div class="flex items-center gap-space-sm px-space-md py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors cursor-pointer"><span class="w-3 h-3 rounded-[2px] border-2 border-primary-container bg-transparent"></span><span class="font-label-md text-label-md text-on-surface">Deadlines</span></div><div class="flex items-center gap-space-sm px-space-md py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors cursor-pointer"><span class="w-3 h-3 rounded-full bg-secondary"></span><span class="font-label-md text-label-md text-on-surface">Personal</span></div></div></div><div class="mt-space-lg pt-space-md"><div class="flex items-center justify-between px-space-xs mb-space-xs"><span class="text-[11px] font-bold tracking-wider uppercase text-on-surface-variant">Upcoming &amp; Pinned</span><span class="material-symbols-outlined text-[16px] text-on-surface-variant">push_pin</span></div><div class="flex flex-col gap-space-xs"><div class="p-space-sm bg-surface-container rounded-lg"><div class="flex items-center justify-between text-on-surface-variant text-[12px] mb-1"><span class="">Tomorrow • 09:00 AM</span><span class="w-2 h-2 rounded-full bg-primary"></span></div><div class="font-label-md text-label-md text-on-surface font-medium truncate">Linear Algebra Midterm</div></div><div class="p-space-sm bg-surface-container rounded-lg"><div class="flex items-center justify-between text-on-surface-variant text-[12px] mb-1"><span class="">Friday • 11:59 PM</span><span class="w-2 h-2 rounded-full bg-tertiary"></span></div><div class="font-label-md text-label-md text-on-surface font-medium truncate">Philosophy Paper Draft</div></div></div></div></div><div class="p-space-md border-t border-outline-variant/30"><div class="flex items-center justify-between p-space-xs rounded-lg hover:bg-surface-container transition-colors cursor-pointer"><div class="flex items-center gap-space-sm"><div class="flex flex-col"><span class="font-label-md text-label-md text-on-surface font-semibold leading-tight">Evelyn Vance</span><span class="text-[12px] text-on-surface-variant leading-tight">Academic Senior</span></div></div><button aria-label="Profile menu" class="text-on-surface-variant hover:text-on-surface p-1 rounded"><span class="material-symbols-outlined text-[20px]">more_vert</span></button></div></div></aside><div class="pl-72"><header class="fixed top-0 left-72 right-0 h-16 bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-gutter"><div class="flex items-center gap-space-md w-96"><div class="relative w-full flex items-center"><span class="material-symbols-outlined absolute left-space-sm text-on-surface-variant text-[20px]">search</span><input class="w-full pl-9 pr-space-md py-1.5 rounded-lg bg-surface-container-low text-on-surface placeholder:text-on-surface-variant text-[14px] outline-none focus:ring-1 focus:ring-primary transition-all" placeholder="Search courses, notes, events..." type="text"></div></div><div class="flex items-center gap-space-lg"><div class="hidden md:flex items-center gap-space-xs text-on-surface-variant font-label-md text-label-md"><span class="material-symbols-outlined text-[18px]">calendar_month</span><span class="">Tuesday, Oct 24</span></div><button aria-label="Notifications" class="relative p-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-error"></span></button><div class="flex items-center gap-space-sm pl-space-xs"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-16 bg-surface min-h-screen"><div class="flex flex-col w-full relative">
+<!-- Underlying Assignments Dashboard (Blurred behind modal overlay) -->
+<div aria-hidden="true" class="w-full px-margin py-space-lg filter blur-[3px] opacity-40 pointer-events-none select-none">
+<!-- Header area of background dashboard -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-space-md mb-space-xl">
+<div>
+<span class="text-on-surface-variant font-label-md text-label-md uppercase tracking-wider">Fall Term 2026</span>
+<h1 class="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight mt-1">Course Assignments</h1>
+</div>
+<div class="flex items-center gap-space-sm">
+<div class="bg-surface-container px-space-md py-space-xs rounded-lg text-on-surface font-label-md text-label-md flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[18px]">filter_list</span> Filter
+        </div>
+<div class="bg-primary-container text-on-primary px-space-md py-space-xs rounded-lg font-label-md text-label-md flex items-center gap-space-xs shadow-sm">
+<span class="material-symbols-outlined text-[18px]">add</span> Add Assignment
+        </div>
+</div>
+</div>
+<!-- Stats row -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-space-md mb-space-xl">
+<div class="bg-surface-container-low p-space-md rounded-xl">
+<span class="text-on-surface-variant font-label-md text-label-md">Total Pending</span>
+<div class="font-headline-lg text-headline-lg text-on-surface font-bold mt-1">12</div>
+</div>
+<div class="bg-surface-container-low p-space-md rounded-xl">
+<span class="text-on-surface-variant font-label-md text-label-md">Due This Week</span>
+<div class="font-headline-lg text-headline-lg text-tertiary font-bold mt-1">4</div>
+</div>
+<div class="bg-surface-container-low p-space-md rounded-xl">
+<span class="text-on-surface-variant font-label-md text-label-md">Completed</span>
+<div class="font-headline-lg text-headline-lg text-primary font-bold mt-1">28</div>
+</div>
+<div class="bg-surface-container-low p-space-md rounded-xl">
+<span class="text-on-surface-variant font-label-md text-label-md">Average Grade</span>
+<div class="font-headline-lg text-headline-lg text-on-surface font-bold mt-1">94.2%</div>
+</div>
+</div>
+<!-- Dummy Cards Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-md">
+<div class="bg-surface-container-low p-space-lg rounded-xl h-48"></div>
+<div class="bg-surface-container-low p-space-lg rounded-xl h-48"></div>
+<div class="bg-surface-container-low p-space-lg rounded-xl h-48"></div>
+</div>
+</div>
+<!-- Modal Overlay Scrim -->
+<div class="fixed inset-0 top-16 left-0 md:left-72 bg-on-surface/20 backdrop-blur-sm z-50 flex items-center justify-center p-space-md md:p-space-xl overflow-y-auto">
+<!-- Modal Card Container -->
+<div class="bg-surface-container-lowest w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden flex flex-col my-auto transition-all transform animate-in fade-in zoom-in-95 duration-200">
+<!-- Modal Header -->
+<div class="px-space-xl pt-space-xl pb-space-md bg-surface-container-lowest flex items-start justify-between">
+<div class="flex flex-col gap-0.5 pr-space-md">
+<div class="flex items-center gap-space-xs text-primary mb-1">
+<span class="material-symbols-outlined text-[20px]">assignment_add</span>
+<span class="font-label-md text-label-md font-semibold tracking-wide uppercase text-[11px]">Academic Planner</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface font-semibold tracking-tight">Add Assignment</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Enter course assignment details and set deadlines.</p>
+</div>
+<button aria-label="Close dialog" class="w-9 h-9 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" id="closeModalBtn" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Modal Body / Form -->
+<form class="px-space-xl py-space-md flex flex-col gap-space-md overflow-y-auto max-h-[calc(78vh-140px)]" id="assignmentForm" onsubmit="event.preventDefault();">
+<!-- 1. Assignment Title (Required) -->
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<label class="font-label-md text-label-md text-on-surface font-semibold flex items-center gap-1" for="assignmentTitle">
+              Assignment Title
+              <span class="text-error font-bold" title="Required">*</span>
+</label>
+<span class="text-on-surface-variant text-[12px]">Dynamic task naming</span>
+</div>
+<div class="relative flex items-center">
+<input class="w-full px-space-md py-2.5 rounded-lg bg-surface-container-low text-on-surface placeholder:text-on-surface-variant/70 font-body-md text-body-md outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary shadow-sm transition-all" id="assignmentTitle" placeholder="e.g., Problem Set 4: Dynamic Programming" required="" type="text">
+</div>
+</div>
+<!-- 2. Course Dropdown -->
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-md text-label-md text-on-surface font-semibold" for="courseSelect">Course</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-space-md text-primary text-[20px] pointer-events-none">school</span>
+<select class="w-full pl-11 pr-10 py-2.5 rounded-lg bg-surface-container-low text-on-surface font-body-md text-body-md outline-none appearance-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary shadow-sm transition-all cursor-pointer" id="courseSelect">
+<option selected="" value="cs201">CS201: Data Structures &amp; Algorithms</option>
+<option value="cs340">CS340: Database Design &amp; Systems</option>
+<option value="math220">MATH220: Linear Algebra &amp; Matrices</option>
+<option value="chem105">CHEM105: General Chemistry I</option>
+</select>
+<span class="material-symbols-outlined absolute right-space-md text-on-surface-variant pointer-events-none text-[20px]">expand_more</span>
+</div>
+</div>
+<!-- 3. Due Date & Time (Two-Column Row) -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-md text-label-md text-on-surface font-semibold" for="dueDate">Due Date</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-space-md text-on-surface-variant text-[20px] pointer-events-none">event</span>
+<input class="w-full pl-11 pr-space-md py-2.5 rounded-lg bg-surface-container-low text-on-surface font-body-md text-body-md outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary shadow-sm transition-all" id="dueDate" type="text" value="Wed, Oct 07, 2026">
+</div>
+</div>
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-md text-label-md text-on-surface font-semibold" for="dueTime">Due Time</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-space-md text-on-surface-variant text-[20px] pointer-events-none">schedule</span>
+<input class="w-full pl-11 pr-space-md py-2.5 rounded-lg bg-surface-container-low text-on-surface font-body-md text-body-md outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary shadow-sm transition-all" id="dueTime" type="text" value="11:59 PM">
+</div>
+</div>
+</div>
+<!-- 4. Priority & 5. Status in Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<!-- Priority Segmented Selector -->
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-md text-label-md text-on-surface font-semibold">Priority</label>
+<div class="grid grid-cols-3 gap-1 bg-surface-container-low p-1 rounded-lg">
+<button class="priority-btn py-1.5 rounded-lg font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-all text-center" onclick="selectPriority(this, 'low')" type="button">
+                Low
+              </button>
+<button class="priority-btn py-1.5 rounded-lg font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-all text-center" onclick="selectPriority(this, 'medium')" type="button">
+                Medium
+              </button>
+<button class="priority-btn active py-1.5 rounded-lg font-label-md text-label-md bg-error-container text-on-error-container font-bold shadow-sm transition-all text-center" onclick="selectPriority(this, 'high')" type="button">
+                High
+              </button>
+</div>
+</div>
+<!-- Status Dropdown -->
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-md text-label-md text-on-surface font-semibold" for="statusSelect">Status</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-space-md text-on-surface-variant text-[20px] pointer-events-none">pending_actions</span>
+<select class="w-full pl-11 pr-10 py-2.5 rounded-lg bg-surface-container-low text-on-surface font-body-md text-body-md outline-none appearance-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary shadow-sm transition-all cursor-pointer" id="statusSelect">
+<option selected="" value="not_started">Not started</option>
+<option value="in_progress">In progress</option>
+<option value="done">Done</option>
+</select>
+<span class="material-symbols-outlined absolute right-space-md text-on-surface-variant pointer-events-none text-[20px]">expand_more</span>
+</div>
+</div>
+</div>
+<!-- 6. Notes Textarea -->
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-md text-label-md text-on-surface font-semibold" for="notesText">Notes &amp; Resources</label>
+<div class="relative">
+<textarea class="w-full p-space-md rounded-lg bg-surface-container-low text-on-surface placeholder:text-on-surface-variant/70 font-body-md text-body-md outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary shadow-sm transition-all resize-none" id="notesText" placeholder="Add instructions, rubric links, or study partner details..." rows="3"></textarea>
+</div>
+</div>
+<!-- 7. Reminder Toggle Row -->
+<div class="bg-surface-container-low p-space-md rounded-xl flex items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-10 h-10 rounded-lg bg-primary-container/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[22px]">notifications_active</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-semibold">Set Deadline Reminder</span>
+<span class="text-on-surface-variant text-[13px] leading-tight">Receive notification 24 hours and 2 hours before due</span>
+</div>
+</div>
+<!-- Toggle switch (ON state) -->
+<button aria-checked="true" class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full bg-primary-container p-0.5 transition-colors duration-200 ease-in-out focus:outline-none" id="reminderToggle" onclick="toggleReminder(this)" role="switch" type="button">
+<span class="sr-only">Set deadline reminder</span>
+<span class="translate-x-5 pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface-container-lowest shadow-md ring-0 transition duration-200 ease-in-out" id="toggleKnob"></span>
+</button>
+</div>
+</form>
+<!-- Modal Footer Actions -->
+<div class="px-space-xl py-space-lg bg-surface-container-low/60 flex items-center justify-between mt-space-xs">
+<!-- Left: Reset Action -->
+<button class="flex items-center gap-1.5 font-label-md text-label-md text-on-surface-variant hover:text-error transition-colors px-space-xs py-1" onclick="resetAssignmentForm()" type="button">
+<span class="material-symbols-outlined text-[18px]">restart_alt</span>
+<span class="">Reset</span>
+</button>
+<!-- Right: Cancel & Save Buttons -->
+<div class="flex items-center gap-space-sm">
+<button class="px-space-lg py-2.5 rounded-lg font-label-md text-label-md text-on-secondary-container bg-secondary-container hover:bg-secondary-fixed transition-colors" id="cancelBtn" type="button">
+            Cancel
+          </button>
+<button class="px-space-xl py-2.5 rounded-lg font-label-md text-label-md text-on-primary bg-primary-container hover:bg-primary transition-all flex items-center gap-space-xs shadow-sm hover:shadow active:scale-[0.98]" id="saveBtn" onclick="saveAssignment()" type="button">
+<span class="material-symbols-outlined text-[18px]">check</span>
+<span class="">Save Assignment</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+  function selectPriority(btn, level) {
+    const buttons = document.querySelectorAll('.priority-btn');
+    buttons.forEach(b => {
+      b.className = 'priority-btn py-1.5 rounded-lg font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-all text-center';
+    });
+    if (level === 'high') {
+      btn.className = 'priority-btn active py-1.5 rounded-lg font-label-md text-label-md bg-error-container text-on-error-container font-bold shadow-sm transition-all text-center';
+    } else if (level === 'medium') {
+      btn.className = 'priority-btn active py-1.5 rounded-lg font-label-md text-label-md bg-tertiary-container/30 text-on-surface font-bold shadow-sm transition-all text-center';
+    } else {
+      btn.className = 'priority-btn active py-1.5 rounded-lg font-label-md text-label-md bg-surface-container-high text-on-surface font-bold shadow-sm transition-all text-center';
+    }
+  }
+
+  function toggleReminder(btn) {
+    const isChecked = btn.getAttribute('aria-checked') === 'true';
+    const knob = document.getElementById('toggleKnob');
+    if (isChecked) {
+      btn.setAttribute('aria-checked', 'false');
+      btn.classList.remove('bg-primary-container');
+      btn.classList.add('bg-outline-variant');
+      knob.classList.remove('translate-x-5');
+      knob.classList.add('translate-x-0');
+    } else {
+      btn.setAttribute('aria-checked', 'true');
+      btn.classList.remove('bg-outline-variant');
+      btn.classList.add('bg-primary-container');
+      knob.classList.remove('translate-x-0');
+      knob.classList.add('translate-x-5');
+    }
+  }
+
+  function resetAssignmentForm() {
+    const form = document.getElementById('assignmentForm');
+    if (form) {
+      form.reset();
+      document.getElementById('assignmentTitle').value = '';
+      document.getElementById('courseSelect').value = 'cs201';
+      document.getElementById('dueDate').value = 'Wed, Oct 07, 2026';
+      document.getElementById('dueTime').value = '11:59 PM';
+      document.getElementById('statusSelect').value = 'not_started';
+      document.getElementById('notesText').value = '';
+      const highBtn = document.querySelectorAll('.priority-btn')[2];
+      if (highBtn) selectPriority(highBtn, 'high');
+      
+      const toggle = document.getElementById('reminderToggle');
+      if (toggle && toggle.getAttribute('aria-checked') === 'false') {
+        toggleReminder(toggle);
+      }
+    }
+  }
+
+  function saveAssignment() {
+    const title = document.getElementById('assignmentTitle');
+    if (!title.value.trim()) {
+      title.focus();
+      title.classList.add('ring-2', 'ring-error');
+      setTimeout(() => {
+        title.classList.remove('ring-2', 'ring-error');
+      }, 2000);
+      return;
+    }
+    const saveBtn = document.getElementById('saveBtn');
+    saveBtn.innerHTML = '<span class="material-symbols-outlined text-[18px] animate-spin">refresh</span><span>Saving...</span>';
+    setTimeout(() => {
+      saveBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">done_all</span><span>Saved!</span>';
+      setTimeout(() => {
+        saveBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">check</span><span>Save Assignment</span>';
+      }, 1500);
+    }, 600);
+  }
+
+  document.getElementById('closeModalBtn')?.addEventListener('click', () => {
+    alert('Modal close event triggered');
+  });
+
+  document.getElementById('cancelBtn')?.addEventListener('click', () => {
+    alert('Action cancelled');
+  });
+</script></main></div>
+
+
+
+</body></html>

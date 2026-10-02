@@ -1,0 +1,2 @@
+[functions.ask-omni]
+verify_jwt = true
