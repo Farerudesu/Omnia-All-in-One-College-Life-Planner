@@ -336,6 +336,40 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   background: var(--outline);
 }
 
+/* ─── Schedule grid scroll & drag support ─── */
+.schedule-grid-scroll {
+  overflow-x: auto !important;
+  touch-action: pan-x pan-y !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior-x: contain !important;
+  cursor: grab;
+}
+
+.schedule-grid-scroll.is-dragging {
+  cursor: grabbing !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+.schedule-grid-scroll::-webkit-scrollbar {
+  height: 8px !important;
+}
+
+.schedule-grid-scroll::-webkit-scrollbar-track {
+  background: var(--surface-container) !important;
+  border-radius: 9999px !important;
+  margin: 0 1rem !important;
+}
+
+.schedule-grid-scroll::-webkit-scrollbar-thumb {
+  background: var(--outline-variant) !important;
+  border-radius: 9999px !important;
+}
+
+.schedule-grid-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--primary) !important;
+}
+
 /* ─── Safe area for Capacitor/mobile ─── */
 .safe-area-bottom {
   padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
@@ -1146,11 +1180,12 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 
   .schedule-grid-scroll {
     padding: 0 0.5rem calc(90px + max(14px, env(safe-area-inset-bottom, 14px))) !important;
-    -webkit-overflow-scrolling: touch;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-x pan-y !important;
   }
 
   .schedule-grid--week {
-    min-width: 680px !important;
+    min-width: 720px !important;
   }
 
   /* ─── Finance summary grid: prevent overflow on narrow screens ─── */

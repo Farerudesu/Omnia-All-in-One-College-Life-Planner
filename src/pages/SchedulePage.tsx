@@ -79,10 +79,102 @@ export function SchedulePage() {
   const [viewMode, setViewMode] = useState<'week' | 'today'>('today');
   const currentTimeRef = useRef<HTMLDivElement>(null);
   const dayHeaderRef = useRef<HTMLDivElement>(null);
+  const gridScrollRef = useRef<HTMLDivElement>(null);
+  const isDraggingRef = useRef(false);
+  const startXRef = useRef(0);
+  const scrollLeftRef = useRef(0);
+  const hasDraggedRef = useRef(false);
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+    const target = e.target as HTMLElement;
+    if (target.closest('button, a, input, select, textarea')) return;
+
+    const container = gridScrollRef.current;
+    if (!container) return;
+
+    isDraggingRef.current = true;
+    hasDraggedRef.current = false;
+    startXRef.current = e.clientX;
+    scrollLeftRef.current = container.scrollLeft;
+
+    if (e.pointerType === 'mouse') {
+      try {
+        container.setPointerCapture(e.pointerId);
+      } catch {
+        // ignore
+      }
+    }
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) return;
+    const container = gridScrollRef.current;
+    if (!container) return;
+
+    const dx = e.clientX - startXRef.current;
+    if (Math.abs(dx) > 4) {
+      hasDraggedRef.current = true;
+      container.scrollLeft = scrollLeftRef.current - dx;
+      container.classList.add('is-dragging');
+    }
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    const container = gridScrollRef.current;
+    if (container) {
+      container.classList.remove('is-dragging');
+      if (e.pointerType === 'mouse') {
+        try {
+          container.releasePointerCapture(e.pointerId);
+        } catch {
+          // ignore
+        }
+      }
+    }
+    setTimeout(() => {
+      hasDraggedRef.current = false;
+    }, 60);
+  };
+
+  const scrollToDay = (dayIndex: number) => {
+    const container = gridScrollRef.current;
+    if (!container) return;
+    const grid = container.querySelector('.schedule-grid') as HTMLElement | null;
+    if (!grid) return;
+    const dayHeaders = grid.querySelectorAll('.schedule-day-header');
+    if (dayHeaders[dayIndex]) {
+      const header = dayHeaders[dayIndex] as HTMLElement;
+      const targetLeft = Math.max(0, header.offsetLeft - 70);
+      container.scrollTo({ left: targetLeft, behavior: 'smooth' });
+    }
+  };
+
+  const scrollGridBy = (delta: number) => {
+    const container = gridScrollRef.current;
+    if (!container) return;
+    container.scrollBy({ left: delta, behavior: 'smooth' });
+  };
 
   useEffect(() => {
     (currentTimeRef.current || dayHeaderRef.current)?.scrollIntoView({ block: 'center', inline: 'nearest' });
   }, [currentDate, viewMode]);
+
+  useEffect(() => {
+    if (viewMode === 'week') {
+      const today = new Date();
+      const currentWeekDates = getWeekDates(currentDate);
+      const todayIdx = currentWeekDates.findIndex((d) => toDateString(d) === toDateString(today));
+      if (todayIdx > 0 && todayIdx < 5) {
+        const timer = setTimeout(() => {
+          scrollToDay(todayIdx);
+        }, 120);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [viewMode, currentDate]);
   const [showAddClass, setShowAddClass] = useState(false);
   const [showAddEvent, setShowAddEvent] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -1144,119 +1236,221 @@ export function SchedulePage() {
             const gridStart = validGridStarts.length > 0 ? Math.min(...validGridStarts) : DEFAULT_GRID_START;
             const hours = getHoursForGrid(gridStart);
             return (
-              <div className="schedule-grid-scroll" style={{
-                padding: '0 2rem 2rem',
-                overflowX: 'auto',
-              }}>
-                <div className={`schedule-grid ${viewMode === 'today' ? 'schedule-grid--today' : 'schedule-grid--week'}`} style={{
-                  display: 'grid',
-                  gridTemplateColumns: viewMode === 'today' ? '70px 1fr' : '70px repeat(5, 1fr)',
-                  border: '1px solid var(--outline-variant)',
-                  borderRadius: 12,
-                  overflow: 'hidden',
-                  minWidth: viewMode === 'today' ? 0 : 600,
-                  background: 'var(--surface-container-lowest)',
-                }}>
-                  {/* Day headers */}
-                  {(() => {
-                    const tzOffsetMinutes = -new Date().getTimezoneOffset();
-                    const tzOffsetHours = Math.floor(Math.abs(tzOffsetMinutes) / 60);
-                    const tzSign = tzOffsetMinutes >= 0 ? '+' : '-';
-                    const tzLabel = `GMT${tzSign}${tzOffsetHours}`;
-                    return (
-                      <div
-                        style={{
-                          padding: '0.75rem',
-                          background: 'var(--surface-container-low)',
-                          borderBottom: '1px solid var(--outline-variant)',
-                          fontSize: '0.75rem',
-                          color: 'var(--on-surface-variant)',
-                          textAlign: 'center',
-                          fontWeight: 600,
-                        }}
-                        title={Intl.DateTimeFormat().resolvedOptions().timeZone}
-                      >
-                        {tzLabel}
-                      </div>
-                    );
-                  })()}
-                  {dayScheduleData.map(({ date }, i) => {
-                    const dayNames = lang === 'id' ? ['SEN', 'SEL', 'RAB', 'KAM', 'JUM', 'SAB', 'MIN'] : ['MO', 'TU', 'WED', 'TH', 'FR', 'SAT', 'SUN'];
-                    const dayIndex = getISODay(date) - 1;
-                    const today = isToday(date);
-                    return (
-                      <div
-                        key={i}
-                        ref={viewMode === 'today' && i === 0 ? dayHeaderRef : undefined}
-                        style={{
-                          padding: '0.5rem',
-                          background: today ? 'var(--surface-container)' : 'var(--surface-container-low)',
-                          borderBottom: '1px solid var(--outline-variant)',
-                          textAlign: 'center',
-                          borderLeft: '1px solid var(--outline-variant)',
-                        }}
-                      >
-                        <div style={{
-                          fontSize: '0.75rem',
-                          fontWeight: 700,
-                          color: 'var(--on-surface-variant)',
-                          letterSpacing: '0.05em',
-                        }}>
-                          {dayNames[dayIndex] || 'DAY'}
-                        </div>
-                    <div className="tabular-nums" style={{
-                      display: 'inline-flex',
+              <>
+                {viewMode === 'week' && (
+                  <div
+                    className="show-mobile schedule-week-nav-bar"
+                    style={{
+                      padding: '0.5rem 0.75rem 0.5rem',
+                      display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center',
-                      width: today ? 32 : 'auto',
-                      height: today ? 32 : 'auto',
-                      borderRadius: today ? '50%' : 0,
-                      background: today ? 'var(--primary)' : 'transparent',
-                      color: today ? 'var(--on-primary)' : 'var(--on-surface)',
-                      fontSize: '1.125rem',
-                      fontWeight: 600,
-                    }}>
-                      {date.getDate()}
+                      justifyContent: 'space-between',
+                      gap: '0.5rem',
+                      background: 'var(--surface-container-lowest)',
+                      borderBottom: '1px solid var(--outline-variant)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', overflowX: 'auto', flex: 1, scrollbarWidth: 'none' }}>
+                      {displayDays.map((date, idx) => {
+                        const dayNames = lang === 'id' ? ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'] : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                        const dayIdx = getISODay(date) - 1;
+                        const isCurrentDay = isToday(date);
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => scrollToDay(idx)}
+                            className="min-touch-target"
+                            style={{
+                              flex: '1 0 auto',
+                              minWidth: 46,
+                              padding: '0.3rem 0.4rem',
+                              borderRadius: 8,
+                              border: isCurrentDay ? '1px solid var(--primary)' : '1px solid var(--outline-variant)',
+                              background: isCurrentDay ? 'var(--primary)' : 'var(--surface-container-low)',
+                              color: isCurrentDay ? 'var(--on-primary)' : 'var(--on-surface)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              cursor: 'pointer',
+                              transition: 'background 0.15s, color 0.15s',
+                            }}
+                          >
+                            <span style={{ fontSize: '0.625rem', fontWeight: 700, textTransform: 'uppercase', opacity: isCurrentDay ? 0.9 : 0.7 }}>
+                              {dayNames[dayIdx] || 'DAY'}
+                            </span>
+                            <span className="tabular-nums" style={{ fontSize: '0.8125rem', fontWeight: 700, lineHeight: 1.1 }}>
+                              {date.getDate()}
+                            </span>
+                          </button>
+                        );
+                      })}
                     </div>
-                    {mondayDate && date.getMonth() !== mondayDate.getMonth() && (
-                      <div style={{ fontSize: '0.6875rem', color: 'var(--on-surface-variant)' }}>
-                        {getMonthName(date.getMonth(), true)}
-                      </div>
-                    )}
+                    <div style={{ display: 'flex', gap: '0.25rem', flexShrink: 0 }}>
+                      <button
+                        type="button"
+                        onClick={() => scrollGridBy(-160)}
+                        className="btn-ghost min-touch-target"
+                        aria-label="Scroll left"
+                        title="Scroll left"
+                        style={{ width: 32, height: 32, padding: 0, borderRadius: 8, background: 'var(--surface-container-low)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                          <polyline points="15 18 9 12 15 6" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => scrollGridBy(160)}
+                        className="btn-ghost min-touch-target"
+                        aria-label="Scroll right"
+                        title="Scroll right"
+                        style={{ width: 32, height: 32, padding: 0, borderRadius: 8, background: 'var(--surface-container-low)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                          <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
-                );
-              })}
-
-              {/* Time grid body */}
-              <div style={{
-                gridColumn: '1 / -1',
-                display: 'grid',
-                gridTemplateColumns: viewMode === 'today' ? '70px 1fr' : '70px repeat(5, 1fr)',
-                position: 'relative',
-              }}>
-                {/* Hour labels */}
-                <div>
-                  {hours.map((h) => (
-                    <div
-                      key={h}
-                      className="tabular-nums"
-                      style={{
-                        height: 60,
-                        borderBottom: '1px solid var(--outline-variant)',
-                        display: 'flex',
-                        alignItems: 'flex-start',
+                )}
+                <div
+                  ref={gridScrollRef}
+                  className="schedule-grid-scroll"
+                  onPointerDown={handlePointerDown}
+                  onPointerMove={handlePointerMove}
+                  onPointerUp={handlePointerUp}
+                  onPointerCancel={handlePointerUp}
+                  style={{
+                    padding: '0 2rem 2rem',
+                    overflowX: 'auto',
+                    touchAction: 'pan-x pan-y',
+                  }}
+                >
+                  <div className={`schedule-grid ${viewMode === 'today' ? 'schedule-grid--today' : 'schedule-grid--week'}`} style={{
+                    display: 'grid',
+                    gridTemplateColumns: viewMode === 'today' ? '70px 1fr' : `70px repeat(${displayDays.length}, minmax(130px, 1fr))`,
+                    border: '1px solid var(--outline-variant)',
+                    borderRadius: 12,
+                    minWidth: viewMode === 'today' ? 0 : 70 + displayDays.length * 130,
+                    background: 'var(--surface-container-lowest)',
+                  }}>
+                    {/* Day headers */}
+                    {(() => {
+                      const tzOffsetMinutes = -new Date().getTimezoneOffset();
+                      const tzOffsetHours = Math.floor(Math.abs(tzOffsetMinutes) / 60);
+                      const tzSign = tzOffsetMinutes >= 0 ? '+' : '-';
+                      const tzLabel = `GMT${tzSign}${tzOffsetHours}`;
+                      return (
+                        <div
+                          style={{
+                            position: 'sticky',
+                            left: 0,
+                            zIndex: 25,
+                            padding: '0.75rem',
+                            background: 'var(--surface-container-low)',
+                            borderBottom: '1px solid var(--outline-variant)',
+                            borderRight: '1px solid var(--outline-variant)',
+                            borderTopLeftRadius: 11,
+                            fontSize: '0.75rem',
+                            color: 'var(--on-surface-variant)',
+                            textAlign: 'center',
+                            fontWeight: 600,
+                            boxShadow: '2px 0 6px rgba(0, 0, 0, 0.04)',
+                          }}
+                          title={Intl.DateTimeFormat().resolvedOptions().timeZone}
+                        >
+                          {tzLabel}
+                        </div>
+                      );
+                    })()}
+                    {dayScheduleData.map(({ date }, i) => {
+                      const dayNames = lang === 'id' ? ['SEN', 'SEL', 'RAB', 'KAM', 'JUM', 'SAB', 'MIN'] : ['MO', 'TU', 'WED', 'TH', 'FR', 'SAT', 'SUN'];
+                      const dayIndex = getISODay(date) - 1;
+                      const today = isToday(date);
+                      return (
+                        <div
+                          key={i}
+                          ref={viewMode === 'today' && i === 0 ? dayHeaderRef : undefined}
+                          className="schedule-day-header"
+                          style={{
+                            padding: '0.5rem',
+                            background: today ? 'var(--surface-container)' : 'var(--surface-container-low)',
+                            borderBottom: '1px solid var(--outline-variant)',
+                            textAlign: 'center',
+                            borderLeft: '1px solid var(--outline-variant)',
+                            borderTopRightRadius: i === dayScheduleData.length - 1 ? 11 : 0,
+                          }}
+                        >
+                          <div style={{
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            color: 'var(--on-surface-variant)',
+                            letterSpacing: '0.05em',
+                          }}>
+                            {dayNames[dayIndex] || 'DAY'}
+                          </div>
+                      <div className="tabular-nums" style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
                         justifyContent: 'center',
-                        paddingTop: '0.25rem',
-                        fontSize: '0.75rem',
-                        color: 'var(--on-surface-variant)',
-                      }}
-                    >
-                      {lang === 'id'
-                        ? `${String(h).padStart(2, '0')}:00`
-                        : (h === 12 ? '12:00 PM' : h > 12 ? `${h - 12}:00 PM` : `${h}:00 AM`)}
+                        width: today ? 32 : 'auto',
+                        height: today ? 32 : 'auto',
+                        borderRadius: today ? '50%' : 0,
+                        background: today ? 'var(--primary)' : 'transparent',
+                        color: today ? 'var(--on-primary)' : 'var(--on-surface)',
+                        fontSize: '1.125rem',
+                        fontWeight: 600,
+                      }}>
+                        {date.getDate()}
+                      </div>
+                      {mondayDate && date.getMonth() !== mondayDate.getMonth() && (
+                        <div style={{ fontSize: '0.6875rem', color: 'var(--on-surface-variant)' }}>
+                          {getMonthName(date.getMonth(), true)}
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
+                  );
+                })}
+
+                {/* Time grid body */}
+                <div style={{
+                  gridColumn: '1 / -1',
+                  display: 'grid',
+                  gridTemplateColumns: viewMode === 'today' ? '70px 1fr' : `70px repeat(${displayDays.length}, minmax(130px, 1fr))`,
+                  position: 'relative',
+                }}>
+                  {/* Hour labels */}
+                  <div style={{
+                    position: 'sticky',
+                    left: 0,
+                    zIndex: 20,
+                    background: 'var(--surface-container-lowest)',
+                    borderRight: '1px solid var(--outline-variant)',
+                    borderBottomLeftRadius: 11,
+                    boxShadow: '2px 0 6px rgba(0, 0, 0, 0.04)',
+                  }}>
+                    {hours.map((h, hIdx) => (
+                      <div
+                        key={h}
+                        className="tabular-nums"
+                        style={{
+                          height: 60,
+                          borderBottom: hIdx === hours.length - 1 ? 'none' : '1px solid var(--outline-variant)',
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          justifyContent: 'center',
+                          paddingTop: '0.25rem',
+                          fontSize: '0.75rem',
+                          color: 'var(--on-surface-variant)',
+                        }}
+                      >
+                        {lang === 'id'
+                          ? `${String(h).padStart(2, '0')}:00`
+                          : (h === 12 ? '12:00 PM' : h > 12 ? `${h - 12}:00 PM` : `${h}:00 AM`)}
+                      </div>
+                    ))}
+                  </div>
 
                 {/* Day columns */}
                 {dayScheduleData.map(({ date, daySessions, dayEvents }, dayIdx) => {
@@ -1343,7 +1537,10 @@ export function SchedulePage() {
                               role="button"
                               tabIndex={0}
                               aria-label={`${course.code} ${course.name}, ${formatTime12(block.startTime)} to ${formatTime12(block.endTime)} in ${room}`}
-                              onClick={() => setSelectedBlock({ session, course, date, exception })}
+                              onClick={() => {
+                                if (hasDraggedRef.current) return;
+                                setSelectedBlock({ session, course, date, exception });
+                              }}
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter' || e.key === ' ') {
                                   e.preventDefault();
@@ -1440,7 +1637,10 @@ export function SchedulePage() {
                               className="schedule-item-block"
                               role="button"
                               tabIndex={0}
-                              onClick={() => setSelectedEventForModal(ev)}
+                              onClick={() => {
+                                if (hasDraggedRef.current) return;
+                                setSelectedEventForModal(ev);
+                              }}
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter' || e.key === ' ') {
                                   e.preventDefault();
@@ -1504,8 +1704,9 @@ export function SchedulePage() {
               </div>
             </div>
           </div>
-            );
-          })()}
+        </>
+      );
+    })()}
         </div>
 
         {/* ─── Right panel (desktop only) ─── */}
