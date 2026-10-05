@@ -1613,6 +1613,14 @@ textarea:focus-visible {
   animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.modal-actions-sticky {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }

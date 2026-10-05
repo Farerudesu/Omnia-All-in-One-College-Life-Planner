@@ -988,7 +988,7 @@ function AddTransactionModal({
           <textarea id="tx-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={lang === 'id' ? 'Catatan transaksi...' : 'Notes...'} rows={2} style={{ width: '100%', resize: 'vertical' }} />
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', paddingTop: '0.5rem' }}>
+        <div className="modal-actions-sticky">
           <button type="button" className="btn-outline" onClick={handleClose} disabled={isSubmitting}>
             {lang === 'id' ? 'Batal' : 'Cancel'}
           </button>

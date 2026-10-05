@@ -1053,7 +1053,7 @@ export function SettingsPage() {
                 </div>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+            <div className="modal-actions-sticky">
               <button type="button" className="btn-ghost" onClick={() => setShowImportModal(false)}>
                 {language === 'id' ? 'Batal' : 'Cancel'}
               </button>

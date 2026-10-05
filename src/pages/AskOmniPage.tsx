@@ -1044,7 +1044,7 @@ export function AskOmniPage() {
             )}
 
             {/* Action Buttons: Cancel and Okay */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem', paddingTop: '0.75rem', borderTop: '1px solid var(--outline-variant)' }}>
+            <div className="modal-actions-sticky">
               <button
                 type="button"
                 className="btn-outline"

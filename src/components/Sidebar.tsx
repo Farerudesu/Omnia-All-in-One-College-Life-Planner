@@ -597,7 +597,7 @@ function QuickAddModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
           </div>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.5rem' }}>
+        <div className="modal-actions-sticky">
           <button type="button" className="btn-outline" onClick={onClose}>
             {lang === 'id' ? 'Batal' : 'Cancel'}
           </button>

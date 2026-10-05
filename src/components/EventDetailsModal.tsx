@@ -259,7 +259,7 @@ export function EventDetailsModal({ event, isOpen, onClose }: EventDetailsModalP
             />
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+          <div className="modal-actions-sticky">
             <button type="button" className="btn-ghost" onClick={() => setIsEditing(false)}>
               {isId ? 'Batal' : 'Cancel'}
             </button>
@@ -363,7 +363,7 @@ export function EventDetailsModal({ event, isOpen, onClose }: EventDetailsModalP
           </div>
 
           {/* Action buttons */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginTop: '0.75rem' }}>
+          <div className="modal-actions-sticky" style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
             <button
               type="button"
               className="btn-outline"
