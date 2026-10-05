@@ -147,7 +147,7 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose }: Assignme
             )}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+          <div className="modal-form-grid-2col">
             <div>
               <label className="label">Category</label>
               <select
@@ -191,7 +191,7 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose }: Assignme
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+          <div className="modal-form-grid-2col">
             <div>
               <label className="label">Priority</label>
               <select

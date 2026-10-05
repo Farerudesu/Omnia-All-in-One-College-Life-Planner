@@ -507,7 +507,7 @@ export function SchedulePage() {
   const unreadNotificationsCount = notifications.filter((n) => !n.read).length;
 
   return (
-    <div>
+    <div className="schedule-page-container">
       {/* Top header bar — visible on desktop */}
       <div className="hidden-mobile" style={{
         display: 'flex',
@@ -2048,7 +2048,7 @@ function ScheduleAddEventModal({
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+        <div className="modal-form-grid-2col">
           <div>
             <label htmlFor="schedule-event-date" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
               {isId ? 'Tanggal *' : 'Date *'}
@@ -2082,7 +2082,7 @@ function ScheduleAddEventModal({
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+        <div className="modal-form-grid-2col">
           <div>
             <label htmlFor="schedule-event-start-time" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
               {isId ? 'Waktu Mulai' : 'Start Time'}
@@ -2232,7 +2232,7 @@ function AddClassModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={isId ? 'Tambah mata kuliah' : 'Add class'}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '0.75rem' }}>
+        <div className="modal-form-grid-2col">
           <div>
             <label htmlFor="class-name" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
               {isId ? 'Nama Mata Kuliah *' : 'Class name *'}
@@ -2369,7 +2369,7 @@ function AddClassModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
           )}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+        <div className="modal-form-grid-2col">
           <div>
             <label htmlFor="class-start-time" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
               {isId ? 'Jam Mulai' : 'Start time'}
@@ -2653,7 +2653,7 @@ function ClassDetailsModal({
             </div>
           )}
           {(excType === 'moved' || scope === 'all-future') && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            <div className="modal-form-grid-2col">
               <div>
                 <label htmlFor="new-start-time-input" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.25rem' }}>
                   {isId ? 'Mulai baru' : 'New start'}

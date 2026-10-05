@@ -339,7 +339,7 @@ export function CalendarPage() {
   }, [selectedDate, currentDate]);
 
   return (
-    <div>
+    <div className="calendar-page-container">
       {/* Top bar */}
       <div
         className="calendar-toolbar"
@@ -1441,7 +1441,7 @@ function AddEventModal({
           />
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+        <div className="modal-form-grid-2col">
           <div>
             <label htmlFor="event-start-time" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
               {lang === 'id' ? 'Waktu Mulai' : 'Start Time'}

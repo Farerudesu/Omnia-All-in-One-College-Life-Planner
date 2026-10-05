@@ -20,6 +20,7 @@ import * as ds from '../lib/dataService';
 import { Modal } from './Modal';
 import type { EventType } from '../types';
 import { EXPENSE_CATEGORIES, type ExpenseCategory } from '../lib/categories';
+import { CATEGORY_NAMES_ID } from '../pages/FinancePage';
 import { useLanguage } from '../lib/useLanguage';
 import { translations } from '../lib/i18n';
 
@@ -367,7 +368,7 @@ export function MobileHeader() {
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            <div className="modal-form-grid-2col">
               <div>
                 <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
                   {lang === 'id' ? 'Kategori' : 'Category'}
@@ -397,7 +398,7 @@ export function MobileHeader() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            <div className="modal-form-grid-2col">
               <div>
                 <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
                   {lang === 'id' ? 'Waktu Mulai' : 'Start Time'}
@@ -460,7 +461,7 @@ export function MobileHeader() {
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            <div className="modal-form-grid-2col">
               <div>
                 <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
                   {lang === 'id' ? 'Nominal (Rp) *' : 'Amount (Rp) *'}
@@ -485,7 +486,9 @@ export function MobileHeader() {
                   style={{ width: '100%', padding: '0.625rem 0.75rem', borderRadius: 8, fontSize: '0.9375rem' }}
                 >
                   {EXPENSE_CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>{cat}</option>
+                    <option key={cat} value={cat}>
+                      {lang === 'id' && CATEGORY_NAMES_ID[cat] ? CATEGORY_NAMES_ID[cat] : cat}
+                    </option>
                   ))}
                 </select>
               </div>

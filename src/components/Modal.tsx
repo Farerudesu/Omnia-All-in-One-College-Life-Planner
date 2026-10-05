@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 
 interface ModalProps {
   isOpen: boolean;
@@ -55,7 +56,7 @@ export function Modal({ isOpen, onClose, title, children, maxWidth }: ModalProps
 
   if (!isOpen) return null;
 
-  return (
+  const modalElement = (
     <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <div
         ref={dialogRef}
@@ -71,6 +72,7 @@ export function Modal({ isOpen, onClose, title, children, maxWidth }: ModalProps
           justifyContent: 'space-between',
           padding: '1rem 1.25rem 0.75rem',
           borderBottom: '0.5px solid var(--outline-variant)',
+          flexShrink: 0,
         }}>
           <h3 id="modal-title" style={{ fontFamily: 'var(--font-heading)', fontSize: '1.0625rem', fontWeight: 600 }}>
             {title}
@@ -92,10 +94,12 @@ export function Modal({ isOpen, onClose, title, children, maxWidth }: ModalProps
             </svg>
           </button>
         </div>
-        <div style={{ padding: '1.25rem' }}>
+        <div className="modal-scroll-body" style={{ padding: '1.25rem' }}>
           {children}
         </div>
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalElement, document.body) : modalElement;
 }

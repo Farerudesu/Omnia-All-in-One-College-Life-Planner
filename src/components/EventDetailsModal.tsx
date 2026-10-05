@@ -168,7 +168,7 @@ export function EventDetailsModal({ event, isOpen, onClose }: EventDetailsModalP
             )}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+          <div className="modal-form-grid-2col">
             <div>
               <label htmlFor="edit-event-date" className="label">
                 {isId ? 'Tanggal *' : 'Date *'}
@@ -197,7 +197,7 @@ export function EventDetailsModal({ event, isOpen, onClose }: EventDetailsModalP
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+          <div className="modal-form-grid-2col">
             <div>
               <label className="label">{isId ? 'Waktu Mulai' : 'Start Time'}</label>
               <input

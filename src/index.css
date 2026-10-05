@@ -112,8 +112,8 @@
   --shadow-lg: 0 12px 28px rgba(27, 67, 50, 0.1);
   --shadow-modal: 0 24px 48px -12px rgba(27, 67, 50, 0.18);
 
-  --mobile-header-bg: rgba(251, 251, 250, 0.82);
-  --mobile-dock-bg: rgba(255, 255, 255, 0.85);
+  --mobile-header-bg: rgba(251, 251, 250, 0.97);
+  --mobile-dock-bg: rgba(255, 255, 255, 0.97);
   --mobile-dock-shadow: 0 -0.5px 0 rgba(0, 0, 0, 0.08), 0 -4px 16px rgba(27, 67, 50, 0.04);
 }
 
@@ -154,8 +154,8 @@
     --shadow-md: 0 4px 12px -1px rgba(0, 0, 0, 0.6);
     --shadow-lg: 0 12px 24px -3px rgba(0, 0, 0, 0.7);
     --shadow-modal: 0 24px 48px -12px rgba(0, 0, 0, 0.85);
-    --mobile-header-bg: rgba(10, 11, 13, 0.82);
-    --mobile-dock-bg: rgba(17, 20, 24, 0.85);
+    --mobile-header-bg: rgba(10, 11, 13, 0.97);
+    --mobile-dock-bg: rgba(17, 20, 24, 0.97);
     --mobile-dock-shadow: 0 -0.5px 0 rgba(255, 255, 255, 0.1), 0 -4px 20px -2px rgba(0, 0, 0, 0.6);
   }
 }
@@ -195,8 +195,8 @@
   --shadow-md: 0 4px 12px -1px rgba(0, 0, 0, 0.6);
   --shadow-lg: 0 12px 24px -3px rgba(0, 0, 0, 0.7);
   --shadow-modal: 0 24px 48px -12px rgba(0, 0, 0, 0.85);
-  --mobile-header-bg: rgba(10, 11, 13, 0.82);
-  --mobile-dock-bg: rgba(17, 20, 24, 0.85);
+  --mobile-header-bg: rgba(10, 11, 13, 0.97);
+  --mobile-dock-bg: rgba(17, 20, 24, 0.97);
   --mobile-dock-shadow: 0 -0.5px 0 rgba(255, 255, 255, 0.1), 0 -4px 20px -2px rgba(0, 0, 0, 0.6);
 }
 
@@ -230,8 +230,8 @@
   --exams: #b91c1c;
   --deadlines: #b45309;
   --personal: #475569;
-  --mobile-header-bg: rgba(251, 251, 250, 0.82);
-  --mobile-dock-bg: rgba(255, 255, 255, 0.85);
+  --mobile-header-bg: rgba(251, 251, 250, 0.97);
+  --mobile-dock-bg: rgba(255, 255, 255, 0.97);
   --mobile-dock-shadow: 0 -0.5px 0 rgba(0, 0, 0, 0.08), 0 -4px 16px rgba(27, 67, 50, 0.04);
 }
 
@@ -435,6 +435,13 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   flex: 1;
   min-width: 0;
 }
+
+.modal-form-grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
 
 @media (max-width: 1023px) {
   .app-layout {
@@ -1096,29 +1103,35 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 
 /* ─── Mobile bottom-sheet modals (Apple iOS Sheet) ─── */
   .modal-overlay {
+    position: fixed !important;
+    inset: 0 !important;
     align-items: flex-end;
     padding: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.65);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    z-index: 1000 !important;
+    z-index: 99999 !important;
   }
   .modal-content {
     width: 100%;
     max-width: none !important;
     max-height: calc(88dvh - env(safe-area-inset-top, 0px));
-    overflow-y: auto;
+    display: flex !important;
+    flex-direction: column !important;
     border-radius: 20px 20px 0 0;
     border: none;
-    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.25);
-    padding-bottom: calc(2.5rem + env(safe-area-inset-bottom, 0px)) !important;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.35);
     background: var(--surface-container);
+    overflow: hidden !important;
+  }
+  .modal-scroll-body {
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    padding: 1.25rem 1.25rem calc(2.5rem + env(safe-area-inset-bottom, 0px)) !important;
   }
   .modal-content > div:first-child {
-    padding: 1rem 1.25rem !important;
-  }
-  .modal-content > div:last-child {
-    padding: 1rem 1.25rem calc(1.75rem + env(safe-area-inset-bottom, 0px)) !important;
+    padding: 1rem 1.25rem 0.75rem !important;
   }
 
   .modal-form-grid-2col {
@@ -1128,12 +1141,14 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   }
 
   .settings-page-container,
-  .finance-page-container {
-    padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)) !important;
+  .finance-page-container,
+  .schedule-page-container,
+  .calendar-page-container {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
   .schedule-grid-scroll {
-    padding: 0 0.5rem calc(88px + env(safe-area-inset-bottom, 0px)) !important;
+    padding: 0 0.5rem calc(96px + env(safe-area-inset-bottom, 0px)) !important;
     -webkit-overflow-scrolling: touch;
   }
 
@@ -1175,7 +1190,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   }
 
   .page-content {
-    padding-block: 1rem 1.25rem;
+    padding-block: 1rem calc(96px + env(safe-area-inset-bottom, 0px)) !important;
     padding-inline: 1rem;
   }
 

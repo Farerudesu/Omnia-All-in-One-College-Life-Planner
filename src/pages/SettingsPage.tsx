@@ -796,6 +796,44 @@ export function SettingsPage() {
               </div>
               {importSuccess && <div role="status" aria-live="polite" style={{ position: 'fixed', right: '1.5rem', bottom: '1.5rem', zIndex: 1000, padding: '0.875rem 1rem', borderRadius: 8, background: 'var(--primary)', color: 'var(--on-primary)', boxShadow: 'var(--shadow-md)' }}>{importSuccess}</div>}
             </div>
+
+            {/* Mobile Save Actions Row */}
+            <div className="card show-mobile" style={{ padding: '1rem', marginTop: '0.5rem' }}>
+              <div style={{ display: 'flex', gap: '0.75rem', flexDirection: 'column' }}>
+                <button
+                  type="button"
+                  className="btn-primary min-touch-target"
+                  onClick={handleSave}
+                  style={{ width: '100%', justifyContent: 'center', minHeight: 44 }}
+                >
+                  {saved ? (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      {language === 'id' ? 'Tersimpan!' : 'Saved!'}
+                    </span>
+                  ) : (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      {language === 'id' ? 'Simpan preferensi' : 'Save preferences'}
+                    </span>
+                  )}
+                </button>
+                {hasChanges && (
+                  <button
+                    type="button"
+                    className="btn-outline min-touch-target"
+                    onClick={handleReset}
+                    style={{ width: '100%', justifyContent: 'center', minHeight: 40 }}
+                  >
+                    {language === 'id' ? 'Batal perubahan' : 'Reset changes'}
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Right column — Account & Data */}
