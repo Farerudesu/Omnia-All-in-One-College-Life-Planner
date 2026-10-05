@@ -7,6 +7,8 @@ import type { CategoryKey } from '../lib/dataService';
 import { Modal } from '../components/Modal';
 import { CategoryIndicator } from '../components/CategoryIndicator';
 import { EventDetailsModal } from '../components/EventDetailsModal';
+import { useLanguage } from '../lib/useLanguage';
+import { translations } from '../lib/i18n';
 import {
   getWeekDates,
   getISODay,
@@ -18,13 +20,21 @@ import {
   timeToGridHeight,
   getMonthName,
   formatDateShort,
+  formatDateLong,
   parseTime,
 } from '../lib/dateUtils';
 import type { ClassSession, Course, SessionException, ExceptionType, CategoryShape, CalendarEvent, EventType } from '../types';
 
-const GRID_START = 8;
+const DEFAULT_GRID_START = 7;
 const GRID_END = 18;
-const HOURS = Array.from({ length: GRID_END - GRID_START + 1 }, (_, i) => GRID_START + i);
+
+function getHoursForGrid(gridStart: number) {
+  const safeStart = Number.isFinite(gridStart)
+    ? Math.min(Math.max(Math.floor(gridStart), 0), GRID_END)
+    : DEFAULT_GRID_START;
+  const length = Math.max(1, GRID_END - safeStart + 1);
+  return Array.from({ length }, (_, i) => safeStart + i);
+}
 
 function scheduleItemHasPassed(date: Date, endTime?: string) {
   const isAllDay = !endTime;
@@ -54,6 +64,8 @@ interface DayScheduleBlock {
 
 export function SchedulePage() {
   const navigate = useNavigate();
+  const lang = useLanguage();
+  const t = translations[lang] || translations.id;
   const courses = useData(ds.getCourses);
   const sessions = useData(ds.getClassSessions);
   const exceptions = useData(ds.getSessionExceptions);
@@ -68,7 +80,7 @@ export function SchedulePage() {
   const dayHeaderRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    (currentTimeRef.current || dayHeaderRef.current)?.scrollIntoView({ block: 'center' });
+    (currentTimeRef.current || dayHeaderRef.current)?.scrollIntoView({ block: 'center', inline: 'nearest' });
   }, [currentDate, viewMode]);
   const [showAddClass, setShowAddClass] = useState(false);
   const [showAddEvent, setShowAddEvent] = useState(false);
@@ -149,9 +161,38 @@ export function SchedulePage() {
   }
 
   // Layout blocks with collision detection / side-by-side positioning
-  function getLayoutBlocksForDay(
+  function getGridStartForDay(
     daySessions: Array<{ session: ClassSession; exception?: SessionException }>,
     dayEvents: CalendarEvent[]
+  ) {
+    const startHours: number[] = [];
+
+    daySessions.forEach(({ session, exception }) => {
+      const startTime = exception?.newStartTime || session.startTime;
+      if (startTime) {
+        const { hours } = parseTime(startTime);
+        if (Number.isFinite(hours)) {
+          startHours.push(hours);
+        }
+      }
+    });
+
+    dayEvents.forEach((event) => {
+      if (!event.startTime) return;
+      const { hours } = parseTime(event.startTime);
+      if (Number.isFinite(hours)) {
+        startHours.push(hours);
+      }
+    });
+
+    if (startHours.length === 0) return DEFAULT_GRID_START;
+    return Math.min(DEFAULT_GRID_START, ...startHours);
+  }
+
+  function getLayoutBlocksForDay(
+    daySessions: Array<{ session: ClassSession; exception?: SessionException }>,
+    dayEvents: CalendarEvent[],
+    gridStart: number
   ): DayScheduleBlock[] {
     const blocks: DayScheduleBlock[] = [];
 
@@ -166,8 +207,8 @@ export function SchedulePage() {
       const { hours: eh, minutes: em } = parseTime(endTime);
       const startMinutes = sh * 60 + sm;
       const endMinutes = eh * 60 + em;
-      const top = timeToGridPosition(startTime, GRID_START, GRID_END);
-      const height = timeToGridHeight(startTime, endTime, GRID_START, GRID_END);
+      const top = timeToGridPosition(startTime, gridStart, GRID_END + 1);
+      const height = timeToGridHeight(startTime, endTime, gridStart, GRID_END + 1);
 
       blocks.push({
         id: session.id,
@@ -200,8 +241,8 @@ export function SchedulePage() {
       const { hours: eh, minutes: em } = parseTime(endTime);
       const startMinutes = sh * 60 + sm;
       const endMinutes = Math.max(startMinutes + 15, eh * 60 + em);
-      const top = timeToGridPosition(startTime, GRID_START, GRID_END);
-      const height = timeToGridHeight(startTime, endTime, GRID_START, GRID_END);
+      const top = timeToGridPosition(startTime, gridStart, GRID_END + 1);
+      const height = timeToGridHeight(startTime, endTime, gridStart, GRID_END + 1);
 
       blocks.push({
         id: ev.id,
@@ -289,7 +330,17 @@ export function SchedulePage() {
     });
   }, [events, categoryVisibility]);
 
-  // Navigate week
+  // Navigate period (day or week depending on viewMode)
+  const prevPeriod = () => {
+    const d = new Date(currentDate);
+    d.setDate(d.getDate() - (viewMode === 'today' ? 1 : 7));
+    setCurrentDate(d);
+  };
+  const nextPeriod = () => {
+    const d = new Date(currentDate);
+    d.setDate(d.getDate() + (viewMode === 'today' ? 1 : 7));
+    setCurrentDate(d);
+  };
   const prevWeek = () => {
     const d = new Date(currentDate);
     d.setDate(d.getDate() - 7);
@@ -314,21 +365,22 @@ export function SchedulePage() {
       const daySessions = getSessionsForDay(checkDate);
       for (const { session, exception } of daySessions) {
         const startTime = exception?.newStartTime || session.startTime;
-        const [h, m] = startTime.split(':').map(Number);
+        if (!startTime) continue;
+        const { hours: h, minutes: m } = parseTime(startTime);
         const sessionStart = new Date(checkDate);
         sessionStart.setHours(h, m, 0, 0);
         if (sessionStart > now) {
           const course = courseMap.get(session.courseId);
           if (course) {
             const diff = sessionStart.getTime() - now.getTime();
-            const mins = Math.floor(diff / 60000);
+            const mins = Math.max(0, Math.floor(diff / 60000));
             return {
               course,
               session,
               exception,
               startTime,
-              endTime: exception?.newEndTime || session.endTime,
-              room: exception?.newRoom || session.room,
+              endTime: exception?.newEndTime || session.endTime || '',
+              room: exception?.newRoom || session.room || course.room || 'TBA',
               minutesUntil: mins,
               date: checkDate,
             };
@@ -337,7 +389,7 @@ export function SchedulePage() {
       }
     }
     return null;
-  }, [sessions, exceptions, courses]);
+  }, [sessions, exceptions, courses, courseMap]);
 
   // Study gap detection
   const studyGap = useMemo(() => {
@@ -347,11 +399,14 @@ export function SchedulePage() {
 
     const sorted = daySess
       .map(({ session, exception }) => ({
-        startTime: exception?.newStartTime || session.startTime,
-        endTime: exception?.newEndTime || session.endTime,
+        startTime: exception?.newStartTime || session.startTime || '',
+        endTime: exception?.newEndTime || session.endTime || '',
         courseId: session.courseId,
       }))
+      .filter((s) => s.startTime && s.endTime)
       .sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+    if (sorted.length < 2) return null;
 
     let maxGap = 0;
     let gapBetween = { before: '', after: '' };
@@ -370,7 +425,7 @@ export function SchedulePage() {
       return { hours, before: gapBetween.before, after: gapBetween.after };
     }
     return null;
-  }, [sessions, exceptions, courses]);
+  }, [sessions, exceptions, courses, courseMap]);
 
   // Weekly load
   const weeklyLoad = useMemo(() => {
@@ -380,7 +435,9 @@ export function SchedulePage() {
       daySess.forEach(({ session, exception }) => {
         const start = exception?.newStartTime || session.startTime;
         const end = exception?.newEndTime || session.endTime;
-        totalMinutes += durationMinutes(start, end);
+        if (start && end) {
+          totalMinutes += durationMinutes(start, end);
+        }
       });
     });
     return {
@@ -481,7 +538,7 @@ export function SchedulePage() {
             fontWeight: 600,
             marginLeft: '0.5rem',
           }}>
-            {getMonthName(mondayDate.getMonth())} {mondayDate.getFullYear()}
+            {mondayDate ? `${getMonthName(mondayDate.getMonth())} ${mondayDate.getFullYear()}` : ''}
           </span>
         </div>
 
@@ -679,7 +736,7 @@ export function SchedulePage() {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '0.5rem', borderBottom: '1px solid var(--outline-variant)', marginBottom: '0.5rem' }}>
-                  <span style={{ fontWeight: 700, fontSize: '0.875rem' }}>Notifications</span>
+                  <span style={{ fontWeight: 700, fontSize: '0.875rem' }}>{lang === 'id' ? 'Pemberitahuan' : 'Notifications'}</span>
                   {unreadNotificationsCount > 0 && (
                     <button
                       type="button"
@@ -687,46 +744,70 @@ export function SchedulePage() {
                       onClick={() => ds.markAllNotificationsRead()}
                       style={{ fontSize: '0.75rem', padding: '0.2rem 0.4rem', color: 'var(--primary)', fontWeight: 600 }}
                     >
-                      Mark all read
+                      {lang === 'id' ? 'Tandai sudah dibaca' : 'Mark all read'}
                     </button>
                   )}
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', maxHeight: 300, overflowY: 'auto' }}>
-                  {notifications.map((n) => (
-                    <div
-                      key={n.id}
-                      onClick={() => {
-                        ds.markNotificationRead(n.id);
-                        if (n.link) navigate(n.link);
-                        setShowNotifications(false);
-                      }}
-                      style={{
-                        padding: '0.5rem 0.625rem',
-                        borderRadius: 8,
-                        background: 'transparent',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        gap: '0.5rem',
-                        alignItems: 'flex-start',
-                        opacity: n.read ? 0.65 : 1,
-                      }}
-                      className="hover-highlight"
-                    >
-                      <div style={{
-                        width: 6, height: 6, borderRadius: '50%',
-                        background: n.read ? 'transparent' : 'var(--primary)',
-                        marginTop: '0.375rem', flexShrink: 0
-                      }} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.125rem' }}>
-                          <span style={{ fontWeight: n.read ? 600 : 700, fontSize: '0.8125rem', color: 'var(--on-surface)' }}>{n.title}</span>
-                          <span style={{ fontSize: '0.625rem', color: 'var(--on-surface-variant)', flexShrink: 0, marginLeft: '0.5rem' }}>{n.time}</span>
-                        </div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', lineHeight: 1.4 }}>{n.message}</div>
+                  {notifications.length === 0 ? (
+                    <div style={{
+                      textAlign: 'center',
+                      padding: '2rem 1rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      color: 'var(--on-surface-variant)',
+                    }}>
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                        <path d="M9 11l2 2 4-4" />
+                      </svg>
+                      <div style={{ fontWeight: 600, fontSize: '0.8125rem', color: 'var(--on-surface)' }}>
+                        {lang === 'id' ? 'Tidak ada pemberitahuan baru' : 'No new notifications'}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', lineHeight: 1.4 }}>
+                        {lang === 'id' ? 'Semua jadwal dan tugasmu sudah beres!' : 'You are all caught up with your classes and tasks.'}
                       </div>
                     </div>
-                  ))}
+                  ) : (
+                    notifications.map((n) => (
+                      <div
+                        key={n.id}
+                        onClick={() => {
+                          ds.markNotificationRead(n.id);
+                          if (n.link) navigate(n.link);
+                          setShowNotifications(false);
+                        }}
+                        style={{
+                          padding: '0.5rem 0.625rem',
+                          borderRadius: 8,
+                          background: 'transparent',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          gap: '0.5rem',
+                          alignItems: 'flex-start',
+                          opacity: n.read ? 0.65 : 1,
+                        }}
+                        className="hover-highlight"
+                      >
+                        <div style={{
+                          width: 6, height: 6, borderRadius: '50%',
+                          background: n.read ? 'transparent' : 'var(--primary)',
+                          marginTop: '0.375rem', flexShrink: 0
+                        }} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.125rem' }}>
+                            <span style={{ fontWeight: n.read ? 600 : 700, fontSize: '0.8125rem', color: 'var(--on-surface)' }}>{n.title}</span>
+                            <span style={{ fontSize: '0.625rem', color: 'var(--on-surface-variant)', flexShrink: 0, marginLeft: '0.5rem' }}>{n.time}</span>
+                          </div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', lineHeight: 1.4 }}>{n.message}</div>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             )}
@@ -734,47 +815,224 @@ export function SchedulePage() {
         </div>
       </div>
 
-      {/* Mobile header */}
-      <div className="show-mobile" style={{
-        padding: '1rem',
-        display: 'none',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <div style={{ fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--on-surface-variant)' }}>
-              Fall term 2026
+      {/* Mobile header: Unified, Non-duplicate Navigation & Actions */}
+      <div className="show-mobile schedule-mobile-header">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.625rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', minWidth: 0 }}>
+            <button
+              type="button"
+              className="btn-ghost min-touch-target"
+              onClick={prevPeriod}
+              aria-label={viewMode === 'today' ? "Previous day" : "Previous week"}
+              style={{ width: 34, height: 34, padding: 0 }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={goToToday}
+              style={{ fontSize: '0.8125rem', fontWeight: 600, padding: '0.25rem 0.5rem', whiteSpace: 'nowrap', flexShrink: 0 }}
+            >
+              {t.common.today}
+            </button>
+            <button
+              type="button"
+              className="btn-ghost min-touch-target"
+              onClick={nextPeriod}
+              aria-label={viewMode === 'today' ? "Next day" : "Next week"}
+              style={{ width: 34, height: 34, padding: 0 }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+            <div style={{ marginLeft: '0.25rem', minWidth: 0 }}>
+              <div style={{ fontSize: '0.625rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--on-surface-variant)' }}>
+                {lang === 'id' ? 'Semester Ganjil 2026' : 'Fall term 2026'}
+              </div>
+              <h1 className="tabular-nums" style={{ fontSize: '1.125rem', fontWeight: 700, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {viewMode === 'today'
+                  ? `${currentDate.getDate()} ${getMonthName(currentDate.getMonth(), true)}`
+                  : (mondayDate ? `${mondayDate.getDate()} ${getMonthName(mondayDate.getMonth(), true)}` : '')}
+              </h1>
             </div>
-            <h1 className="tabular-nums" style={{ fontSize: '1.5rem' }}>
-              {formatDateShort(new Date())}
-            </h1>
           </div>
-          <div style={{ display: 'flex', gap: '0.375rem' }}>
+          <div
+            style={{
+              display: 'flex',
+              background: 'var(--surface-container-high)',
+              padding: '2px',
+              borderRadius: 9,
+              overflow: 'hidden',
+              flexShrink: 0,
+            }}
+          >
             <button
               type="button"
               onClick={() => setViewMode('today')}
-              className={viewMode === 'today' ? 'chip active' : 'chip'}
+              style={{
+                padding: '0.3rem 0.625rem',
+                fontSize: '0.75rem',
+                fontWeight: viewMode === 'today' ? 600 : 500,
+                border: 'none',
+                cursor: 'pointer',
+                background: viewMode === 'today' ? 'var(--surface-container-lowest)' : 'transparent',
+                color: viewMode === 'today' ? 'var(--on-surface)' : 'var(--on-surface-variant)',
+                borderRadius: 7,
+                boxShadow: viewMode === 'today' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                transition: 'background 0.15s, color 0.15s',
+              }}
             >
-              Today
+              {t.common.today}
             </button>
             <button
               type="button"
               onClick={() => setViewMode('week')}
-              className={viewMode === 'week' ? 'chip active' : 'chip'}
+              style={{
+                padding: '0.3rem 0.625rem',
+                fontSize: '0.75rem',
+                fontWeight: viewMode === 'week' ? 600 : 500,
+                border: 'none',
+                cursor: 'pointer',
+                background: viewMode === 'week' ? 'var(--surface-container-lowest)' : 'transparent',
+                color: viewMode === 'week' ? 'var(--on-surface)' : 'var(--on-surface-variant)',
+                borderRadius: 7,
+                boxShadow: viewMode === 'week' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                transition: 'background 0.15s, color 0.15s',
+              }}
             >
-              Week
+              {t.common.week}
             </button>
           </div>
         </div>
+
+        {/* Mobile Quick Action Buttons Row */}
+        <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center' }}>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => setShowAddClass(true)}
+            style={{ flex: 1, justifyContent: 'center', fontSize: '0.8125rem', padding: '0.45rem 0.5rem', minHeight: 36, borderRadius: 10 }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            {lang === 'id' ? 'Tambah kelas' : 'Add class'}
+          </button>
+          <button
+            type="button"
+            className="btn-outline"
+            onClick={() => setShowAddEvent(true)}
+            style={{ flex: 1, justifyContent: 'center', fontSize: '0.8125rem', padding: '0.45rem 0.5rem', minHeight: 36, borderRadius: 10 }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            {lang === 'id' ? 'Tambah acara' : 'Add event'}
+          </button>
+          <button
+            type="button"
+            className="btn-outline"
+            onClick={() => void handleCreateShareCode()}
+            aria-label="Share schedule"
+            style={{ padding: '0.45rem 0.625rem', minHeight: 36, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <Share2 size={15} aria-hidden="true" />
+          </button>
+        </div>
       </div>
 
-      <div style={{
+      {/* Mobile Glance Card: Up Next Class (Visible on mobile) */}
+      {nextClass && (
+        <div className="show-mobile schedule-mobile-upnext" style={{ padding: '0.75rem 1rem 0' }}>
+          <div
+            onClick={() => setSelectedBlock({
+              session: nextClass.session,
+              course: nextClass.course,
+              date: nextClass.date,
+              exception: nextClass.exception,
+            })}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                setSelectedBlock({
+                  session: nextClass.session,
+                  course: nextClass.course,
+                  date: nextClass.date,
+                  exception: nextClass.exception,
+                });
+              }
+            }}
+            style={{
+              background: 'var(--surface-container-lowest)',
+              border: '1px solid var(--outline-variant)',
+              borderRadius: 'var(--radius-lg)',
+              padding: '0.875rem 1rem',
+              boxShadow: 'var(--shadow-xs)',
+              cursor: 'pointer',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.375rem',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.375rem',
+                fontSize: '0.6875rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                color: 'var(--primary)',
+              }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--primary)' }} />
+                Up next {nextClass.minutesUntil <= 60 ? `in ${nextClass.minutesUntil}m` : `today`}
+              </span>
+              <span
+                className="badge"
+                style={{
+                  background: `color-mix(in srgb, ${nextClass.course.color || 'var(--primary)'} 15%, transparent)`,
+                  color: nextClass.course.color || 'var(--primary)',
+                  fontWeight: 700,
+                  fontSize: '0.6875rem',
+                }}
+              >
+                {nextClass.course.code}
+              </span>
+            </div>
+            <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--on-surface)' }}>
+              {nextClass.course.name}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)', flexWrap: 'wrap' }}>
+              <span className="tabular-nums" style={{ fontWeight: 600, color: 'var(--on-surface)' }}>
+                {formatTime12(nextClass.startTime)} – {formatTime12(nextClass.endTime)}
+              </span>
+              <span>•</span>
+              <span>{nextClass.room}</span>
+              {nextClass.course.professor && (
+                <>
+                  <span>•</span>
+                  <span>{nextClass.course.professor}</span>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="schedule-layout" style={{
         display: 'flex',
         gap: '0',
       }}>
         {/* ─── Main schedule area ─── */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Week title + Add Class & Event */}
-          <div style={{
+        <div className="schedule-main-column" style={{ flex: 1, minWidth: 0 }}>
+          {/* Week title + Add Class & Event — hidden on mobile since mobile header handles it */}
+          <div className="schedule-controls hidden-mobile" style={{
             padding: '1rem 2rem 0.75rem',
             display: 'flex',
             alignItems: 'center',
@@ -783,10 +1041,10 @@ export function SchedulePage() {
             gap: '0.75rem',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-              <h2 className="tabular-nums" style={{ fontSize: '1.375rem', margin: 0 }}>
+              <h2 className="schedule-title tabular-nums" style={{ fontSize: '1.375rem', margin: 0 }}>
                 {viewMode === 'today'
-                  ? `Today's Schedule – ${formatDateShort(new Date())}`
-                  : `Week of ${getMonthName(mondayDate.getMonth(), true)} ${mondayDate.getDate()}, ${mondayDate.getFullYear()}`}
+                  ? (lang === 'id' ? `Jadwal Hari Ini – ${formatDateShort(currentDate)}` : `Today's Schedule – ${formatDateShort(currentDate)}`)
+                  : (lang === 'id' ? `Minggu ${formatDateShort(mondayDate)}` : `Week of ${getMonthName(mondayDate.getMonth(), true)} ${mondayDate.getDate()}, ${mondayDate.getFullYear()}`)}
               </h2>
               <div
                 style={{
@@ -811,7 +1069,7 @@ export function SchedulePage() {
                     transition: 'background 0.15s',
                   }}
                 >
-                  Week
+                  {t.common.week}
                 </button>
                 <button
                   type="button"
@@ -828,11 +1086,11 @@ export function SchedulePage() {
                     transition: 'background 0.15s',
                   }}
                 >
-                  Today
+                  {t.common.today}
                 </button>
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div className="schedule-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <button
                 type="button"
                 className="btn-outline"
@@ -840,7 +1098,7 @@ export function SchedulePage() {
                 style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}
               >
                 <Share2 size={15} aria-hidden="true" />
-                Share
+                {lang === 'id' ? 'Bagikan' : 'Share'}
               </button>
               <button
                 type="button"
@@ -851,47 +1109,68 @@ export function SchedulePage() {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
                   <path d="M12 5v14M5 12h14" />
                 </svg>
-                Add event
+                {lang === 'id' ? 'Tambah acara' : 'Add event'}
               </button>
               <button type="button" className="btn-primary" onClick={() => setShowAddClass(true)}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
                   <path d="M12 5v14M5 12h14" />
                 </svg>
-                Add class
+                {lang === 'id' ? 'Tambah kelas' : 'Add class'}
               </button>
             </div>
           </div>
 
           {/* ─── Week / Day Grid ─── */}
           {(() => {
-            const displayDays = viewMode === 'today' ? [new Date()] : weekDates.slice(0, 5);
+            const displayDays = viewMode === 'today' ? [currentDate] : weekDates.slice(0, 5);
+            const dayScheduleData = displayDays.map((date) => {
+              const daySessions = getSessionsForDay(date);
+              const dayEvents = getEventsForDay(date);
+              const gridStart = getGridStartForDay(daySessions, dayEvents);
+              return { date, daySessions, dayEvents, gridStart, hours: getHoursForGrid(gridStart) };
+            });
+            const validGridStarts = dayScheduleData.map((day) => day.gridStart).filter(Number.isFinite);
+            const gridStart = validGridStarts.length > 0 ? Math.min(...validGridStarts) : DEFAULT_GRID_START;
+            const hours = getHoursForGrid(gridStart);
             return (
-              <div style={{
+              <div className="schedule-grid-scroll" style={{
                 padding: '0 2rem 2rem',
                 overflowX: 'auto',
               }}>
-                <div style={{
+                <div className={`schedule-grid ${viewMode === 'today' ? 'schedule-grid--today' : 'schedule-grid--week'}`} style={{
                   display: 'grid',
                   gridTemplateColumns: viewMode === 'today' ? '70px 1fr' : '70px repeat(5, 1fr)',
                   border: '1px solid var(--outline-variant)',
                   borderRadius: 12,
                   overflow: 'hidden',
-                  minWidth: viewMode === 'today' ? 320 : 600,
+                  minWidth: viewMode === 'today' ? 0 : 600,
                   background: 'var(--surface-container-lowest)',
                 }}>
                   {/* Day headers */}
-                  <div style={{
-                    padding: '0.75rem',
-                    background: 'var(--surface-container-low)',
-                    borderBottom: '1px solid var(--outline-variant)',
-                    fontSize: '0.75rem',
-                    color: 'var(--on-surface-variant)',
-                    textAlign: 'center',
-                  }}>
-                    GMT-4
-                  </div>
-                  {displayDays.map((date, i) => {
-                    const dayNames = ['MO', 'TU', 'WED', 'TH', 'FR', 'SAT', 'SUN'];
+                  {(() => {
+                    const tzOffsetMinutes = -new Date().getTimezoneOffset();
+                    const tzOffsetHours = Math.floor(Math.abs(tzOffsetMinutes) / 60);
+                    const tzSign = tzOffsetMinutes >= 0 ? '+' : '-';
+                    const tzLabel = `GMT${tzSign}${tzOffsetHours}`;
+                    return (
+                      <div
+                        style={{
+                          padding: '0.75rem',
+                          background: 'var(--surface-container-low)',
+                          borderBottom: '1px solid var(--outline-variant)',
+                          fontSize: '0.75rem',
+                          color: 'var(--on-surface-variant)',
+                          textAlign: 'center',
+                          fontWeight: 600,
+                        }}
+                        title={Intl.DateTimeFormat().resolvedOptions().timeZone}
+                      >
+                        {tzLabel}
+                      </div>
+                    );
+                  })()}
+                  {dayScheduleData.map(({ date }, i) => {
+                    const dayNames = lang === 'id' ? ['SEN', 'SEL', 'RAB', 'KAM', 'JUM', 'SAB', 'MIN'] : ['MO', 'TU', 'WED', 'TH', 'FR', 'SAT', 'SUN'];
                     const dayIndex = getISODay(date) - 1;
                     const today = isToday(date);
                     return (
@@ -928,7 +1207,7 @@ export function SchedulePage() {
                     }}>
                       {date.getDate()}
                     </div>
-                    {date.getMonth() !== mondayDate.getMonth() && (
+                    {mondayDate && date.getMonth() !== mondayDate.getMonth() && (
                       <div style={{ fontSize: '0.6875rem', color: 'var(--on-surface-variant)' }}>
                         {getMonthName(date.getMonth(), true)}
                       </div>
@@ -946,7 +1225,7 @@ export function SchedulePage() {
               }}>
                 {/* Hour labels */}
                 <div>
-                  {HOURS.map((h) => (
+                  {hours.map((h) => (
                     <div
                       key={h}
                       className="tabular-nums"
@@ -961,15 +1240,15 @@ export function SchedulePage() {
                         color: 'var(--on-surface-variant)',
                       }}
                     >
-                      {h === 12 ? '12:00 PM' : h > 12 ? `${h - 12}:00 PM` : `${h}:00 AM`}
+                      {lang === 'id'
+                        ? `${String(h).padStart(2, '0')}:00`
+                        : (h === 12 ? '12:00 PM' : h > 12 ? `${h - 12}:00 PM` : `${h}:00 AM`)}
                     </div>
                   ))}
                 </div>
 
                 {/* Day columns */}
-                {displayDays.map((date, dayIdx) => {
-                  const daySessions = getSessionsForDay(date);
-                  const dayEvents = getEventsForDay(date);
+                {dayScheduleData.map(({ date, daySessions, dayEvents }, dayIdx) => {
                   return (
                     <div
                       key={dayIdx}
@@ -980,7 +1259,7 @@ export function SchedulePage() {
                       }}
                     >
                       {/* Hour grid lines */}
-                      {HOURS.map((h) => (
+                      {hours.map((h) => (
                         <div
                           key={h}
                           style={{
@@ -995,8 +1274,8 @@ export function SchedulePage() {
                         const now = new Date();
                         const pos = timeToGridPosition(
                           `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
-                          GRID_START,
-                          GRID_END
+                          gridStart,
+                          GRID_END + 1
                         );
                         if (pos >= 0 && pos <= 100) {
                           return (
@@ -1027,7 +1306,7 @@ export function SchedulePage() {
                       })()}
 
                       {/* Timetable blocks with collision / overlap layout */}
-                      {getLayoutBlocksForDay(daySessions, dayEvents).map((block) => {
+                      {getLayoutBlocksForDay(daySessions, dayEvents, gridStart).map((block) => {
                         const isMultiCol = block.totalCols > 1;
                         const isPast = scheduleItemHasPassed(date, block.endTime);
                         const widthPct = 100 / block.totalCols;
@@ -1049,6 +1328,7 @@ export function SchedulePage() {
                           return (
                             <div
                               key={session.id}
+                              className="schedule-item-block"
                               role="button"
                               tabIndex={0}
                               aria-label={`${course.code} ${course.name}, ${formatTime12(block.startTime)} to ${formatTime12(block.endTime)} in ${room}`}
@@ -1146,6 +1426,7 @@ export function SchedulePage() {
                           return (
                             <div
                               key={ev.id}
+                              className="schedule-item-block"
                               role="button"
                               tabIndex={0}
                               onClick={() => setSelectedEventForModal(ev)}
@@ -1253,7 +1534,7 @@ export function SchedulePage() {
                 <span style={{
                   fontSize: '11px',
                   fontWeight: 600,
-                  color: nextClass.course.color,
+                  color: nextClass.course.color || 'var(--primary)',
                   textTransform: 'uppercase',
                   letterSpacing: '0.6px',
                 }}>
@@ -1624,15 +1905,7 @@ export function SchedulePage() {
         defaultDate={toDateString(currentDate)}
       />
 
-      <style>{`
-        @media (max-width: 819px) {
-          .hidden-mobile { display: none !important; }
-          .show-mobile { display: block !important; }
-        }
-        @media (min-width: 820px) {
-          .show-mobile { display: none !important; }
-        }
-      `}</style>
+
     </div>
   );
 }
@@ -1647,52 +1920,107 @@ function ScheduleAddEventModal({
   onClose: () => void;
   defaultDate: string;
 }) {
+  const lang = useLanguage();
+  const isId = lang === 'id';
   const courses = useData(ds.getCourses);
   const [title, setTitle] = useState('');
+  const [titleError, setTitleError] = useState<string | null>(null);
   const [date, setDate] = useState(defaultDate);
   const [startTime, setStartTime] = useState('10:00');
   const [endTime, setEndTime] = useState('11:00');
   const [type, setType] = useState<EventType>('exam');
   const [courseId, setCourseId] = useState('');
   const [notes, setNotes] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSave = () => {
-    if (!title.trim()) return;
-    ds.addEvent({
-      title,
-      date,
-      startTime: startTime || undefined,
-      endTime: endTime || undefined,
-      type,
-      courseId: courseId || undefined,
-      notes: notes || undefined,
-    });
-    setTitle('');
-    setNotes('');
-    onClose();
+  useEffect(() => {
+    if (isOpen) {
+      setTitle('');
+      setTitleError(null);
+      setDate(defaultDate);
+      setStartTime('10:00');
+      setEndTime('11:00');
+      setType('exam');
+      setCourseId('');
+      setNotes('');
+      setIsSubmitting(false);
+    }
+  }, [isOpen, defaultDate]);
+
+  const handleSave = async () => {
+    if (!title.trim()) {
+      setTitleError(isId ? 'Judul kegiatan tidak boleh kosong' : 'Event title is required');
+      return;
+    }
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await ds.addEvent({
+        title: title.trim(),
+        date,
+        startTime: startTime || undefined,
+        endTime: endTime || undefined,
+        type,
+        courseId: courseId || undefined,
+        notes: notes || undefined,
+      });
+      setTitle('');
+      setNotes('');
+      setTitleError(null);
+      onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Add event to schedule">
+    <Modal isOpen={isOpen} onClose={onClose} title={isId ? 'Tambah kegiatan ke jadwal' : 'Add event to schedule'}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <div>
-          <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-            Event Title *
+          <label htmlFor="schedule-event-title" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            {isId ? 'Judul Kegiatan *' : 'Event Title *'}
           </label>
           <input
+            id="schedule-event-title"
+            autoFocus
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g. Midterm Exam, Study Session, Project Presentation"
-            style={{ width: '100%' }}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              if (titleError && e.target.value.trim()) {
+                setTitleError(null);
+              }
+            }}
+            placeholder={isId ? 'contoh: Ujian Tengah Semester, Belajar Bersama' : 'e.g. Midterm Exam, Study Session, Project Presentation'}
+            style={{
+              width: '100%',
+              borderColor: titleError ? 'var(--critical, #dc2626)' : undefined,
+              boxShadow: titleError ? '0 0 0 1px var(--critical, #dc2626)' : undefined,
+            }}
+            aria-invalid={!!titleError}
+            aria-describedby={titleError ? 'schedule-event-title-error' : undefined}
             required
           />
+          {titleError && (
+            <div
+              id="schedule-event-title-error"
+              role="alert"
+              style={{
+                color: 'var(--critical, #dc2626)',
+                fontSize: '0.75rem',
+                marginTop: '0.25rem',
+                fontWeight: 500,
+              }}
+            >
+              {titleError}
+            </div>
+          )}
         </div>
 
         <div>
-          <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-            Event Category
-          </label>
-          <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap' }}>
+          <div id="schedule-event-category-label" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            {isId ? 'Kategori Kegiatan' : 'Event Category'}
+          </div>
+          <div role="group" aria-labelledby="schedule-event-category-label" style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap' }}>
             {(['exam', 'deadline', 'personal', 'other'] as EventType[]).map((t) => (
               <button
                 key={t}
@@ -1700,7 +2028,10 @@ function ScheduleAddEventModal({
                 className={type === t ? 'chip active' : 'chip'}
                 onClick={() => setType(t)}
               >
-                {t.charAt(0).toUpperCase() + t.slice(1)}
+                {t === 'exam' ? (isId ? 'Ujian' : 'Exam') :
+                 t === 'deadline' ? (isId ? 'Tenggat' : 'Deadline') :
+                 t === 'personal' ? (isId ? 'Pribadi' : 'Personal') :
+                 (isId ? 'Lainnya' : 'Other')}
               </button>
             ))}
           </div>
@@ -1708,10 +2039,11 @@ function ScheduleAddEventModal({
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-              Date *
+            <label htmlFor="schedule-event-date" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+              {isId ? 'Tanggal *' : 'Date *'}
             </label>
             <input
+              id="schedule-event-date"
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
@@ -1720,15 +2052,16 @@ function ScheduleAddEventModal({
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-              Associated Course
+            <label htmlFor="schedule-event-course" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+              {isId ? 'Mata Kuliah Terkait' : 'Associated Course'}
             </label>
             <select
+              id="schedule-event-course"
               value={courseId}
               onChange={(e) => setCourseId(e.target.value)}
               style={{ width: '100%' }}
             >
-              <option value="">None / General</option>
+              <option value="">{isId ? 'Tidak ada / Umum' : 'None / General'}</option>
               {courses.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.code} – {c.name}
@@ -1740,10 +2073,11 @@ function ScheduleAddEventModal({
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-              Start Time
+            <label htmlFor="schedule-event-start-time" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+              {isId ? 'Waktu Mulai' : 'Start Time'}
             </label>
             <input
+              id="schedule-event-start-time"
               type="time"
               value={startTime}
               onChange={(e) => setStartTime(e.target.value)}
@@ -1751,10 +2085,11 @@ function ScheduleAddEventModal({
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-              End Time
+            <label htmlFor="schedule-event-end-time" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+              {isId ? 'Waktu Selesai' : 'End Time'}
             </label>
             <input
+              id="schedule-event-end-time"
               type="time"
               value={endTime}
               onChange={(e) => setEndTime(e.target.value)}
@@ -1764,24 +2099,25 @@ function ScheduleAddEventModal({
         </div>
 
         <div>
-          <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-            Notes / Location
+          <label htmlFor="schedule-event-notes" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            {isId ? 'Catatan / Lokasi' : 'Notes / Location'}
           </label>
           <textarea
+            id="schedule-event-notes"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Room number, materials permitted, etc."
+            placeholder={isId ? 'Ruang kelas, materi ujian, dll.' : 'Room number, materials permitted, etc.'}
             rows={2}
             style={{ width: '100%' }}
           />
         </div>
 
         <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', paddingTop: '0.5rem' }}>
-          <button type="button" className="btn-outline" onClick={onClose}>
-            Cancel
+          <button type="button" className="btn-outline" onClick={onClose} disabled={isSubmitting}>
+            {isId ? 'Batal' : 'Cancel'}
           </button>
-          <button type="button" className="btn-primary" onClick={handleSave}>
-            Add Event
+          <button type="button" className="btn-primary" onClick={handleSave} disabled={isSubmitting}>
+            {isId ? 'Tambah Kegiatan' : 'Add Event'}
           </button>
         </div>
       </div>
@@ -1791,73 +2127,210 @@ function ScheduleAddEventModal({
 
 // ─── Add Class Modal ───
 function AddClassModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const lang = useLanguage();
+  const isId = lang === 'id';
   const [courseName, setCourseName] = useState('');
+  const [nameError, setNameError] = useState<string | null>(null);
   const [courseCode, setCourseCode] = useState('');
+  const [codeError, setCodeError] = useState<string | null>(null);
   const [instructor, setInstructor] = useState('');
   const [days, setDays] = useState<number[]>([]);
+  const [daysError, setDaysError] = useState<string | null>(null);
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('10:30');
   const [room, setRoom] = useState('');
   const [color, setColor] = useState('#1b4332');
   const [type, setType] = useState<'lecture' | 'lab' | 'tutorial' | 'seminar'>('lecture');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setCourseName('');
+      setNameError(null);
+      setCourseCode('');
+      setCodeError(null);
+      setInstructor('');
+      setDays([]);
+      setDaysError(null);
+      setStartTime('09:00');
+      setEndTime('10:30');
+      setRoom('');
+      setColor('#1b4332');
+      setType('lecture');
+      setIsSubmitting(false);
+    }
+  }, [isOpen]);
 
   const toggleDay = (d: number) => {
-    setDays((prev) => prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]);
+    setDays((prev) => {
+      const next = prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d];
+      if (next.length > 0 && daysError) {
+        setDaysError(null);
+      }
+      return next;
+    });
   };
 
-  const handleSave = () => {
-    if (!courseName.trim() || !courseCode.trim() || days.length === 0) return;
-    ds.addClassSession({
-      courseId: '',
-      daysOfWeek: days,
-      startTime,
-      endTime,
-      room,
-      type,
-    }, {
-      name: courseName.trim(),
-      code: courseCode.trim(),
-      professor: instructor.trim(),
-      room,
-      color,
-    });
-    setCourseName('');
-    setCourseCode('');
-    setInstructor('');
-    setDays([]);
-    setRoom('');
-    setColor('#1b4332');
-    onClose();
+  const handleSave = async () => {
+    let hasError = false;
+    if (!courseName.trim()) {
+      setNameError(isId ? 'Nama mata kuliah tidak boleh kosong' : 'Class name is required');
+      hasError = true;
+    }
+    if (!courseCode.trim()) {
+      setCodeError(isId ? 'Kode mata kuliah tidak boleh kosong' : 'Course code is required');
+      hasError = true;
+    }
+    if (days.length === 0) {
+      setDaysError(isId ? 'Pilih minimal satu hari pertemuan' : 'Select at least one day');
+      hasError = true;
+    }
+    if (hasError || isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      await ds.addClassSession({
+        courseId: '',
+        daysOfWeek: days,
+        startTime,
+        endTime,
+        room,
+        type,
+      }, {
+        name: courseName.trim(),
+        code: courseCode.trim(),
+        professor: instructor.trim(),
+        room,
+        color,
+      });
+      setCourseName('');
+      setNameError(null);
+      setCourseCode('');
+      setCodeError(null);
+      setInstructor('');
+      setDays([]);
+      setDaysError(null);
+      setRoom('');
+      setColor('#1b4332');
+      onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Add class">
+    <Modal isOpen={isOpen} onClose={onClose} title={isId ? 'Tambah mata kuliah' : 'Add class'}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '0.75rem' }}>
           <div>
-            <label htmlFor="class-name" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>Class name</label>
-            <input id="class-name" value={courseName} onChange={(e) => setCourseName(e.target.value)} placeholder="e.g. Biology" style={{ width: '100%' }} />
+            <label htmlFor="class-name" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+              {isId ? 'Nama Mata Kuliah *' : 'Class name *'}
+            </label>
+            <input
+              id="class-name"
+              value={courseName}
+              onChange={(e) => {
+                setCourseName(e.target.value);
+                if (nameError && e.target.value.trim()) setNameError(null);
+              }}
+              placeholder={isId ? 'contoh: Biologi Sel' : 'e.g. Biology'}
+              style={{
+                width: '100%',
+                borderColor: nameError ? 'var(--critical, #dc2626)' : undefined,
+                boxShadow: nameError ? '0 0 0 1px var(--critical, #dc2626)' : undefined,
+              }}
+              aria-invalid={!!nameError}
+              aria-describedby={nameError ? 'class-name-error' : undefined}
+            />
+            {nameError && (
+              <div
+                id="class-name-error"
+                role="alert"
+                style={{
+                  color: 'var(--critical, #dc2626)',
+                  fontSize: '0.75rem',
+                  marginTop: '0.25rem',
+                  fontWeight: 500,
+                }}
+              >
+                {nameError}
+              </div>
+            )}
           </div>
           <div>
-            <label htmlFor="class-code" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>Course code</label>
-            <input id="class-code" value={courseCode} onChange={(e) => setCourseCode(e.target.value)} placeholder="e.g. BIO110" style={{ width: '100%' }} />
+            <label htmlFor="class-code" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+              {isId ? 'Kode MK *' : 'Course code *'}
+            </label>
+            <input
+              id="class-code"
+              value={courseCode}
+              onChange={(e) => {
+                setCourseCode(e.target.value);
+                if (codeError && e.target.value.trim()) setCodeError(null);
+              }}
+              placeholder={isId ? 'contoh: BIO110' : 'e.g. BIO110'}
+              style={{
+                width: '100%',
+                borderColor: codeError ? 'var(--critical, #dc2626)' : undefined,
+                boxShadow: codeError ? '0 0 0 1px var(--critical, #dc2626)' : undefined,
+              }}
+              aria-invalid={!!codeError}
+              aria-describedby={codeError ? 'class-code-error' : undefined}
+            />
+            {codeError && (
+              <div
+                id="class-code-error"
+                role="alert"
+                style={{
+                  color: 'var(--critical, #dc2626)',
+                  fontSize: '0.75rem',
+                  marginTop: '0.25rem',
+                  fontWeight: 500,
+                }}
+              >
+                {codeError}
+              </div>
+            )}
           </div>
         </div>
 
         <div>
-          <label htmlFor="class-instructor" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>Instructor</label>
-          <input id="class-instructor" value={instructor} onChange={(e) => setInstructor(e.target.value)} placeholder="Optional" style={{ width: '100%' }} />
+          <label htmlFor="class-instructor" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            {isId ? 'Dosen Pengampu' : 'Instructor'}
+          </label>
+          <input
+            id="class-instructor"
+            value={instructor}
+            onChange={(e) => setInstructor(e.target.value)}
+            placeholder={isId ? 'Opsional' : 'Optional'}
+            style={{ width: '100%' }}
+          />
         </div>
 
         <div>
-          <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>Days</label>
-          <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap' }}>
+          <div id="class-days-label" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            {isId ? 'Hari Pertemuan *' : 'Days *'}
+          </div>
+          <div
+            role="group"
+            aria-labelledby="class-days-label"
+            style={{
+              display: 'flex',
+              gap: '0.375rem',
+              flexWrap: 'wrap',
+              padding: daysError ? '0.375rem' : 0,
+              borderRadius: 8,
+              border: daysError ? '1px solid var(--critical, #dc2626)' : '1px solid transparent',
+            }}
+          >
             {[
-              { num: 1, label: 'Mon' },
-              { num: 2, label: 'Tue' },
-              { num: 3, label: 'Wed' },
-              { num: 4, label: 'Thu' },
-              { num: 5, label: 'Fri' },
+              { num: 1, label: isId ? 'Sen' : 'Mon' },
+              { num: 2, label: isId ? 'Sel' : 'Tue' },
+              { num: 3, label: isId ? 'Rab' : 'Wed' },
+              { num: 4, label: isId ? 'Kam' : 'Thu' },
+              { num: 5, label: isId ? 'Jum' : 'Fri' },
+              { num: 6, label: isId ? 'Sab' : 'Sat' },
+              { num: 7, label: isId ? 'Min' : 'Sun' },
             ].map(({ num, label }) => (
               <button
                 key={num}
@@ -1869,46 +2342,79 @@ function AddClassModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
               </button>
             ))}
           </div>
+          {daysError && (
+            <div
+              id="class-days-error"
+              role="alert"
+              style={{
+                color: 'var(--critical, #dc2626)',
+                fontSize: '0.75rem',
+                marginTop: '0.25rem',
+                fontWeight: 500,
+              }}
+            >
+              {daysError}
+            </div>
+          )}
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
           <div>
-            <label htmlFor="class-start-time" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>Start time</label>
+            <label htmlFor="class-start-time" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+              {isId ? 'Jam Mulai' : 'Start time'}
+            </label>
             <input id="class-start-time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} style={{ width: '100%' }} />
           </div>
           <div>
-            <label htmlFor="class-end-time" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>End time</label>
+            <label htmlFor="class-end-time" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+              {isId ? 'Jam Selesai' : 'End time'}
+            </label>
             <input id="class-end-time" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} style={{ width: '100%' }} />
           </div>
         </div>
 
         <div>
-          <label htmlFor="class-room" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>Room</label>
-          <input id="class-room" type="text" value={room} onChange={(e) => setRoom(e.target.value)} placeholder="e.g. Room B-204" style={{ width: '100%' }} />
+          <label htmlFor="class-room" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            {isId ? 'Ruang Kelas' : 'Room'}
+          </label>
+          <input
+            id="class-room"
+            type="text"
+            value={room}
+            onChange={(e) => setRoom(e.target.value)}
+            placeholder={isId ? 'contoh: Ruang B-204' : 'e.g. Room B-204'}
+            style={{ width: '100%' }}
+          />
         </div>
 
         <div>
-          <label htmlFor="class-color" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>Color</label>
+          <label htmlFor="class-color" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            {isId ? 'Warna Penanda' : 'Color'}
+          </label>
           <input id="class-color" type="color" value={color} onChange={(e) => setColor(e.target.value)} style={{ width: 56, height: 40, padding: '0.25rem' }} />
         </div>
 
         <div>
-          <label htmlFor="class-type" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>Type</label>
+          <label htmlFor="class-type" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            {isId ? 'Tipe Kegiatan' : 'Type'}
+          </label>
           <select id="class-type" value={type} onChange={(e) => setType(e.target.value as typeof type)} style={{ width: '100%' }}>
-            <option value="lecture">Lecture</option>
-            <option value="lab">Lab</option>
-            <option value="tutorial">Tutorial</option>
-            <option value="seminar">Seminar</option>
+            <option value="lecture">{isId ? 'Kuliah' : 'Lecture'}</option>
+            <option value="lab">{isId ? 'Praktikum' : 'Lab'}</option>
+            <option value="tutorial">{isId ? 'Tutorial' : 'Tutorial'}</option>
+            <option value="seminar">{isId ? 'Seminar' : 'Seminar'}</option>
           </select>
         </div>
 
         <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', paddingTop: '0.5rem' }}>
-          <button type="button" className="btn-outline" onClick={onClose}>Discard</button>
-          <button type="button" className="btn-primary" onClick={handleSave}>
+          <button type="button" className="btn-outline" onClick={onClose} disabled={isSubmitting}>
+            {isId ? 'Batal' : 'Discard'}
+          </button>
+          <button type="button" className="btn-primary" onClick={handleSave} disabled={isSubmitting}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
               <polyline points="20 6 9 17 4 12" />
             </svg>
-            Add class
+            {isId ? 'Tambah Kelas' : 'Add class'}
           </button>
         </div>
       </div>
@@ -1930,19 +2436,25 @@ function ClassDetailsModal({
   exception?: SessionException;
   onClose: () => void;
 }) {
+  const lang = useLanguage();
+  const isId = lang === 'id';
   const [scope, setScope] = useState<'this-day' | 'all-future'>('this-day');
   const [excType, setExcType] = useState<ExceptionType | ''>('');
+  const [instructor, setInstructor] = useState(course.professor || '');
   const [newRoom, setNewRoom] = useState('');
   const [newStartTime, setNewStartTime] = useState('');
   const [newEndTime, setNewEndTime] = useState('');
   const [note, setNote] = useState('');
 
-  const dateStr = `${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()]}, ${getMonthName(date.getMonth(), true)} ${date.getDate()}, ${date.getFullYear()}`;
+  const dateStr = formatDateLong(date);
   const startTime = exception?.newStartTime || session.startTime;
   const endTime = exception?.newEndTime || session.endTime;
   const room = exception?.newRoom || session.room;
 
   const handleSave = () => {
+    if (instructor.trim() !== (course.professor || '')) {
+      ds.updateCourse(course.id, { professor: instructor.trim() || undefined });
+    }
     if (scope === 'this-day' && excType) {
       ds.addSessionException({
         classSessionId: session.id,
@@ -1965,16 +2477,16 @@ function ClassDetailsModal({
   };
 
   const excTypes: { type: ExceptionType; label: string; icon: React.ReactNode }[] = [
-    { type: 'cancelled', label: 'Cancel', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> },
-    { type: 'moved', label: 'Move', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
-    { type: 'room-changed', label: 'Room', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> },
+    { type: 'cancelled', label: isId ? 'Batal' : 'Cancel', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> },
+    { type: 'moved', label: isId ? 'Pindah Jam' : 'Move', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
+    { type: 'room-changed', label: isId ? 'Ruangan' : 'Room', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> },
     { type: 'online', label: 'Online', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> },
-    { type: 'extra', label: 'Extra class', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> },
-    { type: 'no-class', label: 'No class today', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> },
+    { type: 'extra', label: isId ? 'Kelas Tambahan' : 'Extra class', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> },
+    { type: 'no-class', label: isId ? 'Libur Hari Ini' : 'No class today', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> },
   ];
 
   return (
-    <Modal isOpen={true} onClose={onClose} title="Edit class" maxWidth="560px">
+    <Modal isOpen={true} onClose={onClose} title={isId ? 'Ubah kelas' : 'Edit class'} maxWidth="560px">
       {/* Occurrence info */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -1989,8 +2501,8 @@ function ClassDetailsModal({
             <rect x="3" y="4" width="18" height="18" rx="2" />
             <path d="M3 10h18M8 2v4M16 2v4" />
           </svg>
-          <span style={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-            Modifying occurrence:
+          <span style={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em', fontFamily: 'var(--font-heading)' }}>
+            {isId ? 'Mengubah Pertemuan:' : 'Modifying occurrence:'}
           </span>
         </div>
         <span className="tabular-nums" style={{ fontWeight: 600 }}>{dateStr}</span>
@@ -2003,10 +2515,10 @@ function ClassDetailsModal({
           marginBottom: '0.5rem',
         }}>
           <span style={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '0.6875rem', letterSpacing: '0.05em' }}>
-            Scope choice
+            {isId ? 'Cakupan perubahan' : 'Scope choice'}
           </span>
           <span style={{ fontSize: '0.6875rem', color: 'var(--on-surface-variant)' }}>
-            Select change frequency
+            {isId ? 'Pilih frekuensi perubahan' : 'Select change frequency'}
           </span>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
@@ -2016,7 +2528,7 @@ function ClassDetailsModal({
             onClick={() => setScope('this-day')}
             style={{ padding: '0.5rem 1rem', borderRadius: 8, justifyContent: 'center' }}
           >
-            This day only
+            {isId ? 'Hari ini saja' : 'This day only'}
           </button>
           <button
             type="button"
@@ -2024,7 +2536,7 @@ function ClassDetailsModal({
             onClick={() => setScope('all-future')}
             style={{ padding: '0.5rem 1rem', borderRadius: 8, justifyContent: 'center' }}
           >
-            All future weeks
+            {isId ? 'Semua minggu mendatang' : 'All future weeks'}
           </button>
         </div>
       </div>
@@ -2056,9 +2568,23 @@ function ClassDetailsModal({
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
             </svg>
-            {course.professor}
+            {instructor || course.professor || (isId ? 'Dosen belum ditentukan' : 'Instructor TBA')}
           </div>
         </div>
+      </div>
+
+      {/* Instructor field */}
+      <div style={{ marginBottom: '1rem' }}>
+        <label htmlFor="class-instructor-edit" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.25rem' }}>
+          {isId ? 'Dosen Pengampu' : 'Instructor'}
+        </label>
+        <input
+          id="class-instructor-edit"
+          value={instructor}
+          onChange={(e) => setInstructor(e.target.value)}
+          placeholder={isId ? 'contoh: Dr. Budi Santoso' : 'e.g. Dr. Jane Smith'}
+          style={{ width: '100%' }}
+        />
       </div>
 
       {/* Exception types (only for "this day only") */}
@@ -2069,10 +2595,10 @@ function ClassDetailsModal({
             marginBottom: '0.5rem',
           }}>
             <span style={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '0.6875rem', letterSpacing: '0.05em' }}>
-              Single-day exceptions
+              {isId ? 'Pengecualian satu hari' : 'Single-day exceptions'}
             </span>
             <span className="tabular-nums" style={{ fontSize: '0.6875rem', color: 'var(--on-surface-variant)' }}>
-              Apply to {getMonthName(date.getMonth(), true)} {date.getDate()} only
+              {isId ? `Hanya untuk ${dateStr}` : `Apply to ${getMonthName(date.getMonth(), true)} ${date.getDate()} only`}
             </span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
@@ -2109,18 +2635,24 @@ function ClassDetailsModal({
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
           {(excType === 'room-changed' || scope === 'all-future') && (
             <div>
-              <label htmlFor="new-room-input" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.25rem' }}>New room</label>
+              <label htmlFor="new-room-input" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.25rem' }}>
+                {isId ? 'Ruangan baru' : 'New room'}
+              </label>
               <input id="new-room-input" value={newRoom} onChange={(e) => setNewRoom(e.target.value)} placeholder="e.g. A-103" style={{ width: '100%' }} />
             </div>
           )}
           {(excType === 'moved' || scope === 'all-future') && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
               <div>
-                <label htmlFor="new-start-time-input" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.25rem' }}>New start</label>
+                <label htmlFor="new-start-time-input" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.25rem' }}>
+                  {isId ? 'Mulai baru' : 'New start'}
+                </label>
                 <input id="new-start-time-input" className="tabular-nums" type="time" value={newStartTime} onChange={(e) => setNewStartTime(e.target.value)} style={{ width: '100%' }} />
               </div>
               <div>
-                <label htmlFor="new-end-time-input" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.25rem' }}>New end</label>
+                <label htmlFor="new-end-time-input" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.25rem' }}>
+                  {isId ? 'Selesai baru' : 'New end'}
+                </label>
                 <input id="new-end-time-input" className="tabular-nums" type="time" value={newEndTime} onChange={(e) => setNewEndTime(e.target.value)} style={{ width: '100%' }} />
               </div>
             </div>
@@ -2131,26 +2663,32 @@ function ClassDetailsModal({
       {/* Note */}
       <div style={{ marginBottom: '1rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-          <label htmlFor="class-note-input" style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Note for this class</label>
-          <span style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>Optional</span>
+          <label htmlFor="class-note-input" style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+            {isId ? 'Catatan pertemuan' : 'Note for this class'}
+          </label>
+          <span style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>
+            {isId ? 'Opsional' : 'Optional'}
+          </span>
         </div>
         <textarea
           id="class-note-input"
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="e.g., Bring laptop, quiz at start, attending remotely..."
+          placeholder={isId ? 'contoh: Bawa laptop, kuis di awal jam...' : 'e.g., Bring laptop, quiz at start, attending remotely...'}
           rows={3}
           style={{ width: '100%', resize: 'vertical' }}
         />
       </div>
 
       <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-        <button type="button" className="btn-outline" onClick={onClose}>Discard</button>
+        <button type="button" className="btn-outline" onClick={onClose}>
+          {isId ? 'Batal' : 'Discard'}
+        </button>
         <button type="button" className="btn-primary" onClick={handleSave}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
             <polyline points="20 6 9 17 4 12" />
           </svg>
-          Save changes
+          {isId ? 'Simpan perubahan' : 'Save changes'}
         </button>
       </div>
     </Modal>

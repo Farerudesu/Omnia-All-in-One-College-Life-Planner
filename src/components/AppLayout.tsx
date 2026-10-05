@@ -1,9 +1,11 @@
 import { Outlet, Navigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { Sidebar } from './Sidebar';
+import { MobileHeader } from './MobileHeader';
 import { BottomNav } from './BottomNav';
 import { CommandPalette } from './CommandPalette';
 import { DataState } from './DataState';
+import { ErrorBoundary } from './ErrorBoundary';
 import { useData } from '../lib/useData';
 import * as ds from '../lib/dataService';
 
@@ -67,10 +69,17 @@ export function AppLayout() {
       </a>
 
       <Sidebar isCollapsed={isSidebarCollapsed} onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)} />
-      <main id="main-content" tabIndex={-1} className="app-main" style={{ outline: 'none' }}>
-        <DataState />
-        <Outlet />
-      </main>
+
+      <div className="app-content-wrapper">
+        <MobileHeader />
+        <main id="main-content" tabIndex={-1} className="app-main" style={{ outline: 'none' }}>
+          <DataState />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
+        </main>
+      </div>
+
       <BottomNav />
 
       {/* Global Universal Search & Command Palette */}

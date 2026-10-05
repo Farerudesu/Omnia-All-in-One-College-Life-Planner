@@ -1,0 +1,13 @@
+.env*
+.git/
+.hallmark/
+.vercel/
+dist/
+node_modules/
+skills/
+supabase/
+skills.rar
+*.rar
+*.zip
+Omnia UI-UX/
+android/

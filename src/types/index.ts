@@ -76,6 +76,8 @@ export interface Assignment {
 
 // ─── Transactions ───
 export type TransactionType = 'expense' | 'income';
+export { EXPENSE_CATEGORIES, ALL_TRANSACTION_CATEGORIES } from '../lib/categories';
+export type { ExpenseCategory, TransactionCategory } from '../lib/categories';
 
 export interface Transaction {
   id: string;
@@ -110,6 +112,8 @@ export interface UserSettings {
   termName?: string;
   firstDayOfWeek?: string;
   notifEnabled?: boolean;
+  language?: 'en' | 'id';
+  paymentMethods?: string[];
 }
 
 // ─── Category Shape mapping (accessibility) ───

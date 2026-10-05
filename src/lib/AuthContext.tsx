@@ -8,6 +8,8 @@ interface AuthContextValue {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<boolean>;
+  sendPhoneSignInCode: (phone: string) => Promise<void>;
+  verifyPhoneSignInCode: (phone: string, code: string) => Promise<void>;
   requestPasswordReset: (email: string) => Promise<void>;
   updatePassword: (password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -74,6 +76,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return !data.session;
   };
 
+  const sendPhoneSignInCode = async (phone: string) => {
+    const { error } = await getClient().auth.signInWithOtp({
+      phone,
+      options: { shouldCreateUser: true },
+    });
+    if (error) throw error;
+  };
+
+  const verifyPhoneSignInCode = async (phone: string, code: string) => {
+    const { error } = await getClient().auth.verifyOtp({
+      phone,
+      token: code,
+      type: 'sms',
+    });
+    if (error) throw error;
+  };
+
   const requestPasswordReset = async (email: string) => {
     const { error } = await getClient().auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
@@ -92,7 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, requestPasswordReset, updatePassword, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, sendPhoneSignInCode, verifyPhoneSignInCode, requestPasswordReset, updatePassword, signOut }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,9 +1,11 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useData } from '../lib/useData';
 import * as ds from '../lib/dataService';
 import { Modal } from '../components/Modal';
 import { CategoryIndicator } from '../components/CategoryIndicator';
 import { EventDetailsModal } from '../components/EventDetailsModal';
+import { useLanguage } from '../lib/useLanguage';
 import {
   getMonthGrid,
   getMonthName,
@@ -20,6 +22,13 @@ import type { EventType, CategoryShape, CalendarEvent } from '../types';
 const VIEW_MODES = ['Day', 'Week', 'Month', 'Agenda'] as const;
 type ViewMode = (typeof VIEW_MODES)[number];
 
+const LEGEND_ITEMS = [
+  { key: 'classes', labelEn: 'Classes', labelId: 'Kelas', shape: 'square' as CategoryShape, color: 'var(--classes)' },
+  { key: 'exam', labelEn: 'Exams', labelId: 'Ujian', shape: 'diamond' as CategoryShape, color: 'var(--exams)' },
+  { key: 'deadline', labelEn: 'Deadlines', labelId: 'Tenggat', shape: 'outline-square' as CategoryShape, color: 'var(--deadlines)' },
+  { key: 'personal', labelEn: 'Personal', labelId: 'Pribadi', shape: 'circle' as CategoryShape, color: 'var(--personal)' },
+];
+
 const CATEGORY_MAP: Record<string, { shape: CategoryShape; color: string }> = {
   class: { shape: 'square', color: 'var(--classes)' },
   classes: { shape: 'square', color: 'var(--classes)' },
@@ -30,21 +39,39 @@ const CATEGORY_MAP: Record<string, { shape: CategoryShape; color: string }> = {
 };
 
 export function CalendarPage() {
+  const lang = useLanguage();
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(() => new Date());
-  const [viewMode, setViewMode] = useState<ViewMode>('Month');
+  const [viewMode, setViewMode] = useState<ViewMode>(() =>
+    window.matchMedia('(max-width: 819px)').matches ? 'Agenda' : 'Month'
+  );
   const [showAddEvent, setShowAddEvent] = useState(false);
   const [selectedEventForModal, setSelectedEventForModal] = useState<CalendarEvent | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [quickActionMenu, setQuickActionMenu] = useState<{ id: string, originX: number, originY: number, isExiting: boolean } | null>(null);
+  const [quickActionMenu, setQuickActionMenu] = useState<{ id: string, originX: number, originY: number, item: any, date: Date, isExiting: boolean } | null>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (contextMenuRef.current && quickActionMenu && !quickActionMenu.isExiting) {
-      const rect = contextMenuRef.current.getBoundingClientRect();
-      const originX = quickActionMenu.originX - rect.left;
-      const originY = quickActionMenu.originY - rect.top;
-      contextMenuRef.current.style.transformOrigin = `${originX}px ${originY}px`;
+      const menu = contextMenuRef.current;
+      const rect = menu.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+
+      // Ensure menu stays within screen bounds
+      let top = quickActionMenu.originY + 6;
+      let left = quickActionMenu.originX + 6;
+
+      if (left + rect.width > viewportWidth - 12) {
+        left = Math.max(12, quickActionMenu.originX - rect.width - 6);
+      }
+      if (top + rect.height > viewportHeight - 12) {
+        top = Math.max(12, viewportHeight - rect.height - 12);
+      }
+
+      menu.style.top = `${top}px`;
+      menu.style.left = `${left}px`;
+      menu.style.transformOrigin = `${quickActionMenu.originX - left}px ${quickActionMenu.originY - top}px`;
     }
   }, [quickActionMenu]);
 
@@ -315,6 +342,7 @@ export function CalendarPage() {
     <div>
       {/* Top bar */}
       <div
+        className="calendar-toolbar"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -329,23 +357,24 @@ export function CalendarPage() {
           zIndex: 40,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <button className="btn-ghost" onClick={goToToday}>Today</button>
-          <button className="btn-ghost min-touch-target" onClick={prevPeriod} aria-label="Previous period">‹</button>
-          <button className="btn-ghost min-touch-target" onClick={nextPeriod} aria-label="Next period">›</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', flexWrap: 'wrap' }}>
+          <button className="btn-ghost min-touch-target" onClick={prevPeriod} aria-label={lang === 'id' ? 'Periode sebelumnya' : 'Previous period'} style={{ width: 34, height: 34, padding: 0 }}>‹</button>
+          <button className="btn-ghost" onClick={goToToday} style={{ fontSize: '0.8125rem', fontWeight: 600, padding: '0.25rem 0.5rem' }}>
+            {lang === 'id' ? 'Hari Ini' : 'Today'}
+          </button>
+          <button className="btn-ghost min-touch-target" onClick={nextPeriod} aria-label={lang === 'id' ? 'Periode berikutnya' : 'Next period'} style={{ width: 34, height: 34, padding: 0 }}>›</button>
 
-          <span className="tabular-nums" style={{ fontFamily: 'var(--font-heading)', fontSize: '1.125rem', fontWeight: 600 }}>
+          <span className="tabular-nums" style={{ fontFamily: 'var(--font-heading)', fontSize: '1.125rem', fontWeight: 700, marginLeft: '0.25rem' }}>
             {viewMode === 'Day' && selectedDate
               ? formatDateLong(selectedDate)
               : `${getMonthName(month)} ${year}`}
           </span>
-
-
         </div>
 
         {/* Search Bar with auto-suggest dropdown & View Mode Switcher */}
-        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div className="calendar-toolbar-controls" style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <div
+            className="calendar-view-modes"
             style={{
               display: 'flex',
               background: 'var(--surface-container)',
@@ -354,30 +383,36 @@ export function CalendarPage() {
               marginRight: '0.5rem',
             }}
           >
-            {VIEW_MODES.map((v) => (
-              <button
-                key={v}
-                onClick={() => setViewMode(v)}
-                style={{
-                  padding: '0.375rem 0.75rem',
-                  fontSize: '0.8125rem',
-                  fontWeight: 600,
-                  background: viewMode === v ? 'var(--primary)' : 'transparent',
-                  color: viewMode === v ? 'var(--on-primary)' : 'var(--on-surface-variant)',
-                  borderRadius: viewMode === v ? 8 : 0,
-                  transition: 'background 0.15s',
-                }}
-              >
-                {v}
-              </button>
-            ))}
+            {VIEW_MODES.map((v) => {
+              const label = lang === 'id'
+                ? (v === 'Day' ? 'Hari' : v === 'Week' ? 'Minggu' : v === 'Month' ? 'Bulan' : 'Agenda')
+                : v;
+              return (
+                <button
+                  key={v}
+                  onClick={() => setViewMode(v)}
+                  style={{
+                    padding: '0.375rem 0.75rem',
+                    fontSize: '0.8125rem',
+                    fontWeight: 600,
+                    background: viewMode === v ? 'var(--primary)' : 'transparent',
+                    color: viewMode === v ? 'var(--on-primary)' : 'var(--on-surface-variant)',
+                    borderRadius: viewMode === v ? 8 : 0,
+                    transition: 'background 0.15s',
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
 
-          <div style={{ position: 'relative' }}>
+          <div className="calendar-search" style={{ position: 'relative' }}>
             <input
               id="calendar-search"
+              className="calendar-search-input"
               type="text"
-              placeholder="Search events, exams, courses…"
+              placeholder={lang === 'id' ? 'Cari kegiatan, ujian, matkul…' : 'Search events, exams, courses…'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
@@ -408,19 +443,20 @@ export function CalendarPage() {
           </div>
 
           <button
-            className="btn-primary"
+            className="btn-primary calendar-add-event"
             onClick={() => setShowAddEvent(true)}
             style={{ padding: '0.45rem 0.875rem', fontSize: '0.8125rem' }}
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M12 5v14M5 12h14" />
             </svg>
-            Add event
+            {lang === 'id' ? 'Tambah acara' : 'Add event'}
           </button>
 
           {/* Search Results Dropdown */}
           {searchQuery.trim() && (
             <div
+              className="calendar-search-results"
               style={{
                 position: 'absolute',
                 top: 'calc(100% + 6px)',
@@ -437,6 +473,7 @@ export function CalendarPage() {
               }}
             >
               <div
+                className="calendar-month-grid"
                 style={{
                   fontSize: '0.6875rem',
                   fontWeight: 700,
@@ -446,11 +483,11 @@ export function CalendarPage() {
                   letterSpacing: '0.04em',
                 }}
               >
-                {searchResults.length} Match{searchResults.length !== 1 ? 'es' : ''} found
+                {searchResults.length} {lang === 'id' ? 'hasil ditemukan' : `Match${searchResults.length !== 1 ? 'es' : ''} found`}
               </div>
               {searchResults.length === 0 ? (
                 <div style={{ padding: '1rem', textAlign: 'center', fontSize: '0.8125rem', color: 'var(--on-surface-variant)' }}>
-                  No events or courses matching &ldquo;{searchQuery}&rdquo;
+                  {lang === 'id' ? `Tidak ada acara atau mata kuliah sesuai "${searchQuery}"` : `No events or courses matching “${searchQuery}”`}
                 </div>
               ) : (
                 searchResults.map((item) => (
@@ -495,49 +532,49 @@ export function CalendarPage() {
       </div>
 
       {/* Main Container */}
-      <div style={{ display: 'flex' }}>
-        <div style={{ flex: 1, padding: '1.5rem 2rem', minWidth: 0 }}>
+      <div className="calendar-main-layout" style={{ display: 'flex' }}>
+        <div className="page-content" style={{ flex: 1, minWidth: 0 }}>
           {/* Subheader with category toggles */}
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              marginBottom: '1.5rem',
+              marginBottom: '1.25rem',
               flexWrap: 'wrap',
-              gap: '1rem',
+              gap: '0.75rem',
             }}
           >
             <div>
-              <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>
+              <h1 style={{ fontSize: 'clamp(1.25rem, 4vw, 1.75rem)', fontWeight: 700, margin: 0 }}>
                 {viewMode === 'Month' && `${getMonthName(month)} ${year}`}
-                {viewMode === 'Week' && `Week of ${formatDateLong(weekDates[0])}`}
-                {viewMode === 'Day' && (selectedDate ? formatDateLong(selectedDate) : 'Today')}
-                {viewMode === 'Agenda' && 'Upcoming Agenda & Milestones'}
+                {viewMode === 'Week' && (lang === 'id' ? `Minggu ${formatDateLong(weekDates[0])}` : `Week of ${formatDateLong(weekDates[0])}`)}
+                {viewMode === 'Day' && (selectedDate ? formatDateLong(selectedDate) : (lang === 'id' ? 'Hari Ini' : 'Today'))}
+                {viewMode === 'Agenda' && (lang === 'id' ? 'Agenda & Jadwal Mendatang' : 'Upcoming Agenda & Milestones')}
               </h1>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-              {Object.entries(CATEGORY_MAP).filter(([k]) => k !== 'other').map(([key, val]) => (
+            <div className="horizontal-scroll-chips" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', paddingBottom: '0.25rem' }}>
+              {LEGEND_ITEMS.map((item) => (
                 <button
-                  key={key}
-                  onClick={() => toggleFilter(key)}
+                  key={item.key}
+                  onClick={() => toggleFilter(item.key)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.375rem',
                     fontSize: '0.8125rem',
                     fontWeight: 600,
-                    color: filters[key as keyof typeof filters] ? 'var(--on-surface)' : 'var(--outline)',
-                    opacity: filters[key as keyof typeof filters] ? 1 : 0.5,
+                    color: filters[item.key as keyof typeof filters] ? 'var(--on-surface)' : 'var(--outline)',
+                    opacity: filters[item.key as keyof typeof filters] ? 1 : 0.5,
                     background: 'none',
                     border: 'none',
                     cursor: 'pointer',
+                    whiteSpace: 'nowrap',
                   }}
                 >
-                  <CategoryIndicator shape={val.shape} color={val.color} />
-                  {key.charAt(0).toUpperCase() + key.slice(1)}
-                  {key === 'exam' ? 's' : key === 'deadline' ? 's' : ''}
+                  <CategoryIndicator shape={item.shape} color={item.color} />
+                  {lang === 'id' ? item.labelId : item.labelEn}
                 </button>
               ))}
             </div>
@@ -554,7 +591,7 @@ export function CalendarPage() {
                 overflow: 'hidden',
               }}
             >
-              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
+              {(lang === 'id' ? ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'] : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']).map((d) => (
                 <div
                   key={d}
                   style={{
@@ -587,7 +624,17 @@ export function CalendarPage() {
                 return (
                   <div
                     key={i}
+                    className="calendar-month-cell"
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`View ${formatDateLong(date)}`}
                     onClick={() => setSelectedDate(date)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        setSelectedDate(date);
+                      }
+                    }}
                     style={{
                       minHeight: 92,
                       padding: '0.375rem 0.5rem',
@@ -623,11 +670,11 @@ export function CalendarPage() {
                         {date.getDate()}
                       </span>
                       {today && (
-                        <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--primary)' }}>Today</span>
+                        <span className="calendar-month-today" style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--primary)' }}>Today</span>
                       )}
                     </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                    <div className="calendar-month-cell-items" style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
                       {items.slice(0, 3).map((item) => (
                         <div
                           key={item.id}
@@ -644,7 +691,7 @@ export function CalendarPage() {
                             if (quickActionMenu?.id === item.id) {
                               closeQuickActionMenu();
                             } else {
-                              setQuickActionMenu({ id: item.id, originX: e.clientX, originY: e.clientY, isExiting: false });
+                              setQuickActionMenu({ id: item.id, originX: e.clientX, originY: e.clientY, item, date, isExiting: false });
                             }
                           }}
                           style={{
@@ -657,13 +704,11 @@ export function CalendarPage() {
                             padding: '0.1rem 0.2rem',
                             borderRadius: 3,
                             cursor: 'pointer',
-                            filter: item.isPast ? 'grayscale(1)' : undefined,
-                            opacity: item.isPast ? 0.58 : 1,
                           }}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', filter: item.isPast ? 'grayscale(1)' : undefined, opacity: item.isPast ? 0.58 : 1 }}>
                             <CategoryIndicator shape={item.shape} color={item.color} size={7} />
-                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--on-surface)' }}>
+                            <span className="calendar-month-event-label" style={{ overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--on-surface)' }}>
                               {item.title}
                             </span>
                           </div>
@@ -676,7 +721,8 @@ export function CalendarPage() {
                               if (quickActionMenu?.id === item.id) {
                                 closeQuickActionMenu();
                               } else {
-                                setQuickActionMenu({ id: item.id, originX: e.clientX, originY: e.clientY, isExiting: false });
+                                const target = e.currentTarget.getBoundingClientRect();
+                                setQuickActionMenu({ id: item.id, originX: target.right, originY: target.top, item, date, isExiting: false });
                               }
                             }}
                           >
@@ -687,168 +733,11 @@ export function CalendarPage() {
                             </svg>
                           </button>
 
-                          {quickActionMenu?.id === item.id && (
-                            <>
-                              <div 
-                                className={`fixed inset-0 z-40 ${quickActionMenu.isExiting ? 'context-scrim-exit' : 'context-scrim-enter'}`}
-                                onClick={(e) => { e.stopPropagation(); closeQuickActionMenu(); }}
-                              />
-                              <div 
-                                ref={contextMenuRef}
-                                className={`absolute z-50 w-64 rounded-xl shadow-lg flex flex-col cursor-default ${quickActionMenu.isExiting ? 'context-menu-exit' : 'context-menu-enter'}`}
-                                style={{ 
-                                  top: '0', 
-                                  left: '100%', 
-                                  marginLeft: '0.5rem',
-                                  background: 'var(--surface-container-lowest)',
-                                  border: '1px solid var(--outline-variant)',
-                                }}
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <div className="context-item" style={{ padding: '0.75rem 1rem', background: 'var(--surface-container-low)', borderBottom: '1px solid var(--outline-variant)', borderTopLeftRadius: '0.75rem', borderTopRightRadius: '0.75rem' }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.125rem' }}>
-                                    <div style={{ fontWeight: 700, fontSize: '0.8125rem', color: 'var(--on-surface)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                      {item.title}
-                                    </div>
-                                    <div style={{ 
-                                      fontSize: '11px', fontWeight: 600, 
-                                      color: item.color, textTransform: 'uppercase', letterSpacing: '0.6px'
-                                    }}>
-                                      {item.type}
-                                    </div>
-                                  </div>
-                                  <div style={{ fontSize: '0.6875rem', color: 'var(--on-surface-variant)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                    {formatDateLong(date)} {item.time && `· ${formatTime12(item.time)}`}
-                                  </div>
-                                </div>
-                                <div style={{ padding: '0.375rem', display: 'flex', flexDirection: 'column', gap: '0.125rem' }}>
-                                  
-                                  <button 
-                                    className="btn-ghost hover-highlight context-item" 
-                                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', padding: '0.5rem 0.75rem', width: '100%' }}
-                                    onClick={(e) => { e.stopPropagation(); closeQuickActionMenu(); alert('Item pinned to sidebar!'); }}
-                                  >
-                                    <div style={{ display: 'flex', alignItems: 'center', fontWeight: 600, fontSize: '0.8125rem', color: 'var(--on-surface)' }}>
-                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '0.75rem', color: 'var(--on-surface-variant)' }}>
-                                        <path d="M12 2L12 22M2 12L22 12" />
-                                      </svg>
-                                      Pin to Sidebar
-                                    </div>
-                                    <div style={{ fontSize: '0.625rem', color: 'var(--on-surface-variant)', marginLeft: '1.625rem', marginTop: '0.125rem' }}>
-                                      Display in Upcoming & Pinned
-                                    </div>
-                                  </button>
-
-                                  <button 
-                                    className="btn-ghost hover-highlight context-item" 
-                                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', padding: '0.5rem 0.75rem', width: '100%' }}
-                                    onClick={(e) => { e.stopPropagation(); closeQuickActionMenu(); if(item.rawEvent) setSelectedEventForModal(item.rawEvent); }}
-                                  >
-                                    <div style={{ display: 'flex', alignItems: 'center', fontWeight: 600, fontSize: '0.8125rem', color: 'var(--on-surface)' }}>
-                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '0.75rem', color: 'var(--on-surface-variant)' }}>
-                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                                      </svg>
-                                      Edit Details
-                                    </div>
-                                    <div style={{ fontSize: '0.625rem', color: 'var(--on-surface-variant)', marginLeft: '1.625rem', marginTop: '0.125rem' }}>
-                                      Modify time, room, notes
-                                    </div>
-                                  </button>
-
-                                  <button 
-                                    className="btn-ghost hover-highlight context-item" 
-                                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', width: '100%', padding: '0.5rem 0.75rem', fontWeight: 600, fontSize: '0.8125rem', color: 'var(--on-surface)' }}
-                                    onClick={(e) => { e.stopPropagation(); closeQuickActionMenu(); if(item.rawEvent) setSelectedEventForModal(item.rawEvent); }}
-                                  >
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '0.75rem', color: 'var(--on-surface-variant)' }}>
-                                      <circle cx="12" cy="12" r="10" />
-                                      <polyline points="12 6 12 12 16 14" />
-                                    </svg>
-                                    Reschedule / Move
-                                  </button>
-
-                                  <button 
-                                    className="btn-ghost hover-highlight context-item" 
-                                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', width: '100%', padding: '0.5rem 0.75rem', fontWeight: 600, fontSize: '0.8125rem', color: 'var(--on-surface)' }}
-                                    onClick={(e) => { 
-                                      e.stopPropagation(); 
-                                      if (item.rawEvent) {
-                                        const copy = { ...item.rawEvent, title: `${item.rawEvent.title} (Copy)` };
-                                        ds.addEvent(copy);
-                                      }
-                                      closeQuickActionMenu(); 
-                                    }}
-                                  >
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '0.75rem', color: 'var(--on-surface-variant)' }}>
-                                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                                    </svg>
-                                    Duplicate Event
-                                  </button>
-
-                                  <div style={{ height: 1, background: 'var(--outline-variant)', margin: '0.25rem 0' }} />
-
-                                  <div className="context-item" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0.75rem' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', fontWeight: 600, fontSize: '0.8125rem', color: 'var(--on-surface)' }}>
-                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '0.75rem', color: 'var(--on-surface-variant)' }}>
-                                        <circle cx="12" cy="12" r="10" />
-                                        <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
-                                        <path d="M2 12h20" />
-                                      </svg>
-                                      Category
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-                                      <button type="button" onClick={(e) => { e.stopPropagation(); if(item.rawEvent) ds.updateEvent(item.rawEvent.id, { type: 'other' }); closeQuickActionMenu(); }} style={{ padding: '0.25rem', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '50%' }} className="hover-highlight"><CategoryIndicator shape="square" color="var(--classes)" size={10} /></button>
-                                      <button type="button" onClick={(e) => { e.stopPropagation(); if(item.rawEvent) ds.updateEvent(item.rawEvent.id, { type: 'exam' }); closeQuickActionMenu(); }} style={{ padding: '0.25rem', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '50%' }} className="hover-highlight"><CategoryIndicator shape="diamond" color="var(--exams)" size={10} /></button>
-                                      <button type="button" onClick={(e) => { e.stopPropagation(); if(item.rawEvent) ds.updateEvent(item.rawEvent.id, { type: 'deadline' }); closeQuickActionMenu(); }} style={{ padding: '0.25rem', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '50%' }} className="hover-highlight"><CategoryIndicator shape="outline-square" color="var(--deadlines)" size={10} /></button>
-                                      <button type="button" onClick={(e) => { e.stopPropagation(); if(item.rawEvent) ds.updateEvent(item.rawEvent.id, { type: 'personal' }); closeQuickActionMenu(); }} style={{ padding: '0.25rem', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '50%' }} className="hover-highlight"><CategoryIndicator shape="circle" color="var(--personal)" size={10} /></button>
-                                    </div>
-                                  </div>
-
-                                  <button 
-                                    className="btn-ghost hover-highlight context-item" 
-                                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', width: '100%', padding: '0.5rem 0.75rem', fontWeight: 600, fontSize: '0.8125rem', color: 'var(--on-surface)' }}
-                                    onClick={(e) => { e.stopPropagation(); closeQuickActionMenu(); alert('Event exported to .ics file'); }}
-                                  >
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '0.75rem', color: 'var(--on-surface-variant)' }}>
-                                      <circle cx="18" cy="5" r="3" />
-                                      <circle cx="6" cy="12" r="3" />
-                                      <circle cx="18" cy="19" r="3" />
-                                      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-                                      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-                                    </svg>
-                                    Share / Export .ics
-                                  </button>
-
-                                  <div style={{ height: 1, background: 'var(--outline-variant)', margin: '0.25rem 0' }} />
-
-                                  <button 
-                                    className="btn-ghost hover-highlight context-item" 
-                                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', width: '100%', padding: '0.5rem 0.75rem', fontWeight: 600, fontSize: '0.8125rem', color: 'var(--error)' }}
-                                    onClick={(e) => { 
-                                      e.stopPropagation(); 
-                                      if(item.id.startsWith('assign-')) {
-                                        ds.deleteAssignment(item.id.replace('assign-', ''));
-                                      } else if(item.rawEvent) {
-                                        ds.deleteEvent(item.rawEvent.id); 
-                                      }
-                                      closeQuickActionMenu(); 
-                                    }}
-                                  >
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '0.75rem' }}>
-                                      <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                                    </svg>
-                                    Delete Event
-                                  </button>
-                                </div>
-                              </div>
-                            </>
-                          )}
+                          {/* quickActionMenu rendered via Portal to escape cell stacking context & opacity */}
                         </div>
                       ))}
                       {items.length > 3 && (
-                        <span style={{ fontSize: '0.625rem', color: 'var(--on-surface-variant)', fontWeight: 600 }}>
+                        <span className="calendar-month-overflow" style={{ fontSize: '0.625rem', color: 'var(--on-surface-variant)', fontWeight: 600 }}>
                           +{items.length - 3} more
                         </span>
                       )}
@@ -859,9 +748,167 @@ export function CalendarPage() {
             </div>
           )}
 
+          {/* Quick Action Context Menu Portal */}
+          {quickActionMenu && createPortal(
+            <>
+              <div 
+                className={`fixed inset-0 z-40 ${quickActionMenu.isExiting ? 'context-scrim-exit' : 'context-scrim-enter'}`}
+                onClick={(e) => { e.stopPropagation(); closeQuickActionMenu(); }}
+              />
+              <div 
+                ref={contextMenuRef}
+                className={`fixed z-50 w-64 apple-context-menu flex flex-col cursor-default ${quickActionMenu.isExiting ? 'context-menu-exit' : 'context-menu-enter'}`}
+                style={{ 
+                  top: quickActionMenu.originY + 6, 
+                  left: quickActionMenu.originX + 6,
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="context-item apple-context-menu-header">
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                    <div style={{ fontWeight: 600, fontSize: '0.8125rem', color: 'var(--on-surface)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {quickActionMenu.item.title}
+                    </div>
+                    <span 
+                      className="apple-context-badge"
+                      style={{ 
+                        background: 'color-mix(in srgb, var(--on-surface) 6%, transparent)',
+                        color: 'var(--on-surface-variant)',
+                      }}
+                    >
+                      {quickActionMenu.item.type}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.6875rem', color: 'var(--on-surface-variant)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {formatDateLong(quickActionMenu.date)} {quickActionMenu.item.time && `· ${formatTime12(quickActionMenu.item.time)}`}
+                  </div>
+                </div>
+                <div style={{ padding: '0.3125rem', display: 'flex', flexDirection: 'column', gap: '0.125rem' }}>
+                  
+                  <button 
+                    className="apple-context-item context-item" 
+                    onClick={(e) => { e.stopPropagation(); closeQuickActionMenu(); alert('Item pinned to sidebar!'); }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--on-surface-variant)' }}>
+                        <path d="M12 2L12 22M2 12L22 12" />
+                      </svg>
+                      Pin to Sidebar
+                    </div>
+                  </button>
+
+                  <button 
+                    className="apple-context-item context-item" 
+                    onClick={(e) => { e.stopPropagation(); closeQuickActionMenu(); if(quickActionMenu.item.rawEvent) setSelectedEventForModal(quickActionMenu.item.rawEvent); }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--on-surface-variant)' }}>
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                      </svg>
+                      Edit Details
+                    </div>
+                  </button>
+
+                  <button 
+                    className="apple-context-item context-item" 
+                    onClick={(e) => { e.stopPropagation(); closeQuickActionMenu(); if(quickActionMenu.item.rawEvent) setSelectedEventForModal(quickActionMenu.item.rawEvent); }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--on-surface-variant)' }}>
+                        <circle cx="12" cy="12" r="10" />
+                        <polyline points="12 6 12 12 16 14" />
+                      </svg>
+                      Reschedule / Move
+                    </div>
+                  </button>
+
+                  <button 
+                    className="apple-context-item context-item" 
+                    onClick={(e) => { 
+                      e.stopPropagation(); 
+                      if (quickActionMenu.item.rawEvent) {
+                        const copy = { ...quickActionMenu.item.rawEvent, title: `${quickActionMenu.item.rawEvent.title} (Copy)` };
+                        ds.addEvent(copy);
+                      }
+                      closeQuickActionMenu(); 
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--on-surface-variant)' }}>
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
+                      Duplicate Event
+                    </div>
+                  </button>
+
+                  <div className="apple-context-divider" />
+
+                  <div className="context-item" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.375rem 0.625rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem', fontWeight: 500, color: 'var(--on-surface)' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--on-surface-variant)' }}>
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+                        <path d="M2 12h20" />
+                      </svg>
+                      Category
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                      <button type="button" onClick={(e) => { e.stopPropagation(); if(quickActionMenu.item.rawEvent) ds.updateEvent(quickActionMenu.item.rawEvent.id, { type: 'other' }); closeQuickActionMenu(); }} style={{ padding: '0.25rem', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '50%' }} className="hover-highlight"><CategoryIndicator shape="square" color="var(--classes)" size={9} /></button>
+                      <button type="button" onClick={(e) => { e.stopPropagation(); if(quickActionMenu.item.rawEvent) ds.updateEvent(quickActionMenu.item.rawEvent.id, { type: 'exam' }); closeQuickActionMenu(); }} style={{ padding: '0.25rem', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '50%' }} className="hover-highlight"><CategoryIndicator shape="diamond" color="var(--exams)" size={9} /></button>
+                      <button type="button" onClick={(e) => { e.stopPropagation(); if(quickActionMenu.item.rawEvent) ds.updateEvent(quickActionMenu.item.rawEvent.id, { type: 'deadline' }); closeQuickActionMenu(); }} style={{ padding: '0.25rem', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '50%' }} className="hover-highlight"><CategoryIndicator shape="outline-square" color="var(--deadlines)" size={9} /></button>
+                      <button type="button" onClick={(e) => { e.stopPropagation(); if(quickActionMenu.item.rawEvent) ds.updateEvent(quickActionMenu.item.rawEvent.id, { type: 'personal' }); closeQuickActionMenu(); }} style={{ padding: '0.25rem', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '50%' }} className="hover-highlight"><CategoryIndicator shape="circle" color="var(--personal)" size={9} /></button>
+                    </div>
+                  </div>
+
+                  <button 
+                    className="apple-context-item context-item" 
+                    onClick={(e) => { e.stopPropagation(); closeQuickActionMenu(); alert('Event exported to .ics file'); }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--on-surface-variant)' }}>
+                        <circle cx="18" cy="5" r="3" />
+                        <circle cx="6" cy="12" r="3" />
+                        <circle cx="18" cy="19" r="3" />
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                      </svg>
+                      Share / Export .ics
+                    </div>
+                  </button>
+
+                  <div className="apple-context-divider" />
+
+                  <button 
+                    className="apple-context-item apple-context-item--danger context-item" 
+                    onClick={(e) => { 
+                      e.stopPropagation(); 
+                      if(quickActionMenu.item.id.startsWith('assign-')) {
+                        ds.deleteAssignment(quickActionMenu.item.id.replace('assign-', ''));
+                      } else if(quickActionMenu.item.rawEvent) {
+                        ds.deleteEvent(quickActionMenu.item.rawEvent.id); 
+                      }
+                      closeQuickActionMenu(); 
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                      </svg>
+                      Delete Event
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </>,
+            document.body
+          )}
+
           {/* ══════ VIEW: WEEK ══════ */}
           {viewMode === 'Week' && (
             <div
+              className="calendar-week-scroll"
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(7, 1fr)',
@@ -876,6 +923,7 @@ export function CalendarPage() {
                 return (
                   <div
                     key={i}
+                    className="calendar-week-card"
                     onClick={() => setSelectedDate(dayDate)}
                     style={{
                       background: selected
@@ -894,7 +942,7 @@ export function CalendarPage() {
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--on-surface-variant)' }}>
-                        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i]}
+                        {(lang === 'id' ? ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'] : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])[i]}
                       </span>
                       <span
                         style={{
@@ -962,10 +1010,10 @@ export function CalendarPage() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
                 <div>
                   <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>
-                    {selectedDate ? formatDateLong(selectedDate) : 'Today'}
+                    {selectedDate ? formatDateLong(selectedDate) : (lang === 'id' ? 'Hari Ini' : 'Today')}
                   </h2>
                   <div style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)' }}>
-                    {selectedItems.length} item{selectedItems.length !== 1 ? 's' : ''} scheduled
+                    {selectedItems.length} {lang === 'id' ? 'kegiatan terjadwal' : `item${selectedItems.length !== 1 ? 's' : ''} scheduled`}
                   </div>
                 </div>
                 <button
@@ -976,15 +1024,15 @@ export function CalendarPage() {
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <path d="M12 5v14M5 12h14" />
                   </svg>
-                  Add event for this day
+                  {lang === 'id' ? 'Tambah acara untuk hari ini' : 'Add event for this day'}
                 </button>
               </div>
 
               {selectedItems.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '4rem 1rem', color: 'var(--on-surface-variant)' }}>
                   <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>☕</div>
-                  <div style={{ fontWeight: 600 }}>Completely free day</div>
-                  <div style={{ fontSize: '0.8125rem', marginTop: '0.25rem' }}>Nothing scheduled for this date.</div>
+                  <div style={{ fontWeight: 600 }}>{lang === 'id' ? 'Hari bebas tanpa jadwal' : 'Completely free day'}</div>
+                  <div style={{ fontSize: '0.8125rem', marginTop: '0.25rem' }}>{lang === 'id' ? 'Tidak ada kegiatan untuk tanggal ini.' : 'Nothing scheduled for this date.'}</div>
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -1080,12 +1128,12 @@ export function CalendarPage() {
                       </span>
                       {isToday(date) && (
                         <span className="badge" style={{ background: 'var(--primary)', color: 'white' }}>
-                          Today
+                          {lang === 'id' ? 'Hari Ini' : 'Today'}
                         </span>
                       )}
                     </div>
                     <span style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>
-                      {items.length} item{items.length !== 1 ? 's' : ''}
+                      {items.length} {lang === 'id' ? 'kegiatan' : `item${items.length !== 1 ? 's' : ''}`}
                     </span>
                   </div>
 
@@ -1114,7 +1162,7 @@ export function CalendarPage() {
                             {item.title}
                           </div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', marginTop: '0.125rem' }}>
-                            {item.time ? formatTime12(item.time) : 'All day'} {item.room ? `· ${item.room}` : ''} {item.notes ? `· ${item.notes}` : ''}
+                            {item.time ? formatTime12(item.time) : (lang === 'id' ? 'Sepanjang hari' : 'All day')} {item.room ? `· ${item.room}` : ''} {item.notes ? `· ${item.notes}` : ''}
                           </div>
                         </div>
 
@@ -1141,6 +1189,7 @@ export function CalendarPage() {
         {/* Selected date side panel (desktop only for Month mode) */}
         {viewMode === 'Month' && selectedDate && (
           <div
+            className="calendar-side-panel"
             style={{
               width: 320,
               borderLeft: '1px solid var(--outline-variant)',
@@ -1156,7 +1205,7 @@ export function CalendarPage() {
                 onClick={() => setSelectedDate(null)}
                 className="btn-ghost min-touch-target"
                 style={{ padding: '0.25rem', borderRadius: 'var(--radius-sm)' }}
-                aria-label="Close date details"
+                aria-label={lang === 'id' ? 'Tutup detail tanggal' : 'Close date details'}
               >
                 ✕
               </button>
@@ -1185,9 +1234,11 @@ export function CalendarPage() {
                 </svg>
                 <div>
                   <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--on-surface)', marginBottom: '0.25rem' }}>
-                    A free day!
+                    {lang === 'id' ? 'Hari bebas!' : 'A free day!'}
                   </div>
-                  <div style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)' }}>Nothing scheduled for this date.</div>
+                  <div style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)' }}>
+                    {lang === 'id' ? 'Tidak ada kegiatan untuk tanggal ini.' : 'Nothing scheduled for this date.'}
+                  </div>
                 </div>
               </div>
             ) : (
@@ -1242,17 +1293,6 @@ export function CalendarPage() {
                 ))}
               </div>
             )}
-
-            <button
-              className="btn-primary"
-              onClick={() => setShowAddEvent(true)}
-              style={{ width: '100%', justifyContent: 'center', marginTop: '1rem' }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M12 5v14M5 12h14" />
-              </svg>
-              Add event
-            </button>
           </div>
         )}
       </div>
@@ -1284,6 +1324,7 @@ function AddEventModal({
   onClose: () => void;
   defaultDate: string;
 }) {
+  const lang = useLanguage();
   const courses = useData(ds.getCourses);
   const [title, setTitle] = useState('');
   const [date, setDate] = useState(defaultDate);
@@ -1292,61 +1333,103 @@ function AddEventModal({
   const [type, setType] = useState<EventType>('personal');
   const [courseId, setCourseId] = useState('');
   const [notes, setNotes] = useState('');
+  const [titleError, setTitleError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSave = () => {
-    if (!title.trim()) return;
-    ds.addEvent({
-      title,
-      date,
-      startTime: startTime || undefined,
-      endTime: endTime || undefined,
-      type,
-      courseId: courseId || undefined,
-      notes: notes || undefined,
-    });
-    setTitle('');
-    setNotes('');
+  const handleClose = () => {
+    setTitleError('');
+    setIsSubmitting(false);
     onClose();
   };
 
+  const handleSave = () => {
+    if (!title.trim()) {
+      setTitleError(lang === 'id' ? 'Judul kegiatan tidak boleh kosong' : 'Event title is required');
+      return;
+    }
+
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    try {
+      ds.addEvent({
+        title: title.trim(),
+        date,
+        startTime: startTime || undefined,
+        endTime: endTime || undefined,
+        type,
+        courseId: courseId || undefined,
+        notes: notes.trim() || undefined,
+      });
+      setTitle('');
+      setNotes('');
+      setTitleError('');
+      setIsSubmitting(false);
+      onClose();
+    } catch {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Add calendar event">
+    <Modal isOpen={isOpen} onClose={handleClose} title={lang === 'id' ? 'Tambah acara' : 'Add event'}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <div>
           <label htmlFor="event-title" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-            Event Title *
+            {lang === 'id' ? 'Judul acara *' : 'Event Title *'}
           </label>
           <input
             id="event-title"
+            autoFocus
+            data-autofocus
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g. Midterm Exam, Problem Set 3 Due, Club Meeting"
-            style={{ width: '100%' }}
+            aria-invalid={titleError ? 'true' : 'false'}
+            aria-describedby={titleError ? 'event-title-error' : undefined}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              if (titleError && e.target.value.trim()) setTitleError('');
+            }}
+            placeholder={lang === 'id' ? 'Contoh: Ujian Tengah Semester, Rapat UKM, Belajar Bersama' : 'e.g. Midterm Exam, Problem Set 3 Due, Club Meeting'}
+            style={{
+              width: '100%',
+              borderColor: titleError ? 'var(--error)' : undefined,
+              boxShadow: titleError ? '0 0 0 2px var(--error-container)' : undefined,
+            }}
             required
           />
+          {titleError && (
+            <div id="event-title-error" role="alert" style={{ color: 'var(--error)', fontSize: '0.75rem', marginTop: '0.375rem', fontWeight: 500 }}>
+              {titleError}
+            </div>
+          )}
         </div>
 
         <div>
           <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-            Event Category
+            {lang === 'id' ? 'Kategori acara' : 'Event Category'}
           </label>
           <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap' }}>
-            {(['exam', 'deadline', 'personal', 'other'] as EventType[]).map((t) => (
-              <button
-                key={t}
-                type="button"
-                className={type === t ? 'chip active' : 'chip'}
-                onClick={() => setType(t)}
-              >
-                {t.charAt(0).toUpperCase() + t.slice(1)}
-              </button>
-            ))}
+            {(['exam', 'deadline', 'personal', 'other'] as EventType[]).map((t) => {
+              const chipLabel = lang === 'id'
+                ? (t === 'exam' ? 'Ujian' : t === 'deadline' ? 'Tenggat' : t === 'personal' ? 'Pribadi' : 'Lainnya')
+                : (t.charAt(0).toUpperCase() + t.slice(1));
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  className={type === t ? 'chip active' : 'chip'}
+                  onClick={() => setType(t)}
+                >
+                  {chipLabel}
+                </button>
+              );
+            })}
           </div>
         </div>
 
         <div>
           <label htmlFor="event-date" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-            Date *
+            {lang === 'id' ? 'Tanggal *' : 'Date *'}
           </label>
           <input
             id="event-date"
@@ -1361,7 +1444,7 @@ function AddEventModal({
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
           <div>
             <label htmlFor="event-start-time" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-              Start Time
+              {lang === 'id' ? 'Waktu Mulai' : 'Start Time'}
             </label>
             <input
               id="event-start-time"
@@ -1373,7 +1456,7 @@ function AddEventModal({
           </div>
           <div>
             <label htmlFor="event-end-time" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-              End Time
+              {lang === 'id' ? 'Waktu Selesai' : 'End Time'}
             </label>
             <input
               id="event-end-time"
@@ -1387,10 +1470,10 @@ function AddEventModal({
 
         <div>
           <label htmlFor="event-course" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-            Associated Course (Optional)
+            {lang === 'id' ? 'Mata Kuliah Terkait (Opsional)' : 'Associated Course (Optional)'}
           </label>
           <select id="event-course" value={courseId} onChange={(e) => setCourseId(e.target.value)} style={{ width: '100%' }}>
-            <option value="">None / General</option>
+            <option value="">{lang === 'id' ? 'Tidak Ada / Umum' : 'None / General'}</option>
             {courses.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.code} – {c.name}
@@ -1401,27 +1484,27 @@ function AddEventModal({
 
         <div>
           <label htmlFor="event-notes" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-            Notes & Location
+            {lang === 'id' ? 'Catatan & Lokasi' : 'Notes & Location'}
           </label>
           <textarea
             id="event-notes"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Room number, materials needed, notes…"
+            placeholder={lang === 'id' ? 'Ruang kelas, materi persiapan, catatan…' : 'Room number, materials needed, notes…'}
             rows={3}
             style={{ width: '100%', resize: 'vertical' }}
           />
         </div>
 
         <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', paddingTop: '0.5rem' }}>
-          <button type="button" className="btn-outline" onClick={onClose}>
-            Cancel
+          <button type="button" className="btn-outline" onClick={handleClose} disabled={isSubmitting}>
+            {lang === 'id' ? 'Batal' : 'Cancel'}
           </button>
-          <button type="button" className="btn-primary" onClick={handleSave}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <button type="button" className="btn-primary" onClick={handleSave} disabled={isSubmitting}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
               <polyline points="20 6 9 17 4 12" />
             </svg>
-            Save Event
+            {isSubmitting ? (lang === 'id' ? 'Menyimpan…' : 'Saving…') : (lang === 'id' ? 'Simpan' : 'Save Event')}
           </button>
         </div>
       </div>

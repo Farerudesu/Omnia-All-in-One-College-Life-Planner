@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { CategoryIndicator } from './CategoryIndicator';
 import { OmniaLogo } from './OmniaLogo';
 import { PanelLeft, Plus, Calendar, CheckSquare, Clock, DollarSign, Settings, Eye, EyeOff, Search, LogOut, Sparkles } from 'lucide-react';
@@ -9,15 +9,9 @@ import type { CategoryKey } from '../lib/dataService';
 import { Modal } from './Modal';
 import type { EventType } from '../types';
 import { useAuth } from '../lib/AuthContext';
-
-const navItems = [
-  { to: '/schedule', label: 'Schedule', icon: Clock },
-  { to: '/assignments', label: 'Assignments', icon: CheckSquare },
-  { to: '/calendar', label: 'Calendar', icon: Calendar },
-  { to: '/finance', label: 'Finance', icon: DollarSign },
-  { to: '/ask-omni', label: 'Ask Omni', icon: Sparkles },
-  { to: '/settings', label: 'Settings', icon: Settings },
-];
+import { useLanguage } from '../lib/useLanguage';
+import { translations } from '../lib/i18n';
+import { formatDateShort, formatTime12 } from '../lib/dateUtils';
 
 const categories = [
   { key: 'classes' as CategoryKey, label: 'Classes', shape: 'square' as const, color: 'var(--classes)' },
@@ -28,8 +22,22 @@ const categories = [
 
 export function Sidebar({ isCollapsed, onToggle }: { isCollapsed?: boolean; onToggle?: () => void }) {
   const navigate = useNavigate();
-  const events = useData(() => ds.getEvents());
-  const assignments = useData(() => ds.getAssignments());
+  const location = useLocation();
+  const lang = useLanguage();
+  const t = translations[lang].nav;
+  const isScheduleOrCalendar = location.pathname.startsWith('/schedule') || location.pathname.startsWith('/calendar');
+
+  const navItems = [
+    { to: '/schedule', label: t.schedule, icon: Clock },
+    { to: '/assignments', label: t.assignments, icon: CheckSquare },
+    { to: '/calendar', label: t.calendar, icon: Calendar },
+    { to: '/finance', label: t.finance, icon: DollarSign },
+    { to: '/ask-omni', label: t.askOmni, icon: Sparkles },
+    { to: '/settings', label: t.settings, icon: Settings },
+  ];
+
+  const events = useData(ds.getEvents);
+  const assignments = useData(ds.getAssignments);
   const categoryVisibility = useData(ds.getCategoryVisibility);
   const profile = useData(ds.getProfile);
   const settings = useData(ds.getSettings);
@@ -112,28 +120,30 @@ export function Sidebar({ isCollapsed, onToggle }: { isCollapsed?: boolean; onTo
           )}
         </div>
 
-        {/* Primary Action Button: Active & Functional */}
-        <div style={{ padding: '0.875rem 0.875rem 0.5rem', display: 'flex', justifyContent: 'center' }}>
-          {isCollapsed ? (
-            <button
-              className="btn-primary"
-              style={{ width: 36, height: 36, padding: 0, borderRadius: 8 }}
-              aria-label="Create event"
-              onClick={() => setShowQuickAdd(true)}
-            >
-              <Plus size={18} />
-            </button>
-          ) : (
-            <button
-              className="btn-primary"
-              style={{ width: '100%', justifyContent: 'center', borderRadius: 8 }}
-              onClick={() => setShowQuickAdd(true)}
-            >
-              <Plus size={16} />
-              <span>Create event</span>
-            </button>
-          )}
-        </div>
+        {/* Primary Action Button: Active & Functional (hidden on schedule/calendar to avoid redundant add buttons) */}
+        {!isScheduleOrCalendar && (
+          <div style={{ padding: '0.875rem 0.875rem 0.5rem', display: 'flex', justifyContent: 'center' }}>
+            {isCollapsed ? (
+              <button
+                className="btn-primary"
+                style={{ width: 36, height: 36, padding: 0, borderRadius: 8 }}
+                aria-label={lang === 'id' ? 'Tambah acara' : 'Create event'}
+                onClick={() => setShowQuickAdd(true)}
+              >
+                <Plus size={18} />
+              </button>
+            ) : (
+              <button
+                className="btn-primary"
+                style={{ width: '100%', justifyContent: 'center', borderRadius: 8 }}
+                onClick={() => setShowQuickAdd(true)}
+              >
+                <Plus size={16} />
+                <span>{lang === 'id' ? 'Tambah acara' : 'Create event'}</span>
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Navigation list */}
         <nav style={{ padding: '0.5rem 0.625rem', display: 'flex', flexDirection: 'column', gap: '0.125rem' }}>
@@ -186,17 +196,24 @@ export function Sidebar({ isCollapsed, onToggle }: { isCollapsed?: boolean; onTo
                   fontWeight: 600,
                   color: 'var(--on-surface-variant)',
                 }}>
-                  Calendars
+                  {lang === 'id' ? 'Kalender' : 'Calendars'}
                 </span>
               </div>
               {categories.map((cat) => {
                 const isVisible = categoryVisibility[cat.key] !== false;
+                const catLabel = cat.key === 'classes'
+                  ? (lang === 'id' ? 'Kelas' : 'Classes')
+                  : cat.key === 'exams'
+                  ? (lang === 'id' ? 'Ujian' : 'Exams')
+                  : cat.key === 'deadlines'
+                  ? (lang === 'id' ? 'Tenggat' : 'Deadlines')
+                  : (lang === 'id' ? 'Pribadi' : 'Personal');
                 return (
                   <button
                     key={cat.key}
                     type="button"
                     onClick={() => ds.toggleCategoryVisibility(cat.key)}
-                    title={isVisible ? `Hide ${cat.label}` : `Show ${cat.label}`}
+                    title={isVisible ? (lang === 'id' ? `Sembunyikan ${catLabel}` : `Hide ${catLabel}`) : (lang === 'id' ? `Tampilkan ${catLabel}` : `Show ${catLabel}`)}
                     style={{
                       width: '100%',
                       display: 'flex',
@@ -226,7 +243,7 @@ export function Sidebar({ isCollapsed, onToggle }: { isCollapsed?: boolean; onTo
                       textDecoration: isVisible ? 'none' : 'line-through',
                       fontWeight: isVisible ? 500 : 400,
                     }}>
-                      {cat.label}
+                      {catLabel}
                     </span>
                     {isVisible ? (
                       <Eye size={14} color="var(--outline)" />
@@ -255,7 +272,7 @@ export function Sidebar({ isCollapsed, onToggle }: { isCollapsed?: boolean; onTo
                   fontWeight: 600,
                   color: 'var(--on-surface-variant)',
                 }}>
-                  Upcoming & Pinned
+                  {lang === 'id' ? 'Mendatang & Disematkan' : 'Upcoming & Pinned'}
                 </span>
               </div>
 
@@ -284,19 +301,29 @@ export function Sidebar({ isCollapsed, onToggle }: { isCollapsed?: boolean; onTo
                       textTransform: 'uppercase',
                       letterSpacing: '0.6px',
                     }}>
-                      Next up
+                      {lang === 'id' ? 'Selanjutnya' : 'Next up'}
                     </span>
                   </div>
                   <div style={{ fontWeight: 600, fontSize: '0.8125rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {ev.title}
                   </div>
                   <div className="tabular-nums" style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>
-                    {new Date(ev.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}{ev.startTime ? ` · ${ev.startTime}` : ''}
+                    {formatDateShort(new Date(ev.date))}{ev.startTime ? ` · ${formatTime12(ev.startTime)}` : ''}
                   </div>
                 </div>
               )) : (
-                <div style={{ padding: '0.5rem', fontSize: '0.8125rem', color: 'var(--on-surface-variant)' }}>
-                  No upcoming events
+                <div style={{ padding: '0.75rem 0.5rem', textAlign: 'center', background: 'var(--surface-container-lowest)', borderRadius: 8, border: '1px dashed var(--outline-variant)', marginBottom: '0.5rem' }}>
+                  <Calendar size={18} style={{ color: 'var(--on-surface-variant)', opacity: 0.6, margin: '0 auto 0.25rem', display: 'block' }} />
+                  <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', marginBottom: '0.375rem' }}>
+                    {lang === 'id' ? 'Belum ada acara mendatang' : 'No upcoming events'}
+                  </div>
+                  <button
+                    onClick={() => setShowQuickAdd(true)}
+                    className="btn-ghost"
+                    style={{ fontSize: '0.6875rem', padding: '0.2rem 0.5rem', color: 'var(--primary)', fontWeight: 600, width: '100%', justifyContent: 'center' }}
+                  >
+                    + {lang === 'id' ? 'Tambah acara' : 'Add event'}
+                  </button>
                 </div>
               )}
 
@@ -324,14 +351,14 @@ export function Sidebar({ isCollapsed, onToggle }: { isCollapsed?: boolean; onTo
                       textTransform: 'uppercase',
                       letterSpacing: '0.6px',
                     }}>
-                      Pinned task
+                      {lang === 'id' ? 'Tugas disematkan' : 'Pinned task'}
                     </span>
                   </div>
                   <div style={{ fontWeight: 600, fontSize: '0.8125rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {a.title}
                   </div>
                   <div className="tabular-nums" style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>
-                    Due {new Date(a.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    {lang === 'id' ? 'Tenggat ' : 'Due '}{formatDateShort(new Date(a.dueDate))}
                   </div>
                 </div>
               ))}
@@ -451,6 +478,7 @@ export function Sidebar({ isCollapsed, onToggle }: { isCollapsed?: boolean; onTo
 
 // ─── Quick Add Event/Task Modal ───
 function QuickAddModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const lang = useLanguage();
   const [tab, setTab] = useState<'event' | 'task'>('event');
   const [title, setTitle] = useState('');
   const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
@@ -479,36 +507,38 @@ function QuickAddModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Create New">
+    <Modal isOpen={isOpen} onClose={onClose} title={lang === 'id' ? 'Buat Baru' : 'Create New'}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <div style={{ display: 'flex', background: 'var(--surface-container-low)', padding: 4, borderRadius: 8, gap: 4 }}>
+        <div role="group" aria-label="Item type" style={{ display: 'flex', background: 'var(--surface-container-low)', padding: 4, borderRadius: 8, gap: 4 }}>
           <button
             type="button"
             className={tab === 'event' ? 'chip active' : 'chip'}
+            aria-pressed={tab === 'event'}
             style={{ flex: 1, justifyContent: 'center' }}
             onClick={() => setTab('event')}
           >
-            Calendar Event
+            {lang === 'id' ? 'Acara Kalender' : 'Calendar Event'}
           </button>
           <button
             type="button"
             className={tab === 'task' ? 'chip active' : 'chip'}
+            aria-pressed={tab === 'task'}
             style={{ flex: 1, justifyContent: 'center' }}
             onClick={() => setTab('task')}
           >
-            Assignment / Task
+            {lang === 'id' ? 'Tugas Kuliah' : 'Assignment / Task'}
           </button>
         </div>
 
         <div>
           <label htmlFor="quick-title" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-            Title
+            {lang === 'id' ? 'Judul' : 'Title'}
           </label>
           <input
             id="quick-title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder={tab === 'event' ? 'e.g. Study Group Session' : 'e.g. Problem Set 3'}
+            placeholder={lang === 'id' ? (tab === 'event' ? 'cth. Belajar Bersama' : 'cth. Tugas Mandiri 3') : (tab === 'event' ? 'e.g. Study Group Session' : 'e.g. Problem Set 3')}
             style={{ width: '100%' }}
             autoFocus
           />
@@ -516,20 +546,26 @@ function QuickAddModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
 
         {tab === 'event' && (
           <div>
-            <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-              Category
-            </label>
-            <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap' }}>
-              {(['exam', 'deadline', 'personal', 'other'] as EventType[]).map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  className={type === t ? 'chip active' : 'chip'}
-                  onClick={() => setType(t)}
-                >
-                  {t.charAt(0).toUpperCase() + t.slice(1)}
-                </button>
-              ))}
+            <div id="quick-category-label" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+              {lang === 'id' ? 'Kategori' : 'Category'}
+            </div>
+            <div role="group" aria-labelledby="quick-category-label" style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap' }}>
+              {(['exam', 'deadline', 'personal', 'other'] as EventType[]).map((t) => {
+                const chipLabel = lang === 'id'
+                  ? (t === 'exam' ? 'Ujian' : t === 'deadline' ? 'Tenggat' : t === 'personal' ? 'Pribadi' : 'Lainnya')
+                  : (t.charAt(0).toUpperCase() + t.slice(1));
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    className={type === t ? 'chip active' : 'chip'}
+                    aria-pressed={type === t}
+                    onClick={() => setType(t)}
+                  >
+                    {chipLabel}
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
@@ -537,7 +573,7 @@ function QuickAddModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
           <div>
             <label htmlFor="quick-date" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-              Date
+              {lang === 'id' ? 'Tanggal' : 'Date'}
             </label>
             <input
               id="quick-date"
@@ -549,7 +585,7 @@ function QuickAddModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
           </div>
           <div>
             <label htmlFor="quick-time" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-              Time
+              {lang === 'id' ? 'Waktu' : 'Time'}
             </label>
             <input
               id="quick-time"
@@ -563,10 +599,10 @@ function QuickAddModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.5rem' }}>
           <button type="button" className="btn-outline" onClick={onClose}>
-            Cancel
+            {lang === 'id' ? 'Batal' : 'Cancel'}
           </button>
           <button type="button" className="btn-primary" onClick={handleSave} disabled={!title.trim()}>
-            Create
+            {lang === 'id' ? 'Simpan' : 'Create'}
           </button>
         </div>
       </div>

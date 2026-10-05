@@ -1,17 +1,38 @@
 import { useState, useRef, useEffect } from 'react';
-import { Sparkles, Send, Paperclip, X, Briefcase, Calendar, PlusCircle, Check } from 'lucide-react';
+import {
+  Sparkles,
+  Send,
+  Paperclip,
+  X,
+  Calendar,
+  PlusCircle,
+  Check,
+  DollarSign,
+  CheckSquare,
+  AlertCircle,
+} from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { askOmni } from '../lib/askOmni';
-import type { ProposedCalendarEvent } from '../lib/askOmni';
 import * as ds from '../lib/dataService';
 import { getISODay, toDateString } from '../lib/dateUtils';
+import { formatCurrency } from '../lib/currency';
+import { useData } from '../lib/useData';
+import {
+  formatPrefilledSummary,
+  isConfirmationIntent,
+  type PrefilledData,
+} from '../lib/aiIntentParser';
+import { EXPENSE_CATEGORIES, normalizeTransactionCategory, type ExpenseCategory } from '../lib/categories';
+import { Modal } from '../components/Modal';
+import { useLanguage } from '../lib/useLanguage';
+import type { EventType, Priority } from '../types';
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   attachmentUrl?: string | null;
-  proposedEvent?: ProposedCalendarEvent;
+  prefilledData?: PrefilledData;
   actionStatus?: 'saved' | 'cancelled' | 'replaced';
   actionError?: string;
 }
@@ -23,11 +44,7 @@ interface ImageAttachment {
   name: string;
 }
 
-function getScheduleContext(message: string) {
-  if (!/\b(schedule|calendar|class(?:es)?|event|today|tomorrow|week|monday|tuesday|wednesday|thursday|friday|saturday|sunday|jadwal|besok|kuliah|january|february|march|april|may|june|july|august|september|october|november|december)\b/i.test(message)) {
-    return undefined;
-  }
-
+function getScheduleContext() {
   const today = new Date();
   const dates = Array.from({ length: 8 }, (_, offset) => {
     const date = new Date(today);
@@ -73,6 +90,21 @@ function getScheduleContext(message: string) {
     return [...classes, ...events];
   }).sort((a, b) => a.date.localeCompare(b.date) || (a.startTime || '').localeCompare(b.startTime || ''));
 
+  // Include assignments (tasks) context
+  const assignments = ds.getAssignments();
+  const tasksContext = assignments.map((a) => {
+    const course = a.courseId ? courses.get(a.courseId) : undefined;
+    return {
+      id: a.id,
+      title: a.title,
+      dueDate: a.dueDate,
+      course: course ? `${course.code} - ${course.name}` : undefined,
+      priority: a.priority,
+      status: a.status,
+      notes: a.notes,
+    };
+  });
+
   return {
     currentDate: firstDate,
     throughDate: lastDate,
@@ -82,16 +114,27 @@ function getScheduleContext(message: string) {
       weekday: date.toLocaleDateString('en-US', { weekday: 'long' }),
     })),
     items,
+    tasks: tasksContext,
   };
 }
 
 export function AskOmniPage() {
+  const lang = useLanguage();
+  const courses = useData(ds.getCourses);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [attachment, setAttachment] = useState<ImageAttachment | null>(null);
   const [requestError, setRequestError] = useState('');
-  const [savingEventId, setSavingEventId] = useState<string | null>(null);
+
+  // Prefilled Data Pop-up Modal State
+  const [prefilledModal, setPrefilledModal] = useState<{
+    data: PrefilledData;
+    messageId?: string;
+  } | null>(null);
+  const [isSavingPrefilled, setIsSavingPrefilled] = useState(false);
+  const [prefilledError, setPrefilledError] = useState('');
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
 
@@ -107,14 +150,30 @@ export function AskOmniPage() {
     if (!input.trim() && !attachment) return;
     if (isTyping) return;
 
+    const userText = input.trim();
+
+    // Check if the user is confirming a pending proposal (e.g. "tambahkan", "add", "oke", "ya")
+    if (isConfirmationIntent(userText)) {
+      const pendingMessage = messages.slice().reverse().find((m) => m.prefilledData && m.actionStatus !== 'saved');
+      if (pendingMessage?.prefilledData) {
+        setPrefilledModal({
+          data: { ...pendingMessage.prefilledData },
+          messageId: pendingMessage.id,
+        });
+        setPrefilledError('');
+        setInput('');
+        return;
+      }
+    }
+
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: input.trim(),
+      content: userText,
       attachmentUrl: attachment?.dataUrl,
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setInput('');
     const sentAttachment = attachment;
     setAttachment(null);
@@ -124,8 +183,8 @@ export function AskOmniPage() {
     try {
       const history = messages.slice(-12).map((item) => ({
         role: item.role,
-        content: item.proposedEvent && !item.actionStatus
-          ? `${item.content}\nPending event proposal (not saved): ${JSON.stringify(item.proposedEvent)}`
+        content: item.actionStatus === 'saved' && item.prefilledData
+          ? `${item.content}\n[Saved: ${item.prefilledData.type}]`
           : item.content,
       }));
       const response = await askOmni({
@@ -133,24 +192,73 @@ export function AskOmniPage() {
         history,
         imageBase64: sentAttachment?.imageBase64,
         mimeType: sentAttachment?.mimeType,
-        scheduleContext: getScheduleContext([...history.map((item) => item.content), userMessage.content].join('\n')),
+        scheduleContext: getScheduleContext(),
       });
+
+      let aiPrefilled: PrefilledData | undefined = undefined;
+      if (response.proposedAction) {
+        // Map proposedAction to PrefilledData
+        const action = response.proposedAction;
+        if (action.type === 'event') {
+          aiPrefilled = {
+            type: 'event',
+            title: action.title,
+            date: action.date,
+            startTime: action.startTime,
+            endTime: action.endTime,
+            location: action.location,
+            notes: action.notes,
+            eventType: 'personal',
+          };
+        } else if (action.type === 'task') {
+          aiPrefilled = {
+            type: 'task',
+            title: action.title,
+            date: action.date,
+            dueTime: action.dueTime,
+            courseId: action.courseId,
+            priority: action.priority,
+            notes: action.notes,
+          };
+        } else if (action.type === 'expense') {
+          aiPrefilled = {
+            type: 'expense',
+            title: action.title,
+            date: action.date,
+            amount: action.amount,
+            category: (action.category ? normalizeTransactionCategory(action.category) : 'Food & Groceries') as ExpenseCategory,
+            paymentMethod: action.paymentMethod || 'QRIS',
+            notes: action.notes,
+          };
+        }
+      }
+
+      // Only popup if AI returned a complete proposal
+      if (aiPrefilled) {
+        setPrefilledModal({
+          data: { ...aiPrefilled },
+          messageId: (Date.now() + 1).toString(),
+        });
+        setPrefilledError('');
+      }
+
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: response.reply,
-        proposedEvent: response.proposedEvent,
+        prefilledData: aiPrefilled || undefined,
       };
+
       setMessages((prev) => [
-        ...(response.proposedEvent
-          ? prev.map((item) => item.proposedEvent && !item.actionStatus ? { ...item, actionStatus: 'replaced' as const } : item)
+        ...(aiPrefilled
+          ? prev.map((item) => item.prefilledData && !item.actionStatus ? { ...item, actionStatus: 'replaced' as const } : item)
           : prev),
         aiMessage,
       ]);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to reach Omni. Try again.';
       setRequestError(message);
-      setMessages(prev => [...prev, {
+      setMessages((prev) => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: 'Omni could not reply just now. Please try again in a moment.',
@@ -160,58 +268,96 @@ export function AskOmniPage() {
     }
   };
 
-  const updateProposedEvent = (messageId: string, field: keyof ProposedCalendarEvent, value: string) => {
-    setMessages((prev) => prev.map((item) => item.id === messageId && item.proposedEvent
-      ? { ...item, proposedEvent: { ...item.proposedEvent, [field]: value }, actionError: undefined }
-      : item));
-  };
+  // Confirm and save prefilled pop-up data to Omnia
+  const handleConfirmPrefilled = async () => {
+    if (!prefilledModal) return;
+    const { data, messageId } = prefilledModal;
 
-  const confirmEvent = async (messageId: string) => {
-    const message = messages.find((item) => item.id === messageId);
-    const event = message?.proposedEvent;
-    if (!event || message.actionStatus || savingEventId) return;
-    if (!event.title.trim() || !event.date || (event.endTime && !event.startTime) || (event.startTime && event.endTime && event.endTime <= event.startTime)) {
-      setMessages((prev) => prev.map((item) => item.id === messageId
-        ? { ...item, actionError: 'Check the title, date, and time range before saving.' }
-        : item));
+    if (!data.title.trim()) {
+      setPrefilledError('Please provide a title or description.');
+      return;
+    }
+    if (!data.date) {
+      setPrefilledError('Please select a valid date.');
+      return;
+    }
+    if (data.type === 'expense' && (!data.amount || data.amount <= 0)) {
+      setPrefilledError('Please enter an amount greater than $0.');
       return;
     }
 
-    setSavingEventId(messageId);
+    setPrefilledError('');
+    setIsSavingPrefilled(true);
+
     try {
-      const savedEvent = await ds.createEvent({
-        title: event.title.trim(),
-        date: event.date,
-        type: 'personal',
-        startTime: event.startTime || undefined,
-        endTime: event.endTime || undefined,
-        location: event.location?.trim() || undefined,
-        notes: event.notes?.trim() || undefined,
-      });
-      const dateLabel = new Date(`${savedEvent.date}T12:00:00`).toLocaleDateString(undefined, {
-        weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
-      });
+      let confirmationText = '';
+
+      if (data.type === 'event') {
+        const savedEvent = await ds.createEvent({
+          title: data.title.trim(),
+          date: data.date,
+          type: data.eventType || 'personal',
+          startTime: data.startTime || undefined,
+          endTime: data.endTime || undefined,
+          location: data.location?.trim() || undefined,
+          notes: data.notes?.trim() || undefined,
+          courseId: data.courseId,
+        });
+        const dateLabel = new Date(`${savedEvent.date}T12:00:00`).toLocaleDateString(undefined, {
+          weekday: 'long', month: 'short', day: 'numeric',
+        });
+        confirmationText = `Added **${savedEvent.title}** to your schedule for ${dateLabel}${savedEvent.startTime ? ` at ${savedEvent.startTime}${savedEvent.endTime ? `–${savedEvent.endTime}` : ''}` : ''}.`;
+      } else if (data.type === 'task') {
+        const dueTime = data.dueTime || (data.startTime ? data.startTime : '23:59');
+        const savedTask = ds.addAssignment({
+          title: data.title.trim(),
+          dueDate: `${data.date}T${dueTime}`,
+          courseId: data.courseId,
+          priority: data.priority || 'medium',
+          status: 'not-started',
+          notes: data.notes?.trim() || undefined,
+        });
+        confirmationText = `Added assignment **${savedTask.title}** due on ${data.date}${dueTime ? ` at ${dueTime}` : ''}.`;
+      } else if (data.type === 'expense') {
+        const savedTxn = ds.addTransaction({
+          merchant: data.title.trim() || 'Campus Expense',
+          amount: Number(data.amount) || 0,
+          type: 'expense',
+          category: data.category || 'Other Discretionary',
+          date: data.date,
+          paymentMethod: data.paymentMethod || 'QRIS',
+          notes: data.notes?.trim() || undefined,
+        });
+        const currency = ds.getSettings()?.currency || 'IDR';
+        confirmationText = `Logged expense **${formatCurrency(savedTxn.amount, currency)}** for "${savedTxn.merchant}" under ${savedTxn.category} on ${savedTxn.date}.`;
+      }
+
+      // Mark the relevant message as saved
+      if (messageId) {
+        setMessages((prev) => prev.map((item) =>
+          item.id === messageId || item.prefilledData?.title === data.title
+            ? { ...item, actionStatus: 'saved' as const }
+            : item
+        ));
+      }
+
+      // Add cheerful confirmation assistant message
       setMessages((prev) => [
-        ...prev.map((item) => item.id === messageId ? { ...item, actionStatus: 'saved' as const, actionError: undefined } : item),
+        ...prev,
         {
           id: (Date.now() + 2).toString(),
           role: 'assistant',
-          content: `Added ${savedEvent.title} to your schedule for ${dateLabel}${savedEvent.startTime ? ` at ${savedEvent.startTime}${savedEvent.endTime ? `–${savedEvent.endTime}` : ''}` : ''}.`,
+          content: `✓ ${confirmationText}`,
         },
       ]);
-    } catch (error) {
-      const messageText = error instanceof Error ? error.message : 'Unable to save this event.';
-      setMessages((prev) => prev.map((item) => item.id === messageId ? { ...item, actionError: messageText } : item));
-    } finally {
-      setSavingEventId(null);
-    }
-  };
 
-  const cancelEvent = (messageId: string) => {
-    setMessages((prev) => [
-      ...prev.map((item) => item.id === messageId ? { ...item, actionStatus: 'cancelled' as const } : item),
-      { id: (Date.now() + 3).toString(), role: 'assistant', content: 'Canceled. Nothing was saved.' },
-    ]);
+      // Close modal
+      setPrefilledModal(null);
+    } catch (err) {
+      setPrefilledError(err instanceof Error ? err.message : 'Unable to save. Please check fields and try again.');
+    } finally {
+      setIsSavingPrefilled(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -257,10 +403,14 @@ export function AskOmniPage() {
     reader.readAsDataURL(file);
   };
 
-  const suggestions = [
-    { label: 'Log an expense', icon: <Briefcase size={16} /> },
-    { label: "What's my schedule tomorrow?", icon: <Calendar size={16} /> },
-    { label: 'Add an assignment', icon: <PlusCircle size={16} /> },
+  const suggestions = lang === 'id' ? [
+    { label: 'Catat pengeluaran: 15rb beli makan siang di kantin', icon: <DollarSign size={16} /> },
+    { label: 'Jadwalkan: Belajar kelompok kalkulus besok jam 3 sore di perpus', icon: <Calendar size={16} /> },
+    { label: 'Tambah tugas: Laporan praktikum jaringan dikumpulkan Jumat jam 23:59', icon: <PlusCircle size={16} /> },
+  ] : [
+    { label: 'Log expense: $12 for lunch at campus diner', icon: <DollarSign size={16} /> },
+    { label: 'Add event: Math study group tomorrow 3pm in Library', icon: <Calendar size={16} /> },
+    { label: 'Add task: CS101 problem set due Friday at 11:59pm', icon: <PlusCircle size={16} /> },
   ];
 
   const handleSuggestionClick = (text: string) => {
@@ -268,104 +418,122 @@ export function AskOmniPage() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--surface-container-low)' }}>
-      {/* Header */}
-      <div style={{
-        padding: '1.5rem 2rem',
+    <div className="ask-omni-page" style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--surface-container-low)' }}>
+      {/* Header — desktop only */}
+      <div className="ask-omni-header hidden-mobile" style={{
+        padding: '1.25rem 2rem',
         borderBottom: '1px solid var(--outline-variant)',
         background: 'var(--surface-container-lowest)',
         display: 'flex',
         alignItems: 'center',
-        gap: '0.75rem'
+        justifyContent: 'space-between',
+        gap: '0.75rem',
       }}>
-        <div style={{
-          background: 'var(--primary-container)',
-          color: 'var(--primary)',
-          width: 40,
-          height: 40,
-          borderRadius: 12,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          <Sparkles size={20} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{
+            background: 'var(--primary-container)',
+            color: 'var(--primary)',
+            width: 40,
+            height: 40,
+            borderRadius: 12,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <Sparkles size={20} />
+          </div>
+          <div>
+            <h1 style={{ fontSize: '1.375rem', fontWeight: 700, color: 'var(--on-surface)', margin: 0 }}>
+              {lang === 'id' ? 'Tanya Omni' : 'Ask Omni'}
+            </h1>
+            <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--on-surface-variant)' }}>
+              {lang === 'id'
+                ? 'Ketik secara natural untuk mengatur jadwal, menambah tugas, atau mencatat pengeluaran.'
+                : 'Type naturally to schedule classes, add tasks, or log expenses with pre-filled pop-ups.'}
+            </p>
+          </div>
         </div>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--on-surface)', margin: 0 }}>Ask Omni</h1>
       </div>
 
       {/* Chat Area */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem 2rem', display: 'flex', justifyContent: 'center' }}>
-        <div style={{ width: '100%', maxWidth: 768, display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      <div className="ask-omni-chat-area" style={{ flex: 1, overflowY: 'auto', padding: '1.5rem 1rem', display: 'flex', justifyContent: 'center' }}>
+        <div style={{ width: '100%', maxWidth: 768, display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {messages.length === 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, marginTop: '4rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, marginTop: '3rem', padding: '0 1rem' }}>
               <div style={{
-                width: 80, height: 80, borderRadius: '50%', background: 'var(--primary)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem',
-                color: 'white'
+                width: 72, height: 72, borderRadius: '50%', background: 'var(--primary)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.25rem',
+                color: 'white', boxShadow: 'var(--shadow-sm)',
               }}>
-                <Sparkles size={40} />
+                <Sparkles size={36} />
               </div>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--on-surface)', marginBottom: '0.5rem', textAlign: 'center' }}>
-                Ask me anything about your schedule, money, or tasks
+              <h2 style={{ fontSize: '1.375rem', fontWeight: 700, color: 'var(--on-surface)', marginBottom: '0.5rem', textAlign: 'center' }}>
+                {lang === 'id' ? 'Tanyakan atau catat apa saja untuk perkuliahanmu' : 'Ask me to add anything to your college planner'}
               </h2>
-              <p style={{ color: 'var(--on-surface-variant)', marginBottom: '2.5rem', textAlign: 'center' }}>
-                I can help you organize your life. Try one of these:
+              <p style={{ color: 'var(--on-surface-variant)', marginBottom: '2rem', textAlign: 'center', maxWidth: 480, fontSize: '0.875rem' }}>
+                {lang === 'id'
+                  ? 'Beri tahu saya jadwal kuliah, tugas yang perlu dikerjakan, atau pengeluaran harian. Saya akan siapkan konfirmasinya langsung!'
+                  : 'Tell me what to schedule, assignments to track, or expenses to log. I’ll prefill a pop-up confirmation so you can review and click Okay!'}
               </p>
-              
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', justifyContent: 'center' }}>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem', width: '100%', maxWidth: 460 }}>
                 {suggestions.map((s, idx) => (
                   <button
                     key={idx}
                     type="button"
                     onClick={() => handleSuggestionClick(s.label)}
                     style={{
-                      display: 'flex', alignItems: 'center', gap: '0.5rem',
-                      padding: '0.625rem 1rem', borderRadius: 999,
+                      display: 'flex', alignItems: 'center', gap: '0.75rem',
+                      padding: '0.75rem 1rem', borderRadius: 12,
                       border: '1px solid var(--outline-variant)',
                       background: 'var(--surface-container-lowest)',
                       color: 'var(--on-surface)',
                       fontSize: '0.875rem', fontWeight: 600,
-                      cursor: 'pointer', transition: 'all 0.2s'
+                      cursor: 'pointer', transition: 'background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease',
+                      textAlign: 'left',
+                      boxShadow: 'var(--shadow-xs)',
                     }}
                   >
-                    <span style={{ color: 'var(--on-surface-variant)' }}>{s.icon}</span>
-                    {s.label}
+                    <span style={{ color: 'var(--primary)', flexShrink: 0 }}>{s.icon}</span>
+                    <span style={{ flex: 1 }}>{s.label}</span>
                   </button>
                 ))}
               </div>
             </div>
           ) : (
             <>
-              {messages.map(msg => (
+              {messages.map((msg) => (
                 <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
                   {msg.role === 'assistant' && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.375rem', paddingLeft: '0.5rem' }}>
-                       <div style={{
-                          width: 24, height: 24, borderRadius: '50%', background: 'var(--primary)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white'
-                       }}>
-                         <Sparkles size={12} />
-                       </div>
-                       <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--on-surface-variant)' }}>Omni</span>
+                      <div style={{
+                        width: 24, height: 24, borderRadius: '50%', background: 'var(--primary)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white',
+                      }}>
+                        <Sparkles size={12} />
+                      </div>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--on-surface-variant)' }}>Omni</span>
                     </div>
                   )}
+
+                  {/* Message Bubble */}
                   <div style={{
-                    maxWidth: '80%',
-                    padding: '1rem',
-                    borderRadius: 20,
-                    borderTopLeftRadius: msg.role === 'assistant' ? 4 : 20,
-                    borderBottomRightRadius: msg.role === 'user' ? 4 : 20,
+                    maxWidth: '85%',
+                    padding: '0.875rem 1.125rem',
+                    borderRadius: 18,
+                    borderTopLeftRadius: msg.role === 'assistant' ? 4 : 18,
+                    borderBottomRightRadius: msg.role === 'user' ? 4 : 18,
                     background: msg.role === 'user' ? 'var(--primary)' : 'var(--surface-container-lowest)',
                     color: msg.role === 'user' ? 'white' : 'var(--on-surface)',
                     border: msg.role === 'assistant' ? '1px solid var(--outline-variant)' : 'none',
-                    boxShadow: msg.role === 'assistant' ? '0 2px 8px rgba(0,0,0,0.02)' : 'none'
+                    boxShadow: msg.role === 'assistant' ? 'var(--shadow-xs)' : 'none',
                   }}>
                     {msg.attachmentUrl && (
-                       <img 
-                         src={msg.attachmentUrl} 
-                         alt="Attachment" 
-                         style={{ width: '100%', maxWidth: 300, borderRadius: 12, marginBottom: msg.content ? '0.75rem' : 0 }} 
-                       />
+                      <img
+                        src={msg.attachmentUrl}
+                        alt="Attachment"
+                        style={{ width: '100%', maxWidth: 300, borderRadius: 12, marginBottom: msg.content ? '0.75rem' : 0 }}
+                      />
                     )}
                     {msg.content && (msg.role === 'assistant' ? (
                       <div className="omni-markdown">
@@ -375,83 +543,111 @@ export function AskOmniPage() {
                       <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.5, fontSize: '0.9375rem' }}>{msg.content}</div>
                     ))}
                   </div>
-                  {msg.proposedEvent && (
+
+                  {/* Pre-filled Data Card & Pop-up Trigger */}
+                  {msg.prefilledData && (
                     <div style={{
-                      width: 'min(80%, 420px)',
-                      marginTop: '0.5rem',
-                      padding: '0.875rem',
+                      width: 'min(90%, 460px)',
+                      marginTop: '0.625rem',
+                      padding: '0.875rem 1rem',
+                      borderRadius: 14,
                       border: '1px solid var(--outline-variant)',
-                      borderRadius: 10,
                       background: 'var(--surface-container-lowest)',
+                      boxShadow: 'var(--shadow-xs)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.5rem',
                     }}>
-                      {msg.actionStatus ? (
-                        <div style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)' }}>
-                          {msg.actionStatus === 'saved' ? 'Event saved to your schedule.' : msg.actionStatus === 'cancelled' ? 'Event canceled.' : 'This proposal was replaced.'}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                        <span style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.375rem',
+                          fontSize: '0.6875rem',
+                          fontWeight: 700,
+                          color: 'var(--primary)',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.04em',
+                        }}>
+                          {msg.prefilledData.type === 'expense' ? <DollarSign size={13} /> : msg.prefilledData.type === 'task' ? <CheckSquare size={13} /> : <Calendar size={13} />}
+                          Prefilled {msg.prefilledData.type === 'expense' ? 'Expense' : msg.prefilledData.type === 'task' ? 'Assignment' : 'Schedule Event'}
+                        </span>
+                        {msg.actionStatus === 'saved' ? (
+                          <span style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.25rem',
+                            fontSize: '0.6875rem',
+                            fontWeight: 700,
+                            color: 'var(--primary)',
+                            background: 'var(--primary-container)',
+                            padding: '0.2rem 0.5rem',
+                            borderRadius: 6,
+                          }}>
+                            <Check size={12} /> Saved to {msg.prefilledData.type === 'expense' ? 'Finance' : msg.prefilledData.type === 'task' ? 'Tasks' : 'Schedule'}
+                          </span>
+                        ) : (
+                          <span style={{ fontSize: '0.6875rem', color: 'var(--on-surface-variant)', fontWeight: 600 }}>
+                            Ready to confirm
+                          </span>
+                        )}
+                      </div>
+
+                      <div style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--on-surface)' }}>
+                        {msg.prefilledData.title}
+                      </div>
+
+                      <div style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)', lineHeight: 1.4 }}>
+                        {formatPrefilledSummary(msg.prefilledData)}
+                      </div>
+
+                      {msg.actionStatus !== 'saved' && (
+                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.375rem' }}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPrefilledModal({
+                                data: { ...msg.prefilledData! },
+                                messageId: msg.id,
+                              });
+                              setPrefilledError('');
+                            }}
+                            className="btn-primary"
+                            style={{
+                              fontSize: '0.8125rem',
+                              padding: '0.45rem 0.875rem',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.375rem',
+                            }}
+                          >
+                            <Sparkles size={14} />
+                            Open Pop-up & Confirm
+                          </button>
                         </div>
-                      ) : (
-                        <>
-                          <p style={{ marginBottom: '0.625rem', fontSize: '0.8125rem', color: 'var(--on-surface-variant)' }}>
-                            Review or edit the event. It will only be saved after you confirm.
-                          </p>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.5rem' }}>
-                            <label style={{ gridColumn: '1 / -1', fontSize: '0.75rem', fontWeight: 600 }}>
-                              Title
-                              <input aria-label="Event title" value={msg.proposedEvent.title} onChange={(event) => updateProposedEvent(msg.id, 'title', event.target.value)} style={{ display: 'block', width: '100%', marginTop: '0.25rem' }} />
-                            </label>
-                            <label style={{ fontSize: '0.75rem', fontWeight: 600 }}>
-                              Date
-                              <input type="date" aria-label="Event date" value={msg.proposedEvent.date} onChange={(event) => updateProposedEvent(msg.id, 'date', event.target.value)} style={{ display: 'block', width: '100%', marginTop: '0.25rem' }} />
-                            </label>
-                            <label style={{ fontSize: '0.75rem', fontWeight: 600 }}>
-                              Location
-                              <input aria-label="Event location" value={msg.proposedEvent.location || ''} onChange={(event) => updateProposedEvent(msg.id, 'location', event.target.value)} style={{ display: 'block', width: '100%', marginTop: '0.25rem' }} />
-                            </label>
-                            <label style={{ fontSize: '0.75rem', fontWeight: 600 }}>
-                              Start time
-                              <input type="time" aria-label="Event start time" value={msg.proposedEvent.startTime || ''} onChange={(event) => updateProposedEvent(msg.id, 'startTime', event.target.value)} style={{ display: 'block', width: '100%', marginTop: '0.25rem' }} />
-                            </label>
-                            <label style={{ fontSize: '0.75rem', fontWeight: 600 }}>
-                              End time
-                              <input type="time" aria-label="Event end time" value={msg.proposedEvent.endTime || ''} onChange={(event) => updateProposedEvent(msg.id, 'endTime', event.target.value)} style={{ display: 'block', width: '100%', marginTop: '0.25rem' }} />
-                            </label>
-                            <label style={{ gridColumn: '1 / -1', fontSize: '0.75rem', fontWeight: 600 }}>
-                              Note
-                              <input aria-label="Event note" value={msg.proposedEvent.notes || ''} onChange={(event) => updateProposedEvent(msg.id, 'notes', event.target.value)} style={{ display: 'block', width: '100%', marginTop: '0.25rem' }} />
-                            </label>
-                          </div>
-                          {msg.actionError && <p role="alert" style={{ marginTop: '0.5rem', color: 'var(--error)', fontSize: '0.75rem' }}>{msg.actionError}</p>}
-                          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
-                            <button type="button" onClick={() => void confirmEvent(msg.id)} disabled={savingEventId === msg.id} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', padding: '0.5rem 0.75rem', borderRadius: 6, background: 'var(--primary)', color: 'var(--on-primary)', fontSize: '0.8125rem', fontWeight: 600 }}>
-                              <Check size={15} aria-hidden="true" />
-                              {savingEventId === msg.id ? 'Saving…' : 'Confirm event'}
-                            </button>
-                            <button type="button" onClick={() => cancelEvent(msg.id)} disabled={savingEventId === msg.id} style={{ padding: '0.5rem 0.75rem', borderRadius: 6, border: '1px solid var(--outline-variant)', fontSize: '0.8125rem', fontWeight: 600 }}>
-                              Cancel
-                            </button>
-                          </div>
-                        </>
                       )}
                     </div>
                   )}
                 </div>
               ))}
+
               {isTyping && (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.375rem', paddingLeft: '0.5rem' }}>
-                       <div style={{
-                          width: 24, height: 24, borderRadius: '50%', background: 'var(--primary)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white'
-                       }}>
-                         <Sparkles size={12} />
-                       </div>
-                       <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--on-surface-variant)' }}>Omni</span>
+                    <div style={{
+                      width: 24, height: 24, borderRadius: '50%', background: 'var(--primary)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white',
+                    }}>
+                      <Sparkles size={12} />
+                    </div>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--on-surface-variant)' }}>Omni</span>
                   </div>
                   <div style={{
-                    padding: '1rem', borderRadius: 20, borderTopLeftRadius: 4,
+                    padding: '0.875rem 1.25rem', borderRadius: 18, borderTopLeftRadius: 4,
                     background: 'var(--surface-container-lowest)',
                     border: '1px solid var(--outline-variant)',
                     display: 'flex', gap: '0.375rem', alignItems: 'center',
-                    height: 48
+                    height: 44,
                   }}>
                     <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--on-surface-variant)', animation: 'blink 1.4s infinite both', animationDelay: '0s' }}></span>
                     <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--on-surface-variant)', animation: 'blink 1.4s infinite both', animationDelay: '0.2s' }}></span>
@@ -465,21 +661,25 @@ export function AskOmniPage() {
         </div>
       </div>
 
-      {/* Input Area */}
-      <div style={{
-        padding: '1.5rem',
-        background: 'var(--surface-container-lowest)',
-        borderTop: '1px solid var(--outline-variant)',
-        display: 'flex',
-        justifyContent: 'center'
-      }}>
+      {/* Input Composer Area */}
+      <div
+        className="ask-omni-composer"
+        style={{
+          padding: '1rem 1.5rem',
+          background: 'var(--surface-container-lowest)',
+          borderTop: '1px solid var(--outline-variant)',
+          display: 'flex',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
         <div style={{ width: '100%', maxWidth: 768, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {attachment && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--surface-container-low)', border: '1px solid var(--outline-variant)', padding: '0.5rem', borderRadius: 12, width: 'max-content' }}>
               <img src={attachment.dataUrl} alt="Attached preview" style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover' }} />
               <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface)' }}>{attachment.name}</div>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => setAttachment(null)}
                 aria-label="Remove attached image"
                 style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0.25rem', color: 'var(--on-surface-variant)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
@@ -488,20 +688,23 @@ export function AskOmniPage() {
               </button>
             </div>
           )}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            background: 'var(--surface-container-low)',
-            border: '1px solid var(--outline-variant)',
-            borderRadius: 999,
-            padding: '0.375rem 0.375rem 0.375rem 1rem',
-          }}>
+          <div
+            className="ask-omni-input-row"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              background: 'var(--surface-container-low)',
+              border: '1px solid var(--outline-variant)',
+              borderRadius: 999,
+              padding: '0.375rem 0.375rem 0.375rem 1rem',
+            }}
+          >
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               style={{
                 background: 'transparent', border: 'none', cursor: 'pointer', padding: '0.5rem',
-                color: 'var(--on-surface-variant)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                color: 'var(--on-surface-variant)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}
               title="Attach image"
               aria-label="Attach image"
@@ -522,7 +725,7 @@ export function AskOmniPage() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               disabled={isTyping}
-              placeholder="Message Omni..."
+              placeholder={lang === 'id' ? 'Contoh: Besok ada kuis 9 pagi, atau catat beli makan 15rb...' : 'e.g. Add math exam Monday 9am, or spent $15 on lunch...'}
               style={{
                 flex: 1,
                 background: 'transparent',
@@ -530,12 +733,12 @@ export function AskOmniPage() {
                 outline: 'none',
                 padding: '0.5rem 0.75rem',
                 fontSize: '0.9375rem',
-                color: 'var(--on-surface)'
+                color: 'var(--on-surface)',
               }}
             />
             <button
               type="button"
-              onClick={handleSend}
+              onClick={() => void handleSend()}
               disabled={isTyping || (!input.trim() && !attachment)}
               style={{
                 background: (input.trim() || attachment) ? 'var(--primary)' : 'var(--outline-variant)',
@@ -548,8 +751,8 @@ export function AskOmniPage() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: (input.trim() || attachment) ? 'pointer' : 'not-allowed',
-                transition: 'all 0.2s',
-                marginLeft: '0.5rem'
+                transition: 'background-color 0.2s ease, color 0.2s ease, transform 0.2s ease',
+                marginLeft: '0.5rem',
               }}
             >
               <Send size={18} style={{ transform: 'translateX(-1px) translateY(1px)' }} />
@@ -558,6 +761,320 @@ export function AskOmniPage() {
           {requestError && <div role="alert" style={{ color: 'var(--error)', fontSize: '0.8125rem', paddingLeft: '0.75rem' }}>{requestError}</div>}
         </div>
       </div>
+
+      {/* ─── Pre-filled Pop-up Modal ─── */}
+      {prefilledModal && (
+        <Modal
+          isOpen={!!prefilledModal}
+          onClose={() => setPrefilledModal(null)}
+          title={
+            prefilledModal.data.type === 'expense'
+              ? 'Log Campus Expense'
+              : prefilledModal.data.type === 'task'
+              ? 'Add Assignment / Task'
+              : 'Add Event to Schedule'
+          }
+          maxWidth="520px"
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {/* AI Notice Banner */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.625rem 0.875rem',
+              borderRadius: 8,
+              background: 'var(--primary-container)',
+              color: 'var(--on-primary-container)',
+              fontSize: '0.8125rem',
+              fontWeight: 500,
+            }}>
+              <Sparkles size={16} style={{ flexShrink: 0, color: 'var(--primary)' }} />
+              <span>
+                Omni prefilled these details from your message. You can adjust any fields and click <strong>Okay</strong> to confirm.
+              </span>
+            </div>
+
+            {/* Type Switcher Tabs */}
+            <div>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--on-surface-variant)', marginBottom: '0.375rem' }}>
+                Category Type
+              </label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.375rem', background: 'var(--surface-container)', padding: '0.25rem', borderRadius: 8 }}>
+                {[
+                  { id: 'event' as const, label: 'Schedule Event', icon: <Calendar size={14} /> },
+                  { id: 'task' as const, label: 'Task / HW', icon: <CheckSquare size={14} /> },
+                  { id: 'expense' as const, label: 'Expense', icon: <DollarSign size={14} /> },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setPrefilledModal((prev) => prev ? { ...prev, data: { ...prev.data, type: tab.id } } : null)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.375rem',
+                      padding: '0.45rem 0.5rem',
+                      borderRadius: 6,
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      border: 'none',
+                      cursor: 'pointer',
+                      background: prefilledModal.data.type === tab.id ? 'var(--surface-container-lowest)' : 'transparent',
+                      color: prefilledModal.data.type === tab.id ? 'var(--primary)' : 'var(--on-surface-variant)',
+                      boxShadow: prefilledModal.data.type === tab.id ? 'var(--shadow-xs)' : 'none',
+                      transition: 'background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease',
+                    }}
+                  >
+                    {tab.icon}
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Form Fields */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+              {/* Title */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '0.25rem' }}>
+                  {prefilledModal.data.type === 'expense' ? 'Description / Merchant *' : 'Title *'}
+                </label>
+                <input
+                  type="text"
+                  value={prefilledModal.data.title}
+                  onChange={(e) => setPrefilledModal((prev) => prev ? { ...prev, data: { ...prev.data, title: e.target.value } } : null)}
+                  placeholder={prefilledModal.data.type === 'expense' ? 'e.g. Lunch at Cafe' : 'e.g. CS101 Midterm Exam'}
+                  style={{ width: '100%', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              {/* Date & Time Row */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '0.25rem' }}>
+                    Date *
+                  </label>
+                  <input
+                    type="date"
+                    value={prefilledModal.data.date}
+                    onChange={(e) => setPrefilledModal((prev) => prev ? { ...prev, data: { ...prev.data, date: e.target.value } } : null)}
+                    style={{ width: '100%', boxSizing: 'border-box' }}
+                  />
+                </div>
+
+                {prefilledModal.data.type === 'expense' ? (
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '0.25rem' }}>
+                      {lang === 'id' ? 'Nominal (Rp) *' : 'Amount (Rp) *'}
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={prefilledModal.data.amount ?? ''}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value);
+                        setPrefilledModal((prev) => prev ? { ...prev, data: { ...prev.data, amount: isNaN(val) ? 0 : val } } : null);
+                      }}
+                      placeholder="0.00"
+                      style={{ width: '100%', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                ) : prefilledModal.data.type === 'task' ? (
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '0.25rem' }}>
+                      Due Time
+                    </label>
+                    <input
+                      type="time"
+                      value={prefilledModal.data.dueTime || prefilledModal.data.startTime || '23:59'}
+                      onChange={(e) => setPrefilledModal((prev) => prev ? { ...prev, data: { ...prev.data, dueTime: e.target.value } } : null)}
+                      style={{ width: '100%', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                ) : (
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '0.25rem' }}>
+                      Start Time
+                    </label>
+                    <input
+                      type="time"
+                      value={prefilledModal.data.startTime || ''}
+                      onChange={(e) => setPrefilledModal((prev) => prev ? { ...prev, data: { ...prev.data, startTime: e.target.value } } : null)}
+                      style={{ width: '100%', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Event Specific: End Time & Location */}
+              {prefilledModal.data.type === 'event' && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '0.25rem' }}>
+                      End Time
+                    </label>
+                    <input
+                      type="time"
+                      value={prefilledModal.data.endTime || ''}
+                      onChange={(e) => setPrefilledModal((prev) => prev ? { ...prev, data: { ...prev.data, endTime: e.target.value } } : null)}
+                      style={{ width: '100%', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '0.25rem' }}>
+                      Location
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Hall B302, Library"
+                      value={prefilledModal.data.location || ''}
+                      onChange={(e) => setPrefilledModal((prev) => prev ? { ...prev, data: { ...prev.data, location: e.target.value } } : null)}
+                      style={{ width: '100%', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Task / Expense Course or Category Selection */}
+              {prefilledModal.data.type === 'task' ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '0.25rem' }}>
+                      Course (Optional)
+                    </label>
+                    <select
+                      value={prefilledModal.data.courseId || ''}
+                      onChange={(e) => setPrefilledModal((prev) => prev ? { ...prev, data: { ...prev.data, courseId: e.target.value || undefined } } : null)}
+                      style={{ width: '100%', boxSizing: 'border-box' }}
+                    >
+                      <option value="">General (No Course)</option>
+                      {courses.map((c) => (
+                        <option key={c.id} value={c.id}>{c.code} – {c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '0.25rem' }}>
+                      Priority
+                    </label>
+                    <select
+                      value={prefilledModal.data.priority || 'medium'}
+                      onChange={(e) => setPrefilledModal((prev) => prev ? { ...prev, data: { ...prev.data, priority: e.target.value as Priority } } : null)}
+                      style={{ width: '100%', boxSizing: 'border-box' }}
+                    >
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                    </select>
+                  </div>
+                </div>
+              ) : prefilledModal.data.type === 'expense' ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '0.25rem' }}>
+                      Category
+                    </label>
+                    <select
+                      value={prefilledModal.data.category || 'Food & Groceries'}
+                      onChange={(e) => setPrefilledModal((prev) => prev ? { ...prev, data: { ...prev.data, category: e.target.value as PrefilledData['category'] } } : null)}
+                      style={{ width: '100%', boxSizing: 'border-box' }}
+                    >
+                      {EXPENSE_CATEGORIES.map((cat) => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '0.25rem' }}>
+                      {lang === 'id' ? 'Metode Pembayaran' : 'Payment Method'}
+                    </label>
+                    <select
+                      value={prefilledModal.data.paymentMethod || 'QRIS'}
+                      onChange={(e) => setPrefilledModal((prev) => prev ? { ...prev, data: { ...prev.data, paymentMethod: e.target.value } } : null)}
+                      style={{ width: '100%', boxSizing: 'border-box' }}
+                    >
+                      {ds.getPaymentMethods().map((pm) => (
+                        <option key={pm} value={pm}>{pm}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '0.25rem' }}>
+                    Event Type
+                  </label>
+                  <select
+                    value={prefilledModal.data.eventType || 'personal'}
+                    onChange={(e) => setPrefilledModal((prev) => prev ? { ...prev, data: { ...prev.data, eventType: e.target.value as EventType } } : null)}
+                    style={{ width: '100%', boxSizing: 'border-box' }}
+                  >
+                    <option value="personal">Personal</option>
+                    <option value="exam">Exam</option>
+                    <option value="deadline">Deadline</option>
+                    <option value="class">Class</option>
+                  </select>
+                </div>
+              )}
+
+              {/* Notes */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '0.25rem' }}>
+                  Notes (Optional)
+                </label>
+                <textarea
+                  rows={2}
+                  value={prefilledModal.data.notes || ''}
+                  onChange={(e) => setPrefilledModal((prev) => prev ? { ...prev, data: { ...prev.data, notes: e.target.value } } : null)}
+                  placeholder="Additional information..."
+                  style={{ width: '100%', boxSizing: 'border-box', resize: 'vertical' }}
+                />
+              </div>
+            </div>
+
+            {/* Error Message */}
+            {prefilledError && (
+              <div role="alert" style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', color: 'var(--error)', fontSize: '0.8125rem' }}>
+                <AlertCircle size={15} />
+                <span>{prefilledError}</span>
+              </div>
+            )}
+
+            {/* Action Buttons: Cancel and Okay */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem', paddingTop: '0.75rem', borderTop: '1px solid var(--outline-variant)' }}>
+              <button
+                type="button"
+                className="btn-outline"
+                onClick={() => setPrefilledModal(null)}
+                disabled={isSavingPrefilled}
+                style={{ padding: '0.5rem 1rem', minHeight: 40 }}
+              >
+                {lang === 'id' ? 'Batal' : 'Cancel'}
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => void handleConfirmPrefilled()}
+                disabled={isSavingPrefilled}
+                style={{
+                  padding: '0.5rem 1.25rem',
+                  minHeight: 40,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  fontWeight: 700,
+                }}
+              >
+                <Check size={16} aria-hidden="true" />
+                {isSavingPrefilled ? (lang === 'id' ? 'Menyimpan…' : 'Saving…') : (lang === 'id' ? 'Simpan' : 'Okay')}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

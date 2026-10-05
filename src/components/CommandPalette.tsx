@@ -259,9 +259,10 @@ export function CommandPalette({
         display: 'flex',
         alignItems: 'flex-start',
         justifyContent: 'center',
-        paddingTop: '10vh',
+        paddingTop: 'min(8vh, 1.5rem)',
         paddingLeft: '1rem',
         paddingRight: '1rem',
+        paddingBottom: '1rem',
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
@@ -439,8 +440,9 @@ export function CommandPalette({
           )}
         </div>
 
-        {/* Footer shortcuts hint */}
+        {/* Footer shortcuts hint — hidden on touch/mobile */}
         <div
+          className="hidden-mobile"
           style={{
             padding: '0.5rem 1rem',
             borderTop: '1px solid var(--outline-variant)',

@@ -1,35 +1,22 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useData } from '../lib/useData';
 import * as ds from '../lib/dataService';
 import { Modal } from '../components/Modal';
 import { TransactionModal } from '../components/TransactionModal';
 import { formatCurrency, getCurrencyFractionDigits, getCurrencySymbol } from '../lib/currency';
 import type { Transaction, TransactionType } from '../types';
+import { EXPENSE_CATEGORIES, CATEGORY_COLORS } from '../lib/categories';
+import { useLanguage } from '../lib/useLanguage';
+import { translations } from '../lib/i18n';
+import { formatDateNumeric } from '../lib/dateUtils';
 
-const CATEGORIES = [
-  'Food & Groceries',
-  'Books & Supplies',
-  'Rent & Utilities',
-  'Transport',
-  'Entertainment',
-  'Health',
-  'Other Discretionary',
-];
-
-const CATEGORY_COLORS: Record<string, string> = {
-  'Food & Groceries': '#4a7c59',
-  'Food & Dining': '#4a7c59',
-  'Books & Supplies': '#886e38',
-  'Rent & Utilities': '#316342',
-  'Rent & Housing': '#316342',
-  Transport: '#655d52',
-  Entertainment: '#6d5622',
-  Health: '#1a6b5a',
-  'Other Discretionary': '#717971',
-  Income: '#316342',
-};
+const CATEGORIES = EXPENSE_CATEGORIES;
 
 export function FinancePage() {
+  const navigate = useNavigate();
+  const lang = useLanguage();
+  const t = translations[lang];
   const transactions = useData(ds.getTransactions);
   const settings = useData(ds.getSettings);
   const currency = settings.currency || 'IDR';
@@ -38,7 +25,6 @@ export function FinancePage() {
 
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [showAddIncome, setShowAddIncome] = useState(false);
-  const [showScanReceipt, setShowScanReceipt] = useState(false);
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
   const [showTxModal, setShowTxModal] = useState(false);
 
@@ -109,7 +95,7 @@ export function FinancePage() {
 
   // Real CSV export
   const handleExportCSV = () => {
-    const headers = ['ID', 'Date', 'Type', 'Merchant', 'Category', 'Amount', 'Notes'];
+    const headers = ['ID', 'Date', 'Type', 'Merchant', 'Category', 'Amount', 'PaymentMethod', 'Notes'];
     const rows = filteredTransactions.map((t) => [
       `"${t.id}"`,
       `"${t.date}"`,
@@ -117,6 +103,7 @@ export function FinancePage() {
       `"${t.merchant.replace(/"/g, '""')}"`,
       `"${t.category.replace(/"/g, '""')}"`,
       t.amount.toFixed(currencyDigits),
+      `"${(t.paymentMethod || '').replace(/"/g, '""')}"`,
       `"${(t.notes || '').replace(/"/g, '""')}"`,
     ]);
     const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
@@ -146,30 +133,30 @@ export function FinancePage() {
               marginBottom: '0.375rem',
             }}>
               <span className="badge" style={{ background: 'var(--surface-container-high)', color: 'var(--on-surface-variant)', fontWeight: 600 }}>
-                Fall Semester 2026
+                {lang === 'id' ? 'Semester Ganjil 2026' : 'Fall Semester 2026'}
               </span>
               <span style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)' }}>
-                Active Student Account
+                {lang === 'id' ? 'Akun Mahasiswa Aktif' : 'Active Student Account'}
               </span>
             </div>
-            <h1>Finance & Ledger</h1>
+            <h1>{t.finance.title}</h1>
             <p className="subtitle">
-              Budget pacing, categorical expenses, and receipt intelligence
+              {t.finance.subtitle}
             </p>
           </div>
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <button className="btn-outline" onClick={() => setShowScanReceipt(true)} style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+          <div className="finance-header-actions" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <button className="btn-outline min-touch-target" onClick={() => navigate('/ask-omni')} style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
                 <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
                 <circle cx="12" cy="13" r="4" />
               </svg>
-              Scan receipt
+              {t.finance.scanReceipt}
             </button>
-            <button className="btn-outline" onClick={() => setShowAddIncome(true)}>
-              + Add income
+            <button className="btn-outline min-touch-target" onClick={() => setShowAddIncome(true)}>
+              {t.finance.addIncome}
             </button>
-            <button className="btn-primary" onClick={() => setShowAddExpense(true)}>
-              + Add expense
+            <button className="btn-primary min-touch-target" onClick={() => setShowAddExpense(true)}>
+              {t.finance.addExpense}
             </button>
           </div>
         </div>
@@ -177,7 +164,7 @@ export function FinancePage() {
 
       <div className="page-content">
         {/* Unified Financial Health Overview */}
-        <div className="card" style={{
+        <div className="card finance-summary-grid" style={{
           padding: 0,
           overflow: 'hidden',
           marginBottom: '1.5rem',
@@ -185,7 +172,7 @@ export function FinancePage() {
           gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
         }}>
           {/* Section 1: Liquid Balance */}
-          <div style={{
+          <div className="finance-summary-item" style={{
             padding: '1.5rem',
             background: 'var(--surface-container-lowest)',
             borderRight: '1px solid var(--outline-variant)',
@@ -195,7 +182,7 @@ export function FinancePage() {
           }}>
             <div>
               <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface-variant)', marginBottom: '0.25rem' }}>
-                Liquid Available Balance
+                {t.finance.balance}
               </div>
               <div className="tabular-nums" style={{ fontSize: '2rem', fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--on-surface)' }}>
                 {formatMoney(balance)}
@@ -206,12 +193,12 @@ export function FinancePage() {
                 <rect x="2" y="5" width="20" height="14" rx="2" />
                 <line x1="2" y1="10" x2="22" y2="10" />
               </svg>
-              Primary Checking (••••4291)
+              {lang === 'id' ? 'Rekening Utama Mahasiswa' : 'Primary Student Account'}
             </div>
           </div>
 
           {/* Section 2: Cash Flow In vs Out */}
-          <div style={{
+          <div className="finance-summary-item" style={{
             padding: '1.5rem',
             background: 'var(--surface-container-lowest)',
             borderRight: '1px solid var(--outline-variant)',
@@ -221,30 +208,30 @@ export function FinancePage() {
           }}>
             <div>
               <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface-variant)', marginBottom: '0.5rem' }}>
-                Monthly Flow ({new Date().toLocaleDateString('en-US', { month: 'short' })})
+                {lang === 'id' ? 'Arus Kas Bulan Ini' : 'Monthly Flow'} ({new Date().toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { month: 'short' })})
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.375rem' }}>
-                <span style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)' }}>Inflow</span>
+                <span style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)' }}>{t.finance.inflow}</span>
                 <span className="tabular-nums" style={{ fontWeight: 600, color: 'var(--primary)', fontSize: '0.9375rem' }}>
                   +{formatMoney(incomeThisMonth)}
                 </span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                <span style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)' }}>Outflow</span>
+                <span style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)' }}>{t.finance.outflow}</span>
                 <span className="tabular-nums" style={{ fontWeight: 600, color: 'var(--on-surface)', fontSize: '0.9375rem' }}>
                   -{formatMoney(spentThisMonth)}
                 </span>
               </div>
             </div>
             <div style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>
-              Net flow: <strong className="tabular-nums" style={{ color: (incomeThisMonth - spentThisMonth) >= 0 ? 'var(--primary)' : 'var(--error)' }}>
+              {lang === 'id' ? 'Arus bersih:' : 'Net flow:'} <strong className="tabular-nums" style={{ color: (incomeThisMonth - spentThisMonth) >= 0 ? 'var(--primary)' : 'var(--error)' }}>
                 {(incomeThisMonth - spentThisMonth) >= 0 ? '+' : ''}{formatMoney(incomeThisMonth - spentThisMonth)}
               </strong>
             </div>
           </div>
 
           {/* Section 3: Safe Daily Burn Runway */}
-          <div style={{
+          <div className="finance-summary-item" style={{
             padding: '1.5rem',
             background: 'var(--surface-container-lowest)',
             display: 'flex',
@@ -253,14 +240,14 @@ export function FinancePage() {
           }}>
             <div>
               <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface-variant)', marginBottom: '0.25rem' }}>
-                Daily Safe Burn Runway
+                {lang === 'id' ? 'Alokasi Belanja Aman Harian' : 'Daily Safe Burn Runway'}
               </div>
               <div className="tabular-nums" style={{ fontSize: '2rem', fontWeight: 700, fontFamily: 'var(--font-heading)', color: remaining > 0 ? 'var(--on-surface)' : 'var(--error)' }}>
-                {formatMoney(dailyAllowance)} <span style={{ fontSize: '0.9375rem', fontWeight: 500, color: 'var(--on-surface-variant)' }}>/ day</span>
+                {formatMoney(dailyAllowance)} <span style={{ fontSize: '0.9375rem', fontWeight: 500, color: 'var(--on-surface-variant)' }}>{lang === 'id' ? '/ hari' : '/ day'}</span>
               </div>
             </div>
             <div style={{ marginTop: '1rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>
-              {daysLeftInMonth} days remaining until next allowance refresh
+              {lang === 'id' ? `${daysLeftInMonth} hari tersisa hingga pembaruan alokasi` : `${daysLeftInMonth} days remaining until next allowance refresh`}
             </div>
           </div>
         </div>
@@ -269,10 +256,12 @@ export function FinancePage() {
         <div className="card" style={{ marginBottom: '1.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
             <h2 style={{ fontSize: '1.25rem' }}>
-              Semester Monthly Budget Cap
+              {lang === 'id' ? 'Batas Anggaran Bulanan Semester' : 'Semester Monthly Budget Cap'}
             </h2>
             <div className="tabular-nums" style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)' }}>
-              {formatMoney(spentThisMonth)} spent of {formatMoney(settings.monthlyBudget)} cap
+              {lang === 'id'
+                ? `Terpakai ${formatMoney(spentThisMonth)} dari batas ${formatMoney(settings.monthlyBudget)}`
+                : `${formatMoney(spentThisMonth)} spent of ${formatMoney(settings.monthlyBudget)} cap`}
             </div>
           </div>
           <div style={{
@@ -291,11 +280,11 @@ export function FinancePage() {
             }} />
           </div>
           <div style={{
-            display: 'flex', justifyContent: 'space-between',
+            display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.25rem',
             fontSize: '0.75rem', color: 'var(--on-surface-variant)',
           }}>
             <span className="tabular-nums">0% ({formatMoney(0)})</span>
-            <span className="tabular-nums">Warning (80%: {formatMoney(settings.monthlyBudget * 0.8)})</span>
+            <span className="tabular-nums">{lang === 'id' ? `Peringatan (80%: ${formatMoney(settings.monthlyBudget * 0.8)})` : `Warning (80%: ${formatMoney(settings.monthlyBudget * 0.8)})`}</span>
             <span className="tabular-nums" style={{ color: budgetPercent > 100 ? 'var(--error)' : undefined, fontWeight: budgetPercent > 100 ? 600 : 400 }}>
               100% ({formatMoney(settings.monthlyBudget)})
             </span>
@@ -303,17 +292,20 @@ export function FinancePage() {
         </div>
 
         {/* Spending by Category + Smart Advisory */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: '1rem',
-          marginBottom: '1.5rem',
-        }}>
+        <div
+          className="finance-breakdown-grid"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
+            gap: '1rem',
+            marginBottom: '1.5rem',
+          }}
+        >
           {/* Donut chart */}
           <div className="card">
-            <h2 style={{ fontSize: '1.25rem', marginBottom: '0.25rem' }}>Spending by Category</h2>
+            <h2 style={{ fontSize: '1.25rem', marginBottom: '0.25rem' }}>{lang === 'id' ? 'Pengeluaran per Kategori' : 'Spending by Category'}</h2>
             <p style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)', marginBottom: '1.25rem' }}>
-              Breakdown of {formatMoney(spentThisMonth)} total outlays
+              {lang === 'id' ? `Rincian dari total ${formatMoney(spentThisMonth)} pengeluaran` : `Breakdown of ${formatMoney(spentThisMonth)} total outlays`}
             </p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', flexWrap: 'wrap' }}>
               <DonutChart data={categoryBreakdown} total={spentThisMonth} currency={currency} />
@@ -345,14 +337,18 @@ export function FinancePage() {
                   color: budgetPercent > 100 ? 'var(--error)' : 'var(--primary)',
                   fontWeight: 600,
                 }}>
-                  {budgetPercent > 100 ? 'Attention Needed' : 'On Track'}
+                  {lang === 'id' ? (budgetPercent > 100 ? 'Perlu Perhatian' : 'Sesuai Rencana') : (budgetPercent > 100 ? 'Attention Needed' : 'On Track')}
                 </span>
               </div>
               <h2 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>
-                {budgetPercent > 100 ? 'Over Projected Monthly Limit' : 'Pacing is Well Within Target'}
+                {lang === 'id' ? (budgetPercent > 100 ? 'Melebihi Proyeksi Batas Bulanan' : 'Pengeluaran Terkendali Sesuai Target') : (budgetPercent > 100 ? 'Over Projected Monthly Limit' : 'Pacing is Well Within Target')}
               </h2>
               <p style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)', lineHeight: 1.6 }}>
-                You have an estimated daily allowance of <strong>{formatMoney(dailyAllowance)}</strong> for the remaining {daysLeftInMonth} days of {new Date().toLocaleDateString('en-US', { month: 'long' })} without breaching your {formatMoney(settings.monthlyBudget)} ceiling.
+                {lang === 'id' ? (
+                  <>Anda memiliki estimasi alokasi harian sebesar <strong>{formatMoney(dailyAllowance)}</strong> untuk {daysLeftInMonth} hari tersisa di bulan {new Date().toLocaleDateString('id-ID', { month: 'long' })} agar tidak melampaui batas {formatMoney(settings.monthlyBudget)} Anda.</>
+                ) : (
+                  <>You have an estimated daily allowance of <strong>{formatMoney(dailyAllowance)}</strong> for the remaining {daysLeftInMonth} days of {new Date().toLocaleDateString('en-US', { month: 'long' })} without breaching your {formatMoney(settings.monthlyBudget)} ceiling.</>
+                )}
               </p>
             </div>
             <div style={{
@@ -363,25 +359,31 @@ export function FinancePage() {
               fontSize: '0.8125rem',
               color: 'var(--on-surface-variant)',
             }}>
-              💡 <em>Scholar Tip:</em> Grocery shopping on Wednesdays typically yields campus co-op discounts, helping protect your discretionary cushion.
+              {lang === 'id' ? (
+                <>💡 <em>Tips Mahasiswa:</em> Belanja kebutuhan di hari tertentu seringkali menawarkan diskon kantin atau koperasi kampus untuk menjaga dana cadangan Anda.</>
+              ) : (
+                <>💡 <em>Scholar Tip:</em> Grocery shopping on Wednesdays typically yields campus co-op discounts, helping protect your discretionary cushion.</>
+              )}
             </div>
           </div>
         </div>
 
         {/* Ledger & Recent Transactions */}
-        <div className="card">
-          <div style={{
+        <div className="card finance-transactions-card">
+          <div className="finance-transactions-header" style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             flexWrap: 'wrap', gap: '1rem',
             marginBottom: '1rem',
           }}>
             <div>
-              <h2 style={{ fontSize: '1.25rem', marginBottom: '0.125rem' }}>Campus & Living Transactions</h2>
+              <h2 style={{ fontSize: '1.25rem', marginBottom: '0.125rem' }}>
+                {lang === 'id' ? 'Transaksi Kampus & Keseharian' : 'Campus & Living Transactions'}
+              </h2>
               <p style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)' }}>
-                Auditable log of all student financial records
+                {lang === 'id' ? 'Catatan riwayat transaksi keuangan mahasiswa' : 'Auditable log of all student financial records'}
               </p>
             </div>
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div className="finance-transaction-filters" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
               {/* Type pills */}
               <div style={{
                 display: 'flex',
@@ -389,32 +391,36 @@ export function FinancePage() {
                 borderRadius: 'var(--radius-sm)',
                 padding: '2px',
               }}>
-                {(['all', 'expense', 'income'] as const).map((t) => (
+                {(['all', 'expense', 'income'] as const).map((tType) => (
                   <button
-                    key={t}
-                    onClick={() => setTypeFilter(t)}
+                    key={tType}
+                    onClick={() => setTypeFilter(tType)}
                     style={{
                       padding: '0.25rem 0.625rem',
                       fontSize: '0.75rem',
                       fontWeight: 600,
                       borderRadius: 'calc(var(--radius-sm) - 2px)',
-                      background: typeFilter === t ? 'var(--surface-container-lowest)' : 'transparent',
-                      color: typeFilter === t ? 'var(--on-surface)' : 'var(--on-surface-variant)',
+                      background: typeFilter === tType ? 'var(--surface-container-lowest)' : 'transparent',
+                      color: typeFilter === tType ? 'var(--on-surface)' : 'var(--on-surface-variant)',
                       border: 'none',
                       cursor: 'pointer',
-                      boxShadow: typeFilter === t ? 'var(--shadow-xs)' : 'none',
-                      transition: 'all 0.15s ease',
+                      boxShadow: typeFilter === tType ? 'var(--shadow-xs)' : 'none',
+                      transition: 'background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease',
                       textTransform: 'capitalize',
                     }}
                   >
-                    {t === 'all' ? 'All Types' : t}
+                    {tType === 'all'
+                      ? (lang === 'id' ? 'Semua Tipe' : 'All Types')
+                      : tType === 'expense'
+                      ? (lang === 'id' ? 'Pengeluaran' : 'Expense')
+                      : (lang === 'id' ? 'Pemasukan' : 'Income')}
                   </button>
                 ))}
               </div>
 
               {/* Category dropdown */}
               <select
-                aria-label="Filter transactions by category"
+                aria-label={lang === 'id' ? 'Filter transaksi berdasarkan kategori' : 'Filter transactions by category'}
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
                 style={{
@@ -427,18 +433,18 @@ export function FinancePage() {
                   cursor: 'pointer',
                 }}
               >
-                <option value="all">All Categories</option>
+                <option value="all">{lang === 'id' ? 'Semua Kategori' : 'All Categories'}</option>
                 {CATEGORIES.map((cat) => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
-                <option value="Income">Income</option>
+                <option value="Income">{lang === 'id' ? 'Pemasukan' : 'Income'}</option>
               </select>
 
               {/* Export button */}
               <button
                 className="btn-outline"
                 onClick={handleExportCSV}
-                title="Download ledger as a standard CSV file"
+                title={lang === 'id' ? 'Unduh catatan sebagai file CSV' : 'Download ledger as a standard CSV file'}
                 style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.8125rem', padding: '0.375rem 0.75rem' }}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -446,16 +452,17 @@ export function FinancePage() {
                   <polyline points="7 10 12 15 17 10" />
                   <line x1="12" y1="15" x2="12" y2="3" />
                 </svg>
-                Export CSV
+                {lang === 'id' ? 'Ekspor CSV' : 'Export CSV'}
               </button>
             </div>
           </div>
 
           {/* Quick Search */}
-          <div style={{ marginBottom: '1rem' }}>
+          <div className="finance-transaction-search" style={{ marginBottom: '1rem' }}>
             <input
               type="text"
-              placeholder="Search merchant, category, or notes..."
+              aria-label={lang === 'id' ? 'Cari transaksi' : 'Search transactions'}
+              placeholder={lang === 'id' ? 'Cari tempat, kategori, atau catatan...' : 'Search merchant, category, or notes...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
@@ -467,12 +474,15 @@ export function FinancePage() {
             />
           </div>
 
-          <div style={{ overflowX: 'auto' }}>
+          <div className="finance-transaction-list" style={{ overflowX: 'auto' }}>
             {filteredTransactions.length > 0 ? (
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <table className="finance-transaction-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--outline-variant)' }}>
-                    {['Date', 'Merchant / Description', 'Category', 'Amount', 'Actions'].map((h) => (
+                    {(lang === 'id'
+                      ? ['Tanggal', 'Tempat / Pengeluaran', 'Kategori', 'Nominal', 'Aksi']
+                      : ['Date', 'Merchant / Description', 'Category', 'Amount', 'Actions']
+                    ).map((h, idx) => (
                       <th
                         key={h}
                         style={{
@@ -480,8 +490,8 @@ export function FinancePage() {
                           fontSize: '0.75rem',
                           fontWeight: 600,
                           color: 'var(--on-surface-variant)',
-                          textAlign: h === 'Amount' ? 'right' : h === 'Actions' ? 'center' : 'left',
-                          width: h === 'Actions' ? 90 : undefined,
+                          textAlign: idx === 3 ? 'right' : idx === 4 ? 'center' : 'left',
+                          width: idx === 4 ? 90 : undefined,
                         }}
                       >
                         {h}
@@ -493,7 +503,7 @@ export function FinancePage() {
                   {filteredTransactions.map((t) => (
                     <tr
                       key={t.id}
-                      className="tr-interactive"
+                      className="finance-transaction-row tr-interactive"
                       tabIndex={0}
                       onClick={() => {
                         setEditingTx(t);
@@ -510,10 +520,10 @@ export function FinancePage() {
                         borderBottom: '1px solid var(--outline-variant)',
                       }}
                     >
-                      <td className="tabular-nums" style={{ padding: '0.75rem', fontSize: '0.8125rem', whiteSpace: 'nowrap', color: 'var(--on-surface-variant)' }}>
-                        {new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      <td data-label={lang === 'id' ? 'Tanggal' : 'Date'} className="finance-transaction-date tabular-nums" style={{ padding: '0.75rem', fontSize: '0.8125rem', whiteSpace: 'nowrap', color: 'var(--on-surface-variant)' }}>
+                        {formatDateNumeric(t.date)}
                       </td>
-                      <td style={{ padding: '0.75rem', fontSize: '0.875rem' }}>
+                      <td data-label={lang === 'id' ? 'Tempat' : 'Merchant'} className="finance-transaction-merchant" style={{ padding: '0.75rem', fontSize: '0.875rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
                           <span style={{
                             width: 30, height: 30, borderRadius: 'var(--radius-sm)',
@@ -529,12 +539,19 @@ export function FinancePage() {
                             )}
                           </span>
                           <div>
-                            <div style={{ fontWeight: 600, color: 'var(--on-surface)' }}>{t.merchant}</div>
+                            <div style={{ fontWeight: 600, color: 'var(--on-surface)', display: 'flex', alignItems: 'center', gap: '0.375rem', flexWrap: 'wrap' }}>
+                              <span>{t.merchant}</span>
+                              {t.paymentMethod && (
+                                <span className="badge" style={{ fontSize: '0.6875rem', padding: '0.1rem 0.4rem', background: 'var(--surface-container-high)', color: 'var(--on-surface-variant)' }}>
+                                  {t.paymentMethod}
+                                </span>
+                              )}
+                            </div>
                             {t.notes && <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>{t.notes}</div>}
                           </div>
                         </div>
                       </td>
-                      <td style={{ padding: '0.75rem', fontSize: '0.8125rem' }}>
+                      <td data-label={lang === 'id' ? 'Kategori' : 'Category'} className="finance-transaction-category" style={{ padding: '0.75rem', fontSize: '0.8125rem' }}>
                         <span className="badge" style={{
                           background: 'var(--surface-container)',
                           color: 'var(--on-surface)',
@@ -543,14 +560,14 @@ export function FinancePage() {
                           {t.category}
                         </span>
                       </td>
-                      <td className="tabular-nums" style={{
+                      <td data-label={lang === 'id' ? 'Nominal' : 'Amount'} className="finance-transaction-amount tabular-nums" style={{
                         padding: '0.75rem', fontSize: '0.875rem', fontWeight: 600,
                         textAlign: 'right',
                         color: t.type === 'income' ? 'var(--primary)' : 'var(--on-surface)',
                       }}>
                         {t.type === 'income' ? '+' : '–'}{formatMoney(t.amount)}
                       </td>
-                      <td style={{ padding: '0.75rem', textAlign: 'center' }}>
+                      <td data-label={lang === 'id' ? 'Aksi' : 'Actions'} className="finance-transaction-actions" style={{ padding: '0.75rem', textAlign: 'center' }}>
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem' }}>
                           <button
                             type="button"
@@ -560,7 +577,7 @@ export function FinancePage() {
                               setShowTxModal(true);
                             }}
                             aria-label={`Edit transaction from ${t.merchant}`}
-                            title="Edit transaction"
+                            title={lang === 'id' ? 'Ubah transaksi' : 'Edit transaction'}
                             style={{
                               width: 32, height: 32,
                               padding: 0,
@@ -584,12 +601,15 @@ export function FinancePage() {
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (window.confirm(`Delete transaction from "${t.merchant}" (${formatMoney(t.amount)})?`)) {
+                              const msg = lang === 'id'
+                                ? `Hapus transaksi dari "${t.merchant}" (${formatMoney(t.amount)})?`
+                                : `Delete transaction from "${t.merchant}" (${formatMoney(t.amount)})?`;
+                              if (window.confirm(msg)) {
                                 ds.deleteTransaction(t.id);
                               }
                             }}
                             aria-label={`Delete transaction from ${t.merchant}`}
-                            title="Delete transaction"
+                            title={lang === 'id' ? 'Hapus transaksi' : 'Delete transaction'}
                             style={{
                               width: 32, height: 32,
                               padding: 0,
@@ -621,10 +641,14 @@ export function FinancePage() {
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem',
                 border: '1px dashed var(--outline-variant)', borderRadius: 'var(--radius-md)',
               }}>
-                <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--on-surface)' }}>No transactions found</div>
-                <div style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)' }}>Try adjusting your category or type filters.</div>
+                <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--on-surface)' }}>
+                  {lang === 'id' ? 'Belum ada transaksi' : 'No transactions found'}
+                </div>
+                <div style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)' }}>
+                  {lang === 'id' ? 'Coba sesuaikan filter kategori atau tipe Anda.' : 'Try adjusting your category or type filters.'}
+                </div>
                 <button className="btn-outline" onClick={() => { setCategoryFilter('all'); setTypeFilter('all'); setSearchQuery(''); }}>
-                  Reset filters
+                  {lang === 'id' ? 'Reset filter' : 'Reset filters'}
                 </button>
               </div>
             )}
@@ -635,7 +659,11 @@ export function FinancePage() {
             padding: '0.75rem 0.75rem 0',
             fontSize: '0.75rem', color: 'var(--on-surface-variant)',
           }}>
-            <span>Showing {filteredTransactions.length} of {transactions.length} total entries</span>
+            <span>
+              {lang === 'id'
+                ? `Menampilkan ${filteredTransactions.length} dari ${transactions.length} total entri`
+                : `Showing ${filteredTransactions.length} of ${transactions.length} total entries`}
+            </span>
           </div>
         </div>
       </div>
@@ -646,28 +674,13 @@ export function FinancePage() {
         onClose={() => setShowAddExpense(false)}
         type="expense"
         currency={currency}
-        onScanReceipt={() => { setShowAddExpense(false); setShowScanReceipt(true); }}
+        onScanReceipt={() => { setShowAddExpense(false); navigate('/ask-omni'); }}
       />
       <AddTransactionModal
         isOpen={showAddIncome}
         onClose={() => setShowAddIncome(false)}
         type="income"
         currency={currency}
-      />
-      <ScanReceiptModal
-        isOpen={showScanReceipt}
-        onClose={() => setShowScanReceipt(false)}
-        currency={currency}
-        onExtracted={(data) => {
-          setShowScanReceipt(false);
-          ds.addTransaction({
-            amount: data.total,
-            merchant: data.merchant,
-            category: data.category,
-            date: data.date,
-            type: 'expense',
-          });
-        }}
       />
       <TransactionModal
         isOpen={showTxModal}
@@ -683,6 +696,7 @@ export function FinancePage() {
 
 // ─── Donut Chart ───
 function DonutChart({ data, total, currency }: { data: Array<{ category: string; amount: number }>; total: number; currency: string }) {
+  const lang = useLanguage();
   const size = 160;
   const strokeWidth = 24;
   const radius = (size - strokeWidth) / 2;
@@ -722,12 +736,14 @@ function DonutChart({ data, total, currency }: { data: Array<{ category: string;
         ))}
       </svg>
       <div className="donut-center">
-        <div style={{ fontSize: '0.625rem', fontWeight: 600, color: 'var(--on-surface-variant)' }}>SPENT</div>
+        <div style={{ fontSize: '0.625rem', fontWeight: 600, color: 'var(--on-surface-variant)' }}>
+          {lang === 'id' ? 'PENGELUARAN' : 'SPENT'}
+        </div>
         <div className="tabular-nums" style={{ fontSize: '1.25rem', fontWeight: 700, fontFamily: 'var(--font-heading)' }}>
           {formatCurrency(total, currency)}
         </div>
         <div style={{ fontSize: '0.6875rem', color: 'var(--on-surface-variant)' }}>
-          {data.length} categories
+          {data.length} {lang === 'id' ? 'kategori' : 'categories'}
         </div>
       </div>
     </div>
@@ -748,33 +764,90 @@ function AddTransactionModal({
   currency: string;
   onScanReceipt?: () => void;
 }) {
+  const lang = useLanguage();
+  const paymentMethods = useData(ds.getPaymentMethods);
   const [merchant, setMerchant] = useState('');
   const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [category, setCategory] = useState<string>(CATEGORIES[0]);
+  const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState(paymentMethods[0] || 'QRIS');
+  const [customPaymentMethod, setCustomPaymentMethod] = useState('');
+  const [merchantError, setMerchantError] = useState('');
+  const [amountError, setAmountError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSave = () => {
-    if (!merchant || !amount) return;
-    ds.addTransaction({
-      merchant,
-      amount: parseFloat(amount),
-      category: type === 'income' ? 'Income' : category,
-      date,
-      type,
-      notes: notes || undefined,
-    });
-    setMerchant('');
-    setAmount('');
-    setNotes('');
+  const handleClose = () => {
+    setMerchantError('');
+    setAmountError('');
+    setCustomPaymentMethod('');
+    setIsSubmitting(false);
     onClose();
   };
 
+  const handleSave = () => {
+    let hasError = false;
+    if (!merchant.trim()) {
+      setMerchantError(
+        lang === 'id'
+          ? (type === 'income' ? 'Sumber pemasukan tidak boleh kosong' : 'Nama pengeluaran tidak boleh kosong')
+          : (type === 'income' ? 'Source is required' : 'Merchant description is required')
+      );
+      hasError = true;
+    }
+
+    const parsedAmount = parseFloat(amount);
+    if (!amount.trim() || isNaN(parsedAmount) || parsedAmount <= 0) {
+      setAmountError(
+        lang === 'id'
+          ? (currency === 'IDR' ? 'Nominal harus lebih dari Rp0' : `Nominal harus lebih dari ${getCurrencySymbol(currency)}0`)
+          : `Amount must be greater than ${getCurrencySymbol(currency)}0`
+      );
+      hasError = true;
+    }
+
+    if (hasError) return;
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      const resolvedPaymentMethod = paymentMethod === 'custom' ? customPaymentMethod.trim() : paymentMethod;
+      if (paymentMethod === 'custom' && customPaymentMethod.trim()) {
+        ds.addPaymentMethod(customPaymentMethod.trim());
+      }
+
+      ds.addTransaction({
+        merchant: merchant.trim(),
+        amount: parsedAmount,
+        category: type === 'income' ? 'Income' : (category || CATEGORIES[0]),
+        date: date || new Date().toISOString().split('T')[0],
+        type,
+        notes: notes.trim() || undefined,
+        paymentMethod: type === 'expense' ? (resolvedPaymentMethod || undefined) : undefined,
+      });
+      setMerchant('');
+      setAmount('');
+      setNotes('');
+      setCustomPaymentMethod('');
+      setMerchantError('');
+      setAmountError('');
+      setIsSubmitting(false);
+      onClose();
+    } catch {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={type === 'expense' ? 'Add expense' : 'Add income'}>
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title={type === 'expense' ? (lang === 'id' ? 'Tambah pengeluaran' : 'Add expense') : (lang === 'id' ? 'Tambah pemasukan' : 'Add income')}
+    >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         {type === 'expense' && onScanReceipt && (
           <button
+            type="button"
             className="btn-outline"
             onClick={onScanReceipt}
             style={{ width: '100%', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: '0.375rem' }}
@@ -783,27 +856,74 @@ function AddTransactionModal({
               <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
               <circle cx="12" cy="13" r="4" />
             </svg>
-            Scan receipt instead
+            {lang === 'id' ? 'Pindai struk lewat Omni AI' : 'Scan receipt via Omni AI'}
           </button>
         )}
 
         <div>
           <label htmlFor="tx-merchant" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-            {type === 'income' ? 'Source' : 'Merchant'}
+            {type === 'income' ? (lang === 'id' ? 'Sumber dana *' : 'Source *') : (lang === 'id' ? 'Tempat / Pengeluaran *' : 'Merchant / Description *')}
           </label>
-          <input id="tx-merchant" value={merchant} onChange={(e) => setMerchant(e.target.value)} placeholder={type === 'income' ? 'e.g. Stipend' : "e.g. Trader Joe's"} style={{ width: '100%' }} />
+          <input
+            id="tx-merchant"
+            autoFocus
+            data-autofocus
+            value={merchant}
+            aria-invalid={merchantError ? 'true' : 'false'}
+            aria-describedby={merchantError ? 'tx-merchant-error' : undefined}
+            onChange={(e) => {
+              setMerchant(e.target.value);
+              if (merchantError && e.target.value.trim()) setMerchantError('');
+            }}
+            placeholder={type === 'income' ? (lang === 'id' ? 'Contoh: Beasiswa, Gaji magang' : 'e.g. Stipend') : (lang === 'id' ? 'Contoh: Kantin Teknik, Kopi' : "Contoh: Kantin Kampus")}
+            style={{
+              width: '100%',
+              borderColor: merchantError ? 'var(--error)' : undefined,
+              boxShadow: merchantError ? '0 0 0 2px var(--error-container)' : undefined,
+            }}
+          />
+          {merchantError && (
+            <div id="tx-merchant-error" role="alert" style={{ color: 'var(--error)', fontSize: '0.75rem', marginTop: '0.375rem', fontWeight: 500 }}>
+              {merchantError}
+            </div>
+          )}
         </div>
 
         <div>
-          <label htmlFor="tx-amount" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>Amount ({getCurrencySymbol(currency)})</label>
-          <input id="tx-amount" type="number" step={String(1 / (10 ** getCurrencyFractionDigits(currency)))} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={getCurrencyFractionDigits(currency) === 0 ? '0' : '0.00'} style={{ width: '100%' }} />
+          <label htmlFor="tx-amount" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            {lang === 'id' ? `Nominal (${getCurrencySymbol(currency)}) *` : `Amount (${getCurrencySymbol(currency)}) *`}
+          </label>
+          <input
+            id="tx-amount"
+            type="number"
+            step={String(1 / (10 ** getCurrencyFractionDigits(currency)))}
+            value={amount}
+            aria-invalid={amountError ? 'true' : 'false'}
+            aria-describedby={amountError ? 'tx-amount-error' : undefined}
+            onChange={(e) => {
+              setAmount(e.target.value);
+              if (amountError) setAmountError('');
+            }}
+            placeholder={getCurrencyFractionDigits(currency) === 0 ? '0' : '0.00'}
+            style={{
+              width: '100%',
+              borderColor: amountError ? 'var(--error)' : undefined,
+              boxShadow: amountError ? '0 0 0 2px var(--error-container)' : undefined,
+            }}
+          />
+          {amountError && (
+            <div id="tx-amount-error" role="alert" style={{ color: 'var(--error)', fontSize: '0.75rem', marginTop: '0.375rem', fontWeight: 500 }}>
+              {amountError}
+            </div>
+          )}
         </div>
 
         {type === 'expense' && (
           <div>
-            <label htmlFor="tx-category" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>Category</label>
+            <label htmlFor="tx-category" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+              {lang === 'id' ? 'Kategori' : 'Category'}
+            </label>
             <select id="tx-category" value={category} onChange={(e) => setCategory(e.target.value)} style={{ width: '100%' }}>
-              <option value="">Select category</option>
               {CATEGORIES.map((c) => (
                 <option key={c} value={c}>{c}</option>
               ))}
@@ -811,348 +931,59 @@ function AddTransactionModal({
           </div>
         )}
 
+        {type === 'expense' && (
+          <div>
+            <label htmlFor="tx-payment-method" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+              {lang === 'id' ? 'Metode Pembayaran' : 'Payment Method'}
+            </label>
+            <select
+              id="tx-payment-method"
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              style={{ width: '100%', marginBottom: paymentMethod === 'custom' ? '0.5rem' : 0 }}
+            >
+              {paymentMethods.map((pm) => (
+                <option key={pm} value={pm}>{pm}</option>
+              ))}
+              <option value="custom">{lang === 'id' ? 'Lainnya (Kustom)...' : 'Custom...'}</option>
+            </select>
+            {paymentMethod === 'custom' && (
+              <input
+                type="text"
+                value={customPaymentMethod}
+                onChange={(e) => setCustomPaymentMethod(e.target.value)}
+                placeholder={lang === 'id' ? 'Masukkan nama metode pembayaran' : 'Enter payment method name'}
+                style={{ width: '100%' }}
+                autoFocus
+              />
+            )}
+          </div>
+        )}
+
         <div>
-          <label htmlFor="tx-date" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>Date</label>
+          <label htmlFor="tx-date" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            {lang === 'id' ? 'Tanggal' : 'Date'}
+          </label>
           <input id="tx-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} style={{ width: '100%' }} />
         </div>
 
         <div>
-          <label htmlFor="tx-notes" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>Notes (optional)</label>
-          <textarea id="tx-notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} style={{ width: '100%', resize: 'vertical' }} />
+          <label htmlFor="tx-notes" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            {lang === 'id' ? 'Catatan (opsional)' : 'Notes (optional)'}
+          </label>
+          <textarea id="tx-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={lang === 'id' ? 'Catatan transaksi...' : 'Notes...'} rows={2} style={{ width: '100%', resize: 'vertical' }} />
         </div>
 
         <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', paddingTop: '0.5rem' }}>
-          <button type="button" className="btn-outline" onClick={onClose}>Cancel</button>
-          <button type="button" className="btn-primary" onClick={handleSave}>
+          <button type="button" className="btn-outline" onClick={handleClose} disabled={isSubmitting}>
+            {lang === 'id' ? 'Batal' : 'Cancel'}
+          </button>
+          <button type="button" className="btn-primary" onClick={handleSave} disabled={isSubmitting}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
               <polyline points="20 6 9 17 4 12" />
             </svg>
-            {type === 'expense' ? 'Add expense' : 'Add income'}
+            {isSubmitting ? (lang === 'id' ? 'Menyimpan…' : 'Saving…') : type === 'expense' ? (lang === 'id' ? 'Tambah pengeluaran' : 'Add expense') : (lang === 'id' ? 'Tambah pemasukan' : 'Add income')}
           </button>
-        </div>
-      </div>
-    </Modal>
-  );
-}
-
-// ─── Scan Receipt Modal (Gemini Flash) ───
-function ScanReceiptModal({
-  isOpen,
-  onClose,
-  currency,
-  onExtracted,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  currency: string;
-  onExtracted: (data: { merchant: string; date: string; total: number; category: string }) => void;
-}) {
-  const [status, setStatus] = useState<'idle' | 'reading' | 'done' | 'error'>('idle');
-  const [errorMsg, setErrorMsg] = useState('');
-  const [preview, setPreview] = useState<string | null>(null);
-  const [extracted, setExtracted] = useState<{ merchant: string; date: string; total: number; category: string } | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
-  const imageDataRef = useRef<string | null>(null);
-
-  const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
-  const [keyInput, setKeyInput] = useState('');
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Read file to base64
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const base64 = (reader.result as string).split(',')[1];
-      imageDataRef.current = base64;
-      setPreview(reader.result as string);
-      await processImage(base64, file.type);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const processImage = async (base64: string, mimeType: string) => {
-    const key = apiKey || localStorage.getItem('gemini_api_key');
-    if (!key) {
-      setStatus('error');
-      setErrorMsg('No Gemini API key provided. Please enter your API key above.');
-      return;
-    }
-
-    setStatus('reading');
-    setErrorMsg('');
-
-    try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [
-                {
-                  text: 'Extract the following from this receipt image and return ONLY valid JSON with no markdown formatting: { "merchant": "<store name>", "date": "<YYYY-MM-DD>", "total": <number>, "category": "<one of: Food & Groceries, Books & Supplies, Rent & Utilities, Transport, Entertainment, Health, Other Discretionary>" }. If you cannot extract a field, use reasonable defaults.',
-                },
-                {
-                  inlineData: {
-                    mimeType,
-                    data: base64,
-                  },
-                },
-              ],
-            }],
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`API returned ${response.status}`);
-      }
-
-      const result = await response.json();
-      const text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-      // Extract JSON from response (handle markdown code blocks)
-      const jsonMatch = text.match(/\{[\s\S]*?\}/);
-      if (!jsonMatch) {
-        throw new Error('Could not parse JSON from response');
-      }
-
-      const parsed = JSON.parse(jsonMatch[0]);
-      if (!parsed.merchant || !parsed.total) {
-        throw new Error('Missing required fields in response');
-      }
-
-      setExtracted({
-        merchant: parsed.merchant,
-        date: parsed.date || new Date().toISOString().split('T')[0],
-        total: Number(parsed.total),
-        category: parsed.category || 'Other Discretionary',
-      });
-      setStatus('done');
-    } catch (err) {
-      setStatus('error');
-      setErrorMsg(err instanceof Error ? err.message : 'Failed to process receipt');
-    } finally {
-      // Discard the image from memory
-      imageDataRef.current = null;
-    }
-  };
-
-  const handleConfirm = () => {
-    if (extracted) {
-      onExtracted(extracted);
-      // Clean up
-      setPreview(null);
-      setExtracted(null);
-      setStatus('idle');
-    }
-  };
-
-  const handleClose = () => {
-    setPreview(null);
-    setExtracted(null);
-    imageDataRef.current = null;
-    setStatus('idle');
-    onClose();
-  };
-
-  return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Scan receipt">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        {!apiKey ? (
-          <div style={{
-            padding: '0.875rem', borderRadius: 8,
-            background: 'var(--surface-container-high)',
-            border: '1px solid var(--outline-variant)',
-            display: 'flex', flexDirection: 'column', gap: '0.5rem',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.8125rem', fontWeight: 600 }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                <rect x="3" y="11" width="18" height="10" rx="2" />
-                <circle cx="12" cy="5" r="2" />
-                <path d="M12 7v4" />
-              </svg>
-              Gemini API key required for AI receipt parsing
-            </div>
-            <p style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', margin: 0 }}>
-              Stored locally in your browser. Never sent to any third-party servers.
-            </p>
-            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
-              <input
-                type="password"
-                value={keyInput}
-                onChange={(e) => setKeyInput(e.target.value)}
-                placeholder="Paste Gemini API key"
-                style={{ flex: 1, fontSize: '0.8125rem' }}
-              />
-              <button
-                type="button"
-                className="btn-primary min-touch-target"
-                onClick={() => {
-                  if (keyInput.trim()) {
-                    localStorage.setItem('gemini_api_key', keyInput.trim());
-                    setApiKey(keyInput.trim());
-                  }
-                }}
-                disabled={!keyInput.trim()}
-                style={{ fontSize: '0.8125rem', padding: '0.375rem 0.75rem' }}
-              >
-                Save key
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="3" aria-hidden="true">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-              Gemini API key connected
-            </span>
-            <button
-              type="button"
-              className="btn-ghost"
-              style={{ fontSize: '0.75rem', padding: '0.125rem 0.375rem' }}
-              onClick={() => {
-                localStorage.removeItem('gemini_api_key');
-                setApiKey('');
-                setKeyInput('');
-              }}
-            >
-              Change key
-            </button>
-          </div>
-        )}
-
-        <div style={{
-          fontSize: '0.8125rem', color: 'var(--on-surface-variant)',
-          marginBottom: '0.25rem',
-        }}>
-          Take a photo or select a receipt image. Only the extracted numbers will be saved - the image is never stored.
-        </div>
-
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          onChange={handleFileChange}
-          style={{ display: 'none' }}
-        />
-
-        {!preview ? (
-          <button
-            className="btn-outline"
-            onClick={() => fileRef.current?.click()}
-            style={{
-              width: '100%', justifyContent: 'center',
-              padding: '2rem',
-              borderStyle: 'dashed',
-            }}
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
-              <circle cx="12" cy="13" r="4" />
-            </svg>
-            Pick or take a photo
-          </button>
-        ) : (
-          <div style={{ textAlign: 'center' }}>
-            <img
-              src={preview}
-              alt="Receipt preview"
-              className="image-outline"
-              style={{
-                maxWidth: '100%', maxHeight: 200, borderRadius: 8,
-                objectFit: 'contain',
-              }}
-            />
-          </div>
-        )}
-
-        {status === 'reading' && (
-          <div
-            role="status"
-            aria-live="polite"
-            style={{
-              display: 'flex', alignItems: 'center', gap: '0.75rem',
-              padding: '1rem', borderRadius: 8,
-              background: 'var(--surface-container)',
-            }}
-          >
-            <div style={{
-              width: 24, height: 24, border: '3px solid var(--outline-variant)',
-              borderTop: '3px solid var(--primary)',
-              borderRadius: '50%', animation: 'spin 1s linear infinite',
-            }} aria-hidden="true" />
-            <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>Reading receipt…</span>
-            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-          </div>
-        )}
-
-        {status === 'error' && (
-          <div
-            role="alert"
-            style={{
-              padding: '0.75rem', borderRadius: 8,
-              background: 'var(--error-container)',
-              color: 'var(--on-error-container)',
-              fontSize: '0.8125rem',
-            }}
-          >
-            ⚠ {errorMsg}
-            <div style={{ marginTop: '0.5rem' }}>
-              You can fill in the expense form manually instead.
-            </div>
-          </div>
-        )}
-
-        {status === 'done' && extracted && (
-          <div style={{
-            padding: '1rem', borderRadius: 8,
-            background: 'var(--surface-container)',
-          }}>
-            <div style={{
-              fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase',
-              color: 'var(--primary)', marginBottom: '0.75rem',
-              display: 'flex', alignItems: 'center', gap: '0.375rem',
-            }}>
-              ✓ Only the extracted numbers were saved
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', fontSize: '0.875rem' }}>
-              <div>
-                <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--on-surface-variant)' }}>Merchant</div>
-                <div style={{ fontWeight: 600 }}>{extracted.merchant}</div>
-              </div>
-              <div>
-                <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--on-surface-variant)' }}>Date</div>
-                <div className="tabular-nums" style={{ fontWeight: 600 }}>{extracted.date}</div>
-              </div>
-              <div>
-                <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--on-surface-variant)' }}>Total</div>
-                <div className="tabular-nums" style={{ fontWeight: 600 }}>{formatCurrency(extracted.total, currency)}</div>
-              </div>
-              <div>
-                <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--on-surface-variant)' }}>Category</div>
-                <div style={{ fontWeight: 600 }}>{extracted.category}</div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', paddingTop: '0.5rem' }}>
-          <button type="button" className="btn-outline" onClick={handleClose}>Cancel</button>
-          {status === 'done' && extracted && (
-            <button type="button" className="btn-primary" onClick={handleConfirm}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-              Confirm & save
-            </button>
-          )}
         </div>
       </div>
     </Modal>

@@ -4,6 +4,9 @@ import * as ds from '../lib/dataService';
 import { useData } from '../lib/useData';
 import { CheckCircle, Clock, Circle } from 'lucide-react';
 import type { Assignment, Priority, AssignmentStatus } from '../types';
+import { useLanguage } from '../lib/useLanguage';
+import { formatDateShort, formatTime12 } from '../lib/dateUtils';
+
 interface AssignmentDetailsModalProps {
   assignment: Assignment | null;
   isOpen: boolean;
@@ -11,6 +14,7 @@ interface AssignmentDetailsModalProps {
 }
 
 export function AssignmentDetailsModal({ assignment, isOpen, onClose }: AssignmentDetailsModalProps) {
+  const lang = useLanguage();
   const courses = useData(ds.getCourses);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -22,6 +26,9 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose }: Assignme
   const [category, setCategory] = useState<string>('classes');
   const [courseId, setCourseId] = useState('');
   const [notes, setNotes] = useState('');
+  const [reminderMinutes, setReminderMinutes] = useState(0);
+  const [titleError, setTitleError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (assignment) {
@@ -32,7 +39,11 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose }: Assignme
       setCategory(assignment.category || 'classes');
       setCourseId(assignment.courseId || '');
       setNotes(assignment.notes || '');
+      const existingRem = ds.getUserReminders().find((r) => r.itemId === assignment.id);
+      setReminderMinutes(existingRem ? existingRem.minutesBefore : 0);
       setIsEditing(false);
+      setTitleError('');
+      setIsSubmitting(false);
     }
   }, [assignment, isOpen]);
 
@@ -41,18 +52,46 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose }: Assignme
   const course = courses.find((c) => c.id === (isEditing ? courseId : assignment.courseId));
 
   const handleSave = () => {
-    if (!title.trim()) return;
-    ds.updateAssignment(assignment.id, {
-      title,
-      dueDate,
-      priority,
-      status,
-      category: (category as any) || 'other',
-      courseId: courseId || undefined,
-      notes: notes || undefined,
-    });
-    setIsEditing(false);
-    onClose();
+    if (!title.trim()) {
+      setTitleError(lang === 'id' ? 'Judul tidak boleh kosong' : 'Title is required');
+      return;
+    }
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    try {
+      ds.updateAssignment(assignment.id, {
+        title: title.trim(),
+        dueDate,
+        priority,
+        status,
+        category: (category as any) || 'other',
+        courseId: courseId || undefined,
+        notes: notes.trim() || undefined,
+      });
+
+      if (reminderMinutes > 0 && dueDate) {
+        const remindTime = new Date(new Date(dueDate).getTime() - reminderMinutes * 60 * 1000);
+        ds.setUserReminder({
+          id: `assignment-${assignment.id}`,
+          itemId: assignment.id,
+          itemType: 'assignment',
+          title: title.trim(),
+          remindAt: remindTime.toISOString(),
+          minutesBefore: reminderMinutes,
+          link: '/assignments',
+        });
+      } else {
+        ds.deleteUserReminder(assignment.id);
+      }
+
+      setIsEditing(false);
+      setTitleError('');
+      setIsSubmitting(false);
+      onClose();
+    } catch {
+      setIsSubmitting(false);
+    }
   };
 
   const handleDelete = () => {
@@ -67,8 +106,8 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose }: Assignme
       assignment.status === 'done'
         ? 'not-started'
         : assignment.status === 'not-started'
-        ? 'in-progress'
-        : 'done';
+          ? 'in-progress'
+          : 'done';
     ds.updateAssignment(assignment.id, { status: nextStatus });
   };
 
@@ -81,15 +120,31 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose }: Assignme
       {isEditing ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
-            <label className="label">Title *</label>
+            <label className="label">
+              {lang === 'id' ? 'Judul tugas *' : 'Title *'}
+            </label>
             <input
               type="text"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Problem Set 4, Research Proposal"
-              style={{ width: '100%' }}
+              aria-invalid={titleError ? 'true' : 'false'}
+              aria-describedby={titleError ? 'edit-assignment-title-error' : undefined}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                if (titleError && e.target.value.trim()) setTitleError('');
+              }}
+              placeholder={lang === 'id' ? 'Contoh: Laporan Praktikum Fisika' : 'e.g. Problem Set 4, Research Proposal'}
+              style={{
+                width: '100%',
+                borderColor: titleError ? 'var(--error)' : undefined,
+                boxShadow: titleError ? '0 0 0 2px var(--error-container)' : undefined,
+              }}
               required
             />
+            {titleError && (
+              <div id="edit-assignment-title-error" role="alert" style={{ color: 'var(--error)', fontSize: '0.75rem', marginTop: '0.375rem', fontWeight: 500 }}>
+                {titleError}
+              </div>
+            )}
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
@@ -158,28 +213,45 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose }: Assignme
               >
                 <option value="not-started">Not Started</option>
                 <option value="in-progress">In Progress</option>
-                <option value="done">Completed</option>
+                <option value="done">{lang === 'id' ? 'Selesai' : 'Completed'}</option>
               </select>
             </div>
           </div>
 
           <div>
-            <label className="label">Notes & Specifications</label>
+            <label htmlFor="assignment-reminder" className="label">
+              {lang === 'id' ? 'Ingatkan Saya' : 'Remind me'}
+            </label>
+            <select
+              id="assignment-reminder"
+              value={reminderMinutes}
+              onChange={(e) => setReminderMinutes(Number(e.target.value))}
+              style={{ width: '100%' }}
+            >
+              <option value={0}>{lang === 'id' ? 'Tidak ada pengingat' : 'No reminder'}</option>
+              <option value={15}>{lang === 'id' ? '15 menit sebelumnya' : '15 minutes before'}</option>
+              <option value={60}>{lang === 'id' ? '1 jam sebelumnya' : '1 hour before'}</option>
+              <option value={1440}>{lang === 'id' ? '1 hari sebelumnya' : '1 day before'}</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="label">{lang === 'id' ? 'Catatan & Spesifikasi' : 'Notes & Specifications'}</label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Submission guidelines, file formats, grading rubric notes..."
+              placeholder={lang === 'id' ? 'Petunjuk pengumpulan, format berkas, catatan...' : 'Submission guidelines, file formats, grading rubric notes...'}
               rows={3}
               style={{ width: '100%' }}
             />
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.5rem' }}>
-            <button type="button" className="btn-ghost" onClick={() => setIsEditing(false)}>
-              Cancel
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+            <button type="button" className="btn-ghost" onClick={() => setIsEditing(false)} disabled={isSubmitting}>
+              {lang === 'id' ? 'Batal' : 'Cancel'}
             </button>
-            <button type="button" className="btn-primary" onClick={handleSave}>
-              Save Deliverable
+            <button type="button" className="btn-primary" onClick={handleSave} disabled={isSubmitting}>
+              {isSubmitting ? (lang === 'id' ? 'Menyimpan…' : 'Saving…') : (lang === 'id' ? 'Simpan tugas' : 'Save Deliverable')}
             </button>
           </div>
         </div>
@@ -209,14 +281,14 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose }: Assignme
                     assignment.priority === 'high'
                       ? 'var(--error-container)'
                       : assignment.priority === 'medium'
-                      ? 'var(--tertiary-container)'
-                      : 'var(--surface-container-high)',
+                        ? 'var(--tertiary-container)'
+                        : 'var(--surface-container-high)',
                   color:
                     assignment.priority === 'high'
                       ? 'var(--on-error-container)'
                       : assignment.priority === 'medium'
-                      ? 'var(--on-tertiary-container)'
-                      : 'var(--on-surface-variant)',
+                        ? 'var(--on-tertiary-container)'
+                        : 'var(--on-surface-variant)',
                   fontWeight: 600,
                   fontSize: '0.75rem',
                   textTransform: 'capitalize',
@@ -234,14 +306,14 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose }: Assignme
                     assignment.status === 'done'
                       ? 'var(--primary-container)'
                       : assignment.status === 'in-progress'
-                      ? '#e0f2fe'
-                      : 'var(--surface-container-high)',
+                        ? '#e0f2fe'
+                        : 'var(--surface-container-high)',
                   color:
                     assignment.status === 'done'
                       ? 'var(--on-primary-container)'
                       : assignment.status === 'in-progress'
-                      ? '#0369a1'
-                      : 'var(--on-surface-variant)',
+                        ? '#0369a1'
+                        : 'var(--on-surface-variant)',
                   fontWeight: 600,
                   fontSize: '0.75rem',
                 }}
@@ -279,32 +351,35 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose }: Assignme
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
-              <span style={{ color: 'var(--on-surface-variant)', width: 80 }}>Due Date:</span>
+              <span style={{ color: 'var(--on-surface-variant)', width: 100 }}>{lang === 'id' ? 'Tenggat Waktu:' : 'Due Date:'}</span>
               <span className="tabular-nums" style={{ fontWeight: 600, color: 'var(--on-surface)' }}>
-                {new Date(assignment.dueDate).toLocaleDateString('en-US', {
-                  weekday: 'short',
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                })} at {new Date(assignment.dueDate).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                {formatDateShort(new Date(assignment.dueDate))} {assignment.dueDate.includes('T') ? `· ${formatTime12(assignment.dueDate.split('T')[1])}` : ''}
               </span>
             </div>
             {course?.professor && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
-                <span style={{ color: 'var(--on-surface-variant)', width: 80 }}>Instructor:</span>
+                <span style={{ color: 'var(--on-surface-variant)', width: 100 }}>{lang === 'id' ? 'Dosen Pengampu:' : 'Instructor:'}</span>
                 <span style={{ color: 'var(--on-surface)' }}>{course.professor}</span>
+              </div>
+            )}
+            {reminderMinutes > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
+                <span style={{ color: 'var(--on-surface-variant)', width: 100 }}>{lang === 'id' ? 'Pengingat:' : 'Reminder:'}</span>
+                <span style={{ color: 'var(--primary)', fontWeight: 600 }}>
+                  {reminderMinutes === 15 ? (lang === 'id' ? '15 menit sebelumnya' : '15 min before') : reminderMinutes === 60 ? (lang === 'id' ? '1 jam sebelumnya' : '1 hour before') : (lang === 'id' ? '1 hari sebelumnya' : '1 day before')}
+                </span>
               </div>
             )}
             {assignment.notes && (
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-                <span style={{ color: 'var(--on-surface-variant)', width: 80, flexShrink: 0 }}>Notes:</span>
+                <span style={{ color: 'var(--on-surface-variant)', width: 100, flexShrink: 0 }}>{lang === 'id' ? 'Catatan:' : 'Notes:'}</span>
                 <span style={{ color: 'var(--on-surface)', whiteSpace: 'pre-wrap' }}>{assignment.notes}</span>
               </div>
             )}
           </div>
 
           {/* Actions */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginTop: '0.75rem' }}>
             <button
               type="button"
               className="btn-outline"
@@ -321,11 +396,11 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose }: Assignme
                 <polyline points="3 6 5 6 21 6" />
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
               </svg>
-              Delete
+              {lang === 'id' ? 'Hapus' : 'Delete'}
             </button>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               <button type="button" className="btn-ghost" onClick={onClose}>
-                Close
+                {lang === 'id' ? 'Tutup' : 'Close'}
               </button>
               <button
                 type="button"
@@ -337,7 +412,7 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose }: Assignme
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                 </svg>
-                Edit
+                {lang === 'id' ? 'Ubah' : 'Edit'}
               </button>
             </div>
           </div>

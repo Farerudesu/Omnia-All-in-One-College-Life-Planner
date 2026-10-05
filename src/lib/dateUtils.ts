@@ -2,16 +2,35 @@
  * Date / time utilities used across Schedule, Calendar, etc.
  */
 
-const DAY_NAMES_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const DAY_NAMES_FULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-const MONTH_NAMES = [
+const DAY_NAMES_SHORT_EN = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const DAY_NAMES_FULL_EN = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const MONTH_NAMES_EN = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
-const MONTH_NAMES_SHORT = [
+const MONTH_NAMES_SHORT_EN = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
 ];
+
+const DAY_NAMES_SHORT_ID = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+const DAY_NAMES_FULL_ID = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+const MONTH_NAMES_ID = [
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+];
+const MONTH_NAMES_SHORT_ID = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+  'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
+];
+
+export function getLanguage(): 'en' | 'id' {
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem('omnia_language');
+    if (stored === 'en' || stored === 'id') return stored;
+  }
+  return 'id';
+}
 
 /** ISO day-of-week: 1=Mon, 7=Sun  (like our daysOfWeek field) */
 export function getISODay(date: Date): number {
@@ -28,19 +47,34 @@ export function toDateString(date: Date): string {
 
 /** Parse "YYYY-MM-DD" to Date (local midnight) */
 export function parseDate(str: string): Date {
+  if (!str || typeof str !== 'string') return new Date();
   const [y, m, d] = str.split('-').map(Number);
+  if (!y || !m || !d) return new Date();
   return new Date(y, m - 1, d);
 }
 
 /** Parse "HH:mm" to { hours, minutes } */
-export function parseTime(str: string): { hours: number; minutes: number } {
-  const [h, m] = str.split(':').map(Number);
-  return { hours: h, minutes: m };
+export function parseTime(str?: string | null): { hours: number; minutes: number } {
+  if (!str || typeof str !== 'string') {
+    return { hours: 0, minutes: 0 };
+  }
+  const parts = str.split(':');
+  const h = Number(parts[0]);
+  const m = Number(parts[1]);
+  return {
+    hours: Number.isFinite(h) ? Math.min(23, Math.max(0, h)) : 0,
+    minutes: Number.isFinite(m) ? Math.min(59, Math.max(0, m)) : 0,
+  };
 }
 
-/** "HH:mm" → "10:00 AM" */
-export function formatTime12(time: string): string {
+/** Format time: 24h ("07:30", "23:59") in ID mode, 12h ("7:30 AM", "11:59 PM") in EN mode */
+export function formatTime12(time?: string | null): string {
+  if (!time || typeof time !== 'string') return '';
   const { hours, minutes } = parseTime(time);
+  const lang = getLanguage();
+  if (lang === 'id') {
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+  }
   const ampm = hours >= 12 ? 'PM' : 'AM';
   const h = hours % 12 || 12;
   return `${h}:${String(minutes).padStart(2, '0')} ${ampm}`;
@@ -48,14 +82,30 @@ export function formatTime12(time: string): string {
 
 /** "HH:mm" → "10:00" (already 24h) */
 export function formatTime24(time: string): string {
-  return time;
+  return time || '';
+}
+
+/** Format numeric date: "05/10/2026" (ID) or "10/05/2026" (EN) */
+export function formatDateNumeric(date: Date | string): string {
+  const d = typeof date === 'string' ? parseDate(date.split('T')[0]) : date;
+  if (!d || !(d instanceof Date) || isNaN(d.getTime())) return '';
+  const lang = getLanguage();
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  if (lang === 'id') {
+    return `${day}/${month}/${year}`;
+  }
+  return `${month}/${day}/${year}`;
 }
 
 /** Duration in minutes between two "HH:mm" strings */
-export function durationMinutes(start: string, end: string): number {
+export function durationMinutes(start?: string | null, end?: string | null): number {
+  if (!start || !end) return 0;
   const s = parseTime(start);
   const e = parseTime(end);
-  return (e.hours * 60 + e.minutes) - (s.hours * 60 + s.minutes);
+  const diff = (e.hours * 60 + e.minutes) - (s.hours * 60 + s.minutes);
+  return Number.isFinite(diff) ? Math.max(0, diff) : 0;
 }
 
 /** Monday-first week dates from a given date */
@@ -104,35 +154,68 @@ export function isToday(date: Date): boolean {
 }
 
 export function getDayName(dayNum: number, short = true): string {
-  return short ? DAY_NAMES_SHORT[dayNum - 1] : DAY_NAMES_FULL[dayNum - 1];
+  const isId = getLanguage() === 'id';
+  if (isId) {
+    return short ? DAY_NAMES_SHORT_ID[dayNum - 1] : DAY_NAMES_FULL_ID[dayNum - 1];
+  }
+  return short ? DAY_NAMES_SHORT_EN[dayNum - 1] : DAY_NAMES_FULL_EN[dayNum - 1];
 }
 
 export function getMonthName(month: number, short = false): string {
-  return short ? MONTH_NAMES_SHORT[month] : MONTH_NAMES[month];
+  const isId = getLanguage() === 'id';
+  if (isId) {
+    return short ? MONTH_NAMES_SHORT_ID[month] : MONTH_NAMES_ID[month];
+  }
+  return short ? MONTH_NAMES_SHORT_EN[month] : MONTH_NAMES_EN[month];
 }
 
-/** Format date as "Mon, Sep 28" */
+/** Format date as "Sen, 5 Okt" (ID) or "Mon, Oct 5" (EN) */
 export function formatDateShort(date: Date): string {
-  return `${DAY_NAMES_SHORT[getISODay(date) - 1]}, ${MONTH_NAMES_SHORT[date.getMonth()]} ${date.getDate()}`;
+  const isId = getLanguage() === 'id';
+  const dayIndex = getISODay(date) - 1;
+  const monthIndex = date.getMonth();
+  if (isId) {
+    return `${DAY_NAMES_SHORT_ID[dayIndex]}, ${date.getDate()} ${MONTH_NAMES_SHORT_ID[monthIndex]}`;
+  }
+  return `${DAY_NAMES_SHORT_EN[dayIndex]}, ${MONTH_NAMES_SHORT_EN[monthIndex]} ${date.getDate()}`;
 }
 
-/** Format date as "September 28, 2026" */
+/** Format date as "5 Oktober 2026" (ID) or "October 5, 2026" (EN) */
 export function formatDateLong(date: Date): string {
-  return `${MONTH_NAMES[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+  const isId = getLanguage() === 'id';
+  const monthIndex = date.getMonth();
+  if (isId) {
+    return `${date.getDate()} ${MONTH_NAMES_ID[monthIndex]} ${date.getFullYear()}`;
+  }
+  return `${MONTH_NAMES_EN[monthIndex]} ${date.getDate()}, ${date.getFullYear()}`;
 }
 
-/** Format date as "Oct 3" */
+/** Format date as "5 Okt" (ID) or "Oct 5" (EN) */
 export function formatDateCompact(date: Date): string {
-  return `${MONTH_NAMES_SHORT[date.getMonth()]} ${date.getDate()}`;
+  const isId = getLanguage() === 'id';
+  const monthIndex = date.getMonth();
+  if (isId) {
+    return `${date.getDate()} ${MONTH_NAMES_SHORT_ID[monthIndex]}`;
+  }
+  return `${MONTH_NAMES_SHORT_EN[monthIndex]} ${date.getDate()}`;
 }
 
-/** Relative time: "in 45 min", "2 days ago", etc. */
+/** Relative time: "dalam 45 mnt", "2 hari lalu", "in 45 min", "2 days ago", etc. */
 export function relativeTime(target: Date, from = new Date()): string {
   const diff = target.getTime() - from.getTime();
   const absDiff = Math.abs(diff);
   const minutes = Math.floor(absDiff / 60000);
   const hours = Math.floor(absDiff / 3600000);
   const days = Math.floor(absDiff / 86400000);
+  const isId = getLanguage() === 'id';
+
+  if (isId) {
+    if (minutes < 1) return 'baru saja';
+    if (minutes < 60) return diff > 0 ? `dalam ${minutes} mnt` : `${minutes} mnt lalu`;
+    if (hours < 24) return diff > 0 ? `dalam ${hours} jam` : `${hours} jam lalu`;
+    if (days < 7) return diff > 0 ? `dalam ${days} hari` : `${days} hari lalu`;
+    return formatDateCompact(target);
+  }
 
   const suffix = diff > 0 ? '' : ' ago';
   const prefix = diff > 0 ? 'in ' : '';
@@ -153,27 +236,33 @@ export function isInBreak(
   return breaks.some((b) => ds >= b.start && ds <= b.end);
 }
 
-/** "time-slot" position: what fraction of a time grid (e.g. 8:00–18:00) does this time occupy? */
+/** "time-slot" position: what fraction of a time grid does this time occupy? */
 export function timeToGridPosition(
-  time: string,
-  gridStart = 8,
-  gridEnd = 18
+  time?: string | null,
+  gridStart = 7,
+  gridEnd = 19
 ): number {
+  if (!time) return 0;
   const { hours, minutes } = parseTime(time);
   const totalMinutes = hours * 60 + minutes;
   const gridStartMinutes = gridStart * 60;
   const gridEndMinutes = gridEnd * 60;
   const gridRange = gridEndMinutes - gridStartMinutes;
-  return ((totalMinutes - gridStartMinutes) / gridRange) * 100;
+  if (gridRange <= 0) return 0;
+  const pos = ((totalMinutes - gridStartMinutes) / gridRange) * 100;
+  return Number.isFinite(pos) ? pos : 0;
 }
 
 export function timeToGridHeight(
-  startTime: string,
-  endTime: string,
-  gridStart = 8,
-  gridEnd = 18
+  startTime?: string | null,
+  endTime?: string | null,
+  gridStart = 7,
+  gridEnd = 19
 ): number {
+  if (!startTime || !endTime) return 0;
   const gridRange = (gridEnd - gridStart) * 60;
+  if (gridRange <= 0) return 0;
   const dur = durationMinutes(startTime, endTime);
-  return (dur / gridRange) * 100;
+  const h = (dur / gridRange) * 100;
+  return Number.isFinite(h) ? Math.max(0, h) : 0;
 }

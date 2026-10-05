@@ -5,6 +5,8 @@ import { Modal } from '../components/Modal';
 import { AssignmentDetailsModal } from '../components/AssignmentDetailsModal';
 import { CategoryIndicator } from '../components/CategoryIndicator';
 import type { Assignment, Priority, AssignmentStatus, CategoryShape } from '../types';
+import { useLanguage } from '../lib/useLanguage';
+import { formatDateShort, formatTime12 } from '../lib/dateUtils';
 
 const CATEGORY_MAP: Record<string, { shape: CategoryShape; color: string; label: string }> = {
   classes: { shape: 'square', color: 'var(--classes)', label: 'Coursework' },
@@ -17,6 +19,7 @@ const CATEGORY_MAP: Record<string, { shape: CategoryShape; color: string; label:
 type FilterMode = 'all' | 'due-soon' | 'by-course' | 'done';
 
 export function AssignmentsPage() {
+  const lang = useLanguage();
   const assignments = useData(ds.getAssignments);
   const courses = useData(ds.getCourses);
 
@@ -97,20 +100,22 @@ export function AssignmentsPage() {
           fontSize: '0.8125rem', fontWeight: 500, color: 'var(--on-surface-variant)',
           marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.375rem'
         }}>
-          <span>Academics</span>
+          <span>{lang === 'id' ? 'Akademik' : 'Academics'}</span>
           <span style={{ opacity: 0.4 }}>/</span>
-          <span>Deliverables</span>
+          <span>{lang === 'id' ? 'Daftar Tugas' : 'Deliverables'}</span>
         </div>
-        <h1>Assignments & Tasks</h1>
+        <h1>{lang === 'id' ? 'Tugas & Pekerjaan Rumah' : 'Assignments & Tasks'}</h1>
         <p className="subtitle">
-          Track problem sets, readings, deliverables, and exam milestones.
+          {lang === 'id'
+            ? 'Pantau tugas kuliah, bahan bacaan, laporan, dan jadwal evaluasi.'
+            : 'Track problem sets, readings, deliverables, and exam milestones.'}
         </p>
       </div>
 
       <div className="page-content">
         {/* Academic Progress & Overview Strip */}
-        <div className="card" style={{ marginBottom: '1.5rem', padding: '1.25rem' }}>
-          <div style={{
+        <div className="card assignments-overview" style={{ marginBottom: '1.5rem', padding: '1.25rem' }}>
+          <div className="assignments-controls" style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -120,19 +125,19 @@ export function AssignmentsPage() {
           }}>
             <div>
               <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface-variant)', marginBottom: '0.25rem' }}>
-                Semester Task Completion
+                {lang === 'id' ? 'Penyelesaian Tugas Semester' : 'Semester Task Completion'}
               </div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
                 <span className="tabular-nums" style={{ fontSize: '1.5rem', fontWeight: 700, fontFamily: 'var(--font-heading)' }}>
-                  {doneCount} of {assignments.length}
+                  {doneCount} {lang === 'id' ? 'dari' : 'of'} {assignments.length}
                 </span>
                 <span style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)' }}>
-                  ({assignments.length > 0 ? Math.round((doneCount / assignments.length) * 100) : 0}% completed)
+                  ({assignments.length > 0 ? Math.round((doneCount / assignments.length) * 100) : 0}% {lang === 'id' ? 'selesai' : 'completed'})
                 </span>
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+            <div className="horizontal-scroll-chips" style={{ display: 'flex', gap: '0.625rem', paddingBottom: '0.25rem' }}>
               <div style={{
                 padding: '0.375rem 0.75rem',
                 borderRadius: 6,
@@ -140,8 +145,9 @@ export function AssignmentsPage() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem',
+                flexShrink: 0,
               }}>
-                <span style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>Active:</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>{lang === 'id' ? 'Aktif:' : 'Active:'}</span>
                 <span className="tabular-nums" style={{ fontWeight: 700, fontSize: '0.875rem' }}>{activeCount}</span>
               </div>
               <div style={{
@@ -152,8 +158,9 @@ export function AssignmentsPage() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem',
+                flexShrink: 0,
               }}>
-                <span style={{ fontSize: '0.75rem' }}>Due this week:</span>
+                <span style={{ fontSize: '0.75rem' }}>{lang === 'id' ? 'Tenggat minggu ini:' : 'Due this week:'}</span>
                 <span className="tabular-nums" style={{ fontWeight: 700, fontSize: '0.875rem' }}>{dueSoonCount}</span>
               </div>
               {overdueCount > 0 && (
@@ -165,8 +172,9 @@ export function AssignmentsPage() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.5rem',
+                  flexShrink: 0,
                 }}>
-                  <span style={{ fontSize: '0.75rem' }}>Overdue:</span>
+                  <span style={{ fontSize: '0.75rem' }}>{lang === 'id' ? 'Terlambat:' : 'Overdue:'}</span>
                   <span className="tabular-nums" style={{ fontWeight: 700, fontSize: '0.875rem' }}>{overdueCount}</span>
                 </div>
               )}
@@ -199,29 +207,32 @@ export function AssignmentsPage() {
           flexWrap: 'wrap',
           gap: '0.75rem',
         }}>
-          <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap' }}>
+          <div className="assignment-filter-list horizontal-scroll-chips" style={{ display: 'flex', gap: '0.375rem', width: '100%', paddingBottom: '0.25rem', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
             {([
-              { key: 'all', label: `All (${assignments.length})` },
-              { key: 'due-soon', label: `Due soon (${dueSoonCount})` },
-              { key: 'by-course', label: 'By course' },
-              { key: 'done', label: `Completed (${doneCount})` },
+              { key: 'all', label: `${lang === 'id' ? 'Semua' : 'All'} (${assignments.length})` },
+              { key: 'due-soon', label: `${lang === 'id' ? 'Mendesak' : 'Due soon'} (${dueSoonCount})` },
+              { key: 'by-course', label: lang === 'id' ? 'Per mata kuliah' : 'By course' },
+              { key: 'done', label: `${lang === 'id' ? 'Selesai' : 'Completed'} (${doneCount})` },
             ] as { key: FilterMode; label: string }[]).map(({ key, label }) => (
               <button
                 key={key}
                 type="button"
                 className={filter === key ? 'chip active' : 'chip'}
+                aria-pressed={filter === key}
                 onClick={() => setFilter(key)}
+                style={{ flexShrink: 0, whiteSpace: 'nowrap' }}
               >
                 {label}
               </button>
             ))}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: '1 1 300px', maxWidth: 450 }}>
-            <div style={{ position: 'relative', width: '100%' }}>
+          <div className="assignment-search-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: '1 1 300px', maxWidth: 450 }}>
+            <div className="assignment-search-field" style={{ position: 'relative', width: '100%' }}>
               <input
+                className="assignment-search-input"
                 type="text"
-                placeholder="Search deliverables, courses, notes…"
+                placeholder={lang === 'id' ? 'Cari tugas, mata kuliah, catatan…' : 'Search deliverables, courses, notes…'}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 style={{ width: '100%', fontSize: '0.8125rem', padding: '0.45rem 2rem 0.45rem 0.75rem' }}
@@ -229,6 +240,7 @@ export function AssignmentsPage() {
               {searchQuery && (
                 <button
                   type="button"
+                  aria-label="Clear assignment search"
                   onClick={() => setSearchQuery('')}
                   style={{
                     position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
@@ -239,11 +251,11 @@ export function AssignmentsPage() {
                 </button>
               )}
             </div>
-            <button type="button" className="btn-primary" onClick={() => setShowAdd(true)} style={{ whiteSpace: 'nowrap' }}>
+            <button type="button" className="btn-primary assignment-add-button" onClick={() => setShowAdd(true)} style={{ whiteSpace: 'nowrap' }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
                 <path d="M12 5v14M5 12h14" />
               </svg>
-              Add assignment
+              {lang === 'id' ? 'Tambah tugas' : 'Add assignment'}
             </button>
           </div>
         </div>
@@ -278,12 +290,12 @@ export function AssignmentsPage() {
               </svg>
               <div>
                 <div style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--on-surface)', marginBottom: '0.25rem' }}>
-                  {searchQuery ? `No deliverables matching "${searchQuery}"` : 'No assignments found'}
+                  {searchQuery ? (lang === 'id' ? `Tidak ada tugas sesuai "${searchQuery}"` : `No deliverables matching "${searchQuery}"`) : (lang === 'id' ? 'Belum ada tugas' : 'No assignments found')}
                 </div>
-                <div style={{ fontSize: '0.875rem' }}>Get ahead of your coursework by adding your next deliverable.</div>
+                <div style={{ fontSize: '0.875rem' }}>{lang === 'id' ? 'Catat tugas berikutnya untuk mengatur jadwal belajarmu.' : 'Get ahead of your coursework by adding your next deliverable.'}</div>
               </div>
               <button className="btn-primary" onClick={() => setShowAdd(true)}>
-                Add assignment
+                {lang === 'id' ? 'Tambah tugas' : 'Add assignment'}
               </button>
             </div>
           )}
@@ -316,16 +328,20 @@ function AssignmentRow({
   onToggle: () => void;
   onOpenDetails: () => void;
 }) {
+  const lang = useLanguage();
   const due = new Date(assignment.dueDate);
   const now = new Date();
   const diff = due.getTime() - now.getTime();
   const daysUntil = Math.ceil(diff / (1000 * 60 * 60 * 24));
 
+  const dateFormatted = formatDateShort(due);
+  const timeFormatted = formatTime12(`${due.getHours().toString().padStart(2, '0')}:${due.getMinutes().toString().padStart(2, '0')}`);
+
   const dueText = isOverdue
-    ? `${due.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} – ${due.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} (Overdue)`
+    ? (lang === 'id' ? `${dateFormatted} – ${timeFormatted} (Terlambat)` : `${dateFormatted} – ${timeFormatted} (Overdue)`)
     : daysUntil <= 0
-      ? 'Today'
-      : `${due.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} – ${due.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} (In ${daysUntil} day${daysUntil !== 1 ? 's' : ''})`;
+      ? (lang === 'id' ? 'Hari Ini' : 'Today')
+      : (lang === 'id' ? `${dateFormatted} – ${timeFormatted} (${daysUntil} hari lagi)` : `${dateFormatted} – ${timeFormatted} (In ${daysUntil} day${daysUntil !== 1 ? 's' : ''})`);
 
   return (
     <div
@@ -335,7 +351,7 @@ function AssignmentRow({
         alignItems: 'flex-start',
         gap: '0.75rem',
         padding: '0.875rem 1rem',
-        borderRadius: 8,
+        borderRadius: 14,
         background: assignment.status === 'done' ? 'var(--surface-container-low)' : 'var(--surface-container-lowest)',
         border: isOverdue ? '1px solid var(--error)' : '1px solid var(--outline-variant)',
         boxShadow: 'var(--shadow-xs)',
@@ -349,14 +365,14 @@ function AssignmentRow({
         aria-checked={assignment.status === 'done'}
         aria-label={assignment.status === 'done' ? `Mark "${assignment.title}" as incomplete` : `Mark "${assignment.title}" as complete`}
         style={{
-          width: 32, height: 32, borderRadius: 6, marginTop: -2, marginLeft: -2,
+          width: 32, height: 32, borderRadius: '50%', marginTop: -2, marginLeft: -2,
           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
           cursor: 'pointer', flexShrink: 0,
         }}
         className="btn-ghost"
       >
         <span style={{
-          width: 20, height: 20, borderRadius: 5,
+          width: 22, height: 22, borderRadius: '50%',
           border: assignment.status === 'done' ? 'none' : '1.5px solid var(--outline)',
           background: assignment.status === 'done' ? 'var(--primary)' : 'transparent',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -451,8 +467,9 @@ function AssignmentRow({
         <button
           type="button"
           onClick={onOpenDetails}
-          className="btn-ghost"
+          className="btn-ghost min-touch-target"
           style={{ padding: '0.3rem', color: 'var(--on-surface-variant)' }}
+          aria-label={`Edit ${assignment.title}`}
           title="Edit deliverable"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -467,55 +484,106 @@ function AssignmentRow({
 
 // ─── Add Assignment Modal ───
 function AddAssignmentModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const lang = useLanguage();
   const courses = useData(ds.getCourses);
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<string>('classes');
   const [courseId, setCourseId] = useState('');
-  const [dueDate, setDueDate] = useState('');
+  const [dueDate, setDueDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [dueTime, setDueTime] = useState('23:59');
   const [priority, setPriority] = useState<Priority>('medium');
   const [status, setStatus] = useState<AssignmentStatus>('not-started');
   const [notes, setNotes] = useState('');
+  const [titleError, setTitleError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSave = () => {
-    if (!title || !dueDate) return;
-    ds.addAssignment({
-      courseId: courseId || undefined,
-      category: (category as any) || 'other',
-      title,
-      dueDate: `${dueDate}T${dueTime}`,
-      priority,
-      status,
-      notes: notes || undefined,
-    });
-    setTitle('');
-    setNotes('');
+  const handleClose = () => {
+    setTitleError('');
+    setIsSubmitting(false);
     onClose();
   };
 
+  const handleSave = () => {
+    if (!title.trim()) {
+      setTitleError(lang === 'id' ? 'Judul tidak boleh kosong' : 'Title is required');
+      return;
+    }
+
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    try {
+      const finalDueDate = dueDate || new Date().toISOString().split('T')[0];
+      ds.addAssignment({
+        courseId: courseId || undefined,
+        category: (category as any) || 'other',
+        title: title.trim(),
+        dueDate: `${finalDueDate}T${dueTime || '23:59'}`,
+        priority,
+        status,
+        notes: notes.trim() || undefined,
+      });
+      setTitle('');
+      setNotes('');
+      setTitleError('');
+      setIsSubmitting(false);
+      onClose();
+    } catch {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Add assignment">
+    <Modal isOpen={isOpen} onClose={handleClose} title={lang === 'id' ? 'Tambah tugas' : 'Add assignment'}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <div>
-          <label htmlFor="assignment-title" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>Title</label>
-          <input id="assignment-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Assignment title" style={{ width: '100%' }} />
+          <label htmlFor="assignment-title" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            {lang === 'id' ? 'Judul tugas *' : 'Title *'}
+          </label>
+          <input
+            id="assignment-title"
+            autoFocus
+            data-autofocus
+            value={title}
+            aria-invalid={titleError ? 'true' : 'false'}
+            aria-describedby={titleError ? 'assignment-title-error' : undefined}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              if (titleError && e.target.value.trim()) setTitleError('');
+            }}
+            placeholder={lang === 'id' ? 'Contoh: Laporan Praktikum Fisika' : 'Assignment title'}
+            style={{
+              width: '100%',
+              borderColor: titleError ? 'var(--error)' : undefined,
+              boxShadow: titleError ? '0 0 0 2px var(--error-container)' : undefined,
+            }}
+          />
+          {titleError && (
+            <div id="assignment-title-error" role="alert" style={{ color: 'var(--error)', fontSize: '0.75rem', marginTop: '0.375rem', fontWeight: 500 }}>
+              {titleError}
+            </div>
+          )}
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
           <div>
-            <label htmlFor="assignment-category" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>Category</label>
+            <label htmlFor="assignment-category" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+              {lang === 'id' ? 'Kategori' : 'Category'}
+            </label>
             <select id="assignment-category" value={category} onChange={(e) => setCategory(e.target.value)} style={{ width: '100%' }}>
-              <option value="classes">Coursework</option>
-              <option value="personal">Personal</option>
-              <option value="exam">Exam Prep</option>
-              <option value="deadline">General Deadline</option>
-              <option value="other">Other</option>
+              <option value="classes">{lang === 'id' ? 'Tugas Kuliah' : 'Coursework'}</option>
+              <option value="personal">{lang === 'id' ? 'Pribadi' : 'Personal'}</option>
+              <option value="exam">{lang === 'id' ? 'Persiapan Ujian' : 'Exam Prep'}</option>
+              <option value="deadline">{lang === 'id' ? 'Tenggat Umum' : 'General Deadline'}</option>
+              <option value="other">{lang === 'id' ? 'Lainnya' : 'Other'}</option>
             </select>
           </div>
           <div>
-            <label htmlFor="assignment-course" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>Course (Optional)</label>
+            <label htmlFor="assignment-course" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+              {lang === 'id' ? 'Mata Kuliah (Opsional)' : 'Course (Optional)'}
+            </label>
             <select id="assignment-course" value={courseId} onChange={(e) => setCourseId(e.target.value)} disabled={category !== 'classes'} style={{ width: '100%' }}>
-              <option value="">None</option>
+              <option value="">{lang === 'id' ? 'Tidak ada' : 'None'}</option>
               {courses.map((c) => (
                 <option key={c.id} value={c.id}>{c.code} – {c.name}</option>
               ))}
@@ -525,17 +593,23 @@ function AddAssignmentModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
           <div>
-            <label htmlFor="assignment-due-date" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>Due date</label>
+            <label htmlFor="assignment-due-date" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+              {lang === 'id' ? 'Tanggal tenggat' : 'Due date'}
+            </label>
             <input id="assignment-due-date" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} style={{ width: '100%' }} />
           </div>
           <div>
-            <label htmlFor="assignment-due-time" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>Due time</label>
+            <label htmlFor="assignment-due-time" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+              {lang === 'id' ? 'Waktu tenggat' : 'Due time'}
+            </label>
             <input id="assignment-due-time" type="time" value={dueTime} onChange={(e) => setDueTime(e.target.value)} style={{ width: '100%' }} />
           </div>
         </div>
 
         <div>
-          <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>Priority</label>
+          <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            {lang === 'id' ? 'Prioritas' : 'Priority'}
+          </label>
           <div style={{ display: 'flex', gap: '0.375rem' }}>
             {(['low', 'medium', 'high'] as Priority[]).map((p) => (
               <button
@@ -544,19 +618,21 @@ function AddAssignmentModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                 className={priority === p ? 'chip active' : 'chip'}
                 onClick={() => setPriority(p)}
               >
-                {p.charAt(0).toUpperCase() + p.slice(1)}
+                {p === 'low' ? (lang === 'id' ? 'Rendah' : 'Low') : p === 'medium' ? (lang === 'id' ? 'Sedang' : 'Medium') : (lang === 'id' ? 'Tinggi' : 'High')}
               </button>
             ))}
           </div>
         </div>
 
         <div>
-          <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>Status</label>
+          <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            {lang === 'id' ? 'Status' : 'Status'}
+          </label>
           <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap' }}>
             {([
-              { value: 'not-started', label: 'Not started' },
-              { value: 'in-progress', label: 'In progress' },
-              { value: 'done', label: 'Done' },
+              { value: 'not-started', label: lang === 'id' ? 'Belum mulai' : 'Not started' },
+              { value: 'in-progress', label: lang === 'id' ? 'Sedang dikerjakan' : 'In progress' },
+              { value: 'done', label: lang === 'id' ? 'Selesai' : 'Done' },
             ] as { value: AssignmentStatus; label: string }[]).map(({ value, label }) => (
               <button
                 key={value}
@@ -571,17 +647,21 @@ function AddAssignmentModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
         </div>
 
         <div>
-          <label htmlFor="assignment-notes" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>Notes (optional)</label>
-          <textarea id="assignment-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Additional notes…" rows={3} style={{ width: '100%', resize: 'vertical' }} />
+          <label htmlFor="assignment-notes" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            {lang === 'id' ? 'Catatan (opsional)' : 'Notes (optional)'}
+          </label>
+          <textarea id="assignment-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={lang === 'id' ? 'Catatan tambahan...' : 'Additional notes…'} rows={3} style={{ width: '100%', resize: 'vertical' }} />
         </div>
 
         <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', paddingTop: '0.5rem' }}>
-          <button type="button" className="btn-outline" onClick={onClose}>Cancel</button>
-          <button type="button" className="btn-primary" onClick={handleSave}>
+          <button type="button" className="btn-outline" onClick={handleClose} disabled={isSubmitting}>
+            {lang === 'id' ? 'Batal' : 'Cancel'}
+          </button>
+          <button type="button" className="btn-primary" onClick={handleSave} disabled={isSubmitting}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
               <polyline points="20 6 9 17 4 12" />
             </svg>
-            Add assignment
+            {isSubmitting ? (lang === 'id' ? 'Menyimpan…' : 'Saving…') : (lang === 'id' ? 'Simpan' : 'Save')}
           </button>
         </div>
       </div>

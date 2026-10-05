@@ -10,6 +10,7 @@ import type {
 } from '../types';
 import { supabase } from './supabase.js';
 import { getCurrencyScale, normalizeCurrency } from './currency';
+import { normalizeTransactionCategory } from './categories';
 
 // simple id generator
 let _counter = Date.now();
@@ -31,6 +32,7 @@ let settings: UserSettings = {
   monthlyBudget: 1850,
   currency: 'IDR',
   theme: 'light',
+  language: (localStorage.getItem('omnia_language') as 'en' | 'id') || 'id',
 };
 
 export type DataTable = 'transactions' | 'classes' | 'events' | 'assignments' | 'profiles' | 'user_settings';
@@ -81,16 +83,19 @@ async function refreshTable(table: DataTable) {
     if (table === 'transactions') {
       const { data, error } = await client.from('transactions').select('*').eq('user_id', activeUserId).order('tanggal', { ascending: false });
       if (error) throw error;
-      transactions = ((data || []) as DbRow[]).map((row) => ({
-        id: rowText(row, 'id'),
-        date: rowText(row, 'tanggal'),
-        type: rowText(row, 'tipe') === 'pemasukan' ? 'income' : 'expense',
-        amount: rowNumber(row, 'jumlah') / getCurrencyScale(settings.currency),
-        category: rowText(row, 'kategori'),
-        merchant: rowText(row, 'merchant'),
-        paymentMethod: rowText(row, 'payment_method') || undefined,
-        notes: rowText(row, 'catatan') || undefined,
-      }));
+      transactions = ((data || []) as DbRow[]).map((row) => {
+        const type = rowText(row, 'tipe') === 'pemasukan' ? 'income' : 'expense';
+        return {
+          id: rowText(row, 'id'),
+          date: rowText(row, 'tanggal'),
+          type,
+          amount: rowNumber(row, 'jumlah') / getCurrencyScale(settings.currency),
+          category: normalizeTransactionCategory(rowText(row, 'kategori'), type),
+          merchant: rowText(row, 'merchant'),
+          paymentMethod: rowText(row, 'payment_method') || undefined,
+          notes: rowText(row, 'catatan') || undefined,
+        };
+      });
     } else if (table === 'classes') {
       const { data, error } = await client.from('classes').select('*').eq('user_id', activeUserId).order('hari').order('jam_mulai');
       if (error) throw error;
@@ -165,6 +170,8 @@ async function refreshTable(table: DataTable) {
         notifEnabled: row ? row.notif_enabled !== false : true,
         currency: normalizeCurrency(row ? rowText(row, 'currency', 'IDR') : 'IDR'),
         theme: rowText(row || {}, 'theme', 'light') === 'dark' ? 'dark' : 'light',
+        language: (localStorage.getItem('omnia_language') as 'en' | 'id') || 'id',
+        paymentMethods: row && Array.isArray(row.payment_methods) && row.payment_methods.length > 0 ? (row.payment_methods as string[]) : getPaymentMethods(),
       };
     }
     setTableStatus(table, { loading: false, error: null });
@@ -191,6 +198,8 @@ export function clearUserData() {
   transactions = [];
   profile = null;
   settings = { semesterStart: '', semesterEnd: '', breakWeeks: [], monthlyBudget: 1850, currency: 'IDR', theme: 'light' };
+  cachedPaymentMethods = null;
+  cachedNotifications = null;
   tableStatus = emptyTableStatus();
   notify();
 }
@@ -221,10 +230,11 @@ async function mutateTable(table: DataTable, request: () => PromiseLike<{ error:
 
 function transactionRow(transaction: Omit<Transaction, 'id'> | Partial<Transaction>) {
   const row: Record<string, unknown> = {};
+  const txType = transaction.type || ('amount' in transaction && transaction.amount && transaction.amount > 0 ? 'expense' : undefined);
   if ('date' in transaction) row.tanggal = transaction.date;
   if ('type' in transaction) row.tipe = transaction.type === 'income' ? 'pemasukan' : 'pengeluaran';
   if ('amount' in transaction) row.jumlah = Math.round((transaction.amount || 0) * getCurrencyScale(settings.currency));
-  if ('category' in transaction) row.kategori = transaction.category;
+  if ('category' in transaction) row.kategori = normalizeTransactionCategory(transaction.category, txType || 'expense');
   if ('merchant' in transaction) row.merchant = transaction.merchant;
   if ('paymentMethod' in transaction) row.payment_method = transaction.paymentMethod ?? null;
   if ('notes' in transaction) row.catatan = transaction.notes ?? null;
@@ -285,6 +295,7 @@ export function subscribe(fn: Listener) {
 }
 
 function notify() {
+  cachedNotifications = null;
   listeners.forEach((fn) => fn());
 }
 
@@ -459,6 +470,59 @@ export function deleteTransaction(id: string): void {
   void mutateTable('transactions', () => getClient().from('transactions').delete().eq('id', id).eq('user_id', activeUserId));
 }
 
+// ─── Payment Methods ───
+export const DEFAULT_PAYMENT_METHODS = ['QRIS', 'Debit', 'Cash', 'Transfer'];
+let cachedPaymentMethods: string[] | null = null;
+
+export function getPaymentMethods(): string[] {
+  if (cachedPaymentMethods) return cachedPaymentMethods;
+  const stored = localStorage.getItem('omnia_payment_methods');
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        cachedPaymentMethods = parsed;
+        return cachedPaymentMethods;
+      }
+    } catch {}
+  }
+  cachedPaymentMethods = settings.paymentMethods && settings.paymentMethods.length > 0
+    ? settings.paymentMethods
+    : DEFAULT_PAYMENT_METHODS;
+  return cachedPaymentMethods;
+}
+
+export function savePaymentMethods(methods: string[]): void {
+  const filtered = Array.from(new Set(methods.map((m) => m.trim()).filter(Boolean)));
+  cachedPaymentMethods = filtered;
+  localStorage.setItem('omnia_payment_methods', JSON.stringify(filtered));
+  settings = { ...settings, paymentMethods: filtered };
+  notify();
+  void mutateTable('user_settings', async () => {
+    const client = getClient();
+    return client.from('user_settings').update({ payment_methods: filtered }).eq('user_id', activeUserId);
+  });
+}
+
+export function addPaymentMethod(method: string): string[] {
+  const trimmed = method.trim();
+  if (!trimmed) return getPaymentMethods();
+  const current = getPaymentMethods();
+  if (!current.includes(trimmed)) {
+    const next = [...current, trimmed];
+    savePaymentMethods(next);
+    return next;
+  }
+  return current;
+}
+
+export function deletePaymentMethod(method: string): string[] {
+  const current = getPaymentMethods();
+  const next = current.filter((m) => m !== method);
+  savePaymentMethods(next.length > 0 ? next : DEFAULT_PAYMENT_METHODS);
+  return next.length > 0 ? next : DEFAULT_PAYMENT_METHODS;
+}
+
 // ─── Settings ───
 export function getSettings(): UserSettings {
   return settings;
@@ -605,7 +669,7 @@ export function setCategoryVisibility(key: CategoryKey, visible: boolean) {
   notify();
 }
 
-// ─── Notifications ───
+// ─── Notifications & Reminders ───
 export interface AppNotification {
   id: string;
   title: string;
@@ -616,24 +680,179 @@ export interface AppNotification {
   link?: string;
 }
 
-let notifications: AppNotification[] = [];
+export interface UserReminder {
+  id: string;
+  itemId: string;
+  itemType: 'assignment' | 'event';
+  title: string;
+  remindAt: string; // ISO string
+  minutesBefore: number;
+  link: string;
+}
+
+function getStoredReadNotificationIds(): Set<string> {
+  try {
+    const raw = localStorage.getItem('omnia_read_notifications');
+    return new Set(raw ? JSON.parse(raw) : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveStoredReadNotificationIds(ids: Set<string>): void {
+  try {
+    localStorage.setItem('omnia_read_notifications', JSON.stringify(Array.from(ids)));
+  } catch {}
+}
+
+export function getUserReminders(): UserReminder[] {
+  try {
+    const raw = localStorage.getItem('omnia_reminders');
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function setUserReminder(reminder: UserReminder): void {
+  const current = getUserReminders().filter((r) => r.itemId !== reminder.itemId);
+  current.push(reminder);
+  localStorage.setItem('omnia_reminders', JSON.stringify(current));
+  notify();
+}
+
+export function deleteUserReminder(itemId: string): void {
+  const current = getUserReminders().filter((r) => r.itemId !== itemId);
+  localStorage.setItem('omnia_reminders', JSON.stringify(current));
+  notify();
+}
+
+let extraNotifications: AppNotification[] = [];
+let cachedNotifications: AppNotification[] | null = null;
 
 export function getNotifications(): AppNotification[] {
-  return notifications;
+  if (cachedNotifications) return cachedNotifications;
+  const readIds = getStoredReadNotificationIds();
+  const result: AppNotification[] = [];
+  const now = new Date();
+  const isId = (localStorage.getItem('omnia_language') || 'id') === 'id';
+
+  // 1. Upcoming classes starting within 2 hours
+  const todayDayNum = now.getDay() === 0 ? 7 : now.getDay();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+  for (const session of classSessions) {
+    if (session.daysOfWeek.includes(todayDayNum)) {
+      const course = courses.find((c) => c.id === session.courseId);
+      const [sh, sm] = (session.startTime || '').split(':').map(Number);
+      if (!isNaN(sh) && !isNaN(sm)) {
+        const sessionMinutes = sh * 60 + sm;
+        const diff = sessionMinutes - currentMinutes;
+        if (diff >= -30 && diff <= 120) {
+          const id = `class-${session.id}-${now.toISOString().split('T')[0]}`;
+          result.push({
+            id,
+            title: isId
+              ? `Kelas segera dimulai: ${course?.name || session.startTime}`
+              : `Class starting soon: ${course?.name || session.startTime}`,
+            message: `${course?.code || ''} · ${session.startTime}–${session.endTime} (${session.room || course?.room || 'TBA'})`,
+            time: diff > 0 ? (isId ? `dalam ${diff} mnt` : `in ${diff} min`) : (isId ? 'sedang berlangsung' : 'now'),
+            read: readIds.has(id),
+            type: 'academic',
+            link: '/schedule',
+          });
+        }
+      }
+    }
+  }
+
+  // 2. Assignments due within 48 hours
+  const in48Hours = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+  for (const a of assignments) {
+    if (a.status !== 'done' && a.dueDate) {
+      const due = new Date(a.dueDate);
+      if (!isNaN(due.getTime()) && due >= new Date(now.getTime() - 24 * 60 * 60 * 1000) && due <= in48Hours) {
+        const id = `assignment-${a.id}`;
+        const diffHours = Math.round((due.getTime() - now.getTime()) / (60 * 60 * 1000));
+        result.push({
+          id,
+          title: isId ? `Tenggat tugas: ${a.title}` : `Deliverable due: ${a.title}`,
+          message: isId ? `Batas waktu pengumpulan: ${a.dueDate.replace('T', ' ')}` : `Submission deadline: ${a.dueDate.replace('T', ' ')}`,
+          time: diffHours > 0 ? (isId ? `dalam ${diffHours} jam` : `in ${diffHours}h`) : (isId ? 'sudah lewat' : 'overdue'),
+          read: readIds.has(id),
+          type: 'deadline',
+          link: '/assignments',
+        });
+      }
+    }
+  }
+
+  // 3. Events occurring today
+  const todayStr = now.toISOString().split('T')[0];
+  for (const ev of events) {
+    if (ev.date === todayStr) {
+      const id = `event-${ev.id}`;
+      result.push({
+        id,
+        title: isId ? `Acara hari ini: ${ev.title}` : `Event today: ${ev.title}`,
+        message: `${ev.startTime ? ev.startTime + ' · ' : ''}${ev.location || (isId ? 'Kampus' : 'Campus')}`,
+        time: ev.startTime || (isId ? 'Sepanjang hari' : 'All day'),
+        read: readIds.has(id),
+        type: 'alert',
+        link: '/calendar',
+      });
+    }
+  }
+
+  // 4. User reminders that have reached trigger time
+  for (const rem of getUserReminders()) {
+    const remTime = new Date(rem.remindAt);
+    if (!isNaN(remTime.getTime()) && remTime <= now) {
+      const id = `rem-${rem.id}`;
+      result.push({
+        id,
+        title: isId ? `Pengingat: ${rem.title}` : `Reminder: ${rem.title}`,
+        message: isId ? `Pengingat terjadwal (${rem.minutesBefore} menit sebelum waktu acara)` : `Scheduled reminder (${rem.minutesBefore}m before)`,
+        time: isId ? 'Waktunya tiba' : 'Triggered',
+        read: readIds.has(id),
+        type: rem.itemType === 'assignment' ? 'deadline' : 'alert',
+        link: rem.link,
+      });
+    }
+  }
+
+  // Combine with any extra manually pushed notifications
+  for (const n of extraNotifications) {
+    result.push({ ...n, read: readIds.has(n.id) || n.read });
+  }
+
+  cachedNotifications = result;
+  return cachedNotifications;
 }
 
 export function markNotificationRead(id: string) {
-  notifications = notifications.map((n) => (n.id === id ? { ...n, read: true } : n));
+  const readIds = getStoredReadNotificationIds();
+  readIds.add(id);
+  saveStoredReadNotificationIds(readIds);
   notify();
 }
 
 export function markAllNotificationsRead() {
-  notifications = notifications.map((n) => ({ ...n, read: true }));
+  const readIds = getStoredReadNotificationIds();
+  for (const n of getNotifications()) {
+    readIds.add(n.id);
+  }
+  saveStoredReadNotificationIds(readIds);
   notify();
 }
 
 export function clearNotifications() {
-  notifications = [];
+  const readIds = getStoredReadNotificationIds();
+  for (const n of getNotifications()) {
+    readIds.add(n.id);
+  }
+  saveStoredReadNotificationIds(readIds);
+  extraNotifications = [];
   notify();
 }
 
