@@ -207,7 +207,7 @@ export function AssignmentsPage() {
           flexWrap: 'wrap',
           gap: '0.75rem',
         }}>
-          <div className="assignment-filter-list horizontal-scroll-chips" style={{ display: 'flex', gap: '0.375rem', width: '100%', paddingBottom: '0.25rem', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <div className="assignment-filter-list horizontal-scroll-chips" style={{ display: 'flex', gap: '0.375rem', width: '100%', paddingBottom: '0.25rem', paddingRight: '1.5rem', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
             {([
               { key: 'all', label: `${lang === 'id' ? 'Semua' : 'All'} (${assignments.length})` },
               { key: 'due-soon', label: `${lang === 'id' ? 'Mendesak' : 'Due soon'} (${dueSoonCount})` },
@@ -565,7 +565,7 @@ function AddAssignmentModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
           )}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+        <div className="modal-form-grid-2col">
           <div>
             <label htmlFor="assignment-category" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
               {lang === 'id' ? 'Kategori' : 'Category'}
@@ -591,7 +591,7 @@ function AddAssignmentModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+        <div className="modal-form-grid-2col">
           <div>
             <label htmlFor="assignment-due-date" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
               {lang === 'id' ? 'Tanggal tenggat' : 'Due date'}

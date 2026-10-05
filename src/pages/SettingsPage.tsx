@@ -306,7 +306,7 @@ export function SettingsPage() {
   };
 
   return (
-    <div>
+    <div className="settings-page-container">
       <div className="page-header">
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -531,7 +531,9 @@ export function SettingsPage() {
               </div>
               <div className="settings-budget-row" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '1.125rem', fontWeight: 600 }}>{getCurrencySymbol(currency)}</span>
-                <label htmlFor="monthly-budget-input" className="sr-only">Monthly budget amount</label>
+                <label htmlFor="monthly-budget-input" className="sr-only">
+                  {language === 'id' ? 'Jumlah anggaran bulanan' : 'Monthly budget amount'}
+                </label>
                 <input
                   id="monthly-budget-input"
                   type="number"

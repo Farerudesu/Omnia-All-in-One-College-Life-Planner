@@ -13,6 +13,16 @@ import { formatDateNumeric } from '../lib/dateUtils';
 
 const CATEGORIES = EXPENSE_CATEGORIES;
 
+export const CATEGORY_NAMES_ID: Record<string, string> = {
+  'Food & Groceries': 'Makanan & Kebutuhan',
+  'Transport': 'Transportasi',
+  'Academic Supplies': 'Kebutuhan Kuliah',
+  'Housing & Utilities': 'Tempat Tinggal & Tagihan',
+  'Entertainment': 'Hiburan & Gaya Hidup',
+  'Health & Wellness': 'Kesehatan',
+  'Other': 'Lainnya',
+};
+
 export function FinancePage() {
   const navigate = useNavigate();
   const lang = useLanguage();
@@ -119,7 +129,7 @@ export function FinancePage() {
   };
 
   return (
-    <div>
+    <div className="finance-page-container">
       <div className="page-header">
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -925,7 +935,7 @@ function AddTransactionModal({
             </label>
             <select id="tx-category" value={category} onChange={(e) => setCategory(e.target.value)} style={{ width: '100%' }}>
               {CATEGORIES.map((c) => (
-                <option key={c} value={c}>{c}</option>
+                <option key={c} value={c}>{lang === 'id' ? (CATEGORY_NAMES_ID[c] || c) : c}</option>
               ))}
             </select>
           </div>

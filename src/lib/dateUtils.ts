@@ -153,7 +153,8 @@ export function isToday(date: Date): boolean {
   return isSameDay(date, new Date());
 }
 
-export function getDayName(dayNum: number, short = true): string {
+export function getDayName(dayOrDate: number | Date, short = true): string {
+  const dayNum = typeof dayOrDate === 'number' ? dayOrDate : getISODay(dayOrDate);
   const isId = getLanguage() === 'id';
   if (isId) {
     return short ? DAY_NAMES_SHORT_ID[dayNum - 1] : DAY_NAMES_FULL_ID[dayNum - 1];

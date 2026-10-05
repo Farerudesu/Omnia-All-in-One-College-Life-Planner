@@ -1279,13 +1279,13 @@ export function CalendarPage() {
                     </div>
                     <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--on-surface)' }}>{item.title}</div>
                     {item.time && (
-                      <div className="tabular-nums" style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', marginTop: '0.375rem' }}>
+                      <div className="tabular-nums" style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface)', marginTop: '0.375rem' }}>
                         {formatTime12(item.time)}
                         {item.endTime ? ` – ${formatTime12(item.endTime)}` : ''}
                       </div>
                     )}
                     {item.notes && (
-                      <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', marginTop: '0.25rem' }}>
+                      <div style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)', marginTop: '0.25rem', lineHeight: 1.4 }}>
                         {item.notes}
                       </div>
                     )}

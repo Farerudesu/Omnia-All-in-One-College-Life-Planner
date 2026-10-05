@@ -4,6 +4,7 @@ import { useData } from '../lib/useData';
 import * as ds from '../lib/dataService';
 import { getCurrencyFractionDigits, getCurrencySymbol } from '../lib/currency';
 import { EXPENSE_CATEGORIES, normalizeTransactionCategory } from '../lib/categories';
+import { CATEGORY_NAMES_ID } from '../pages/FinancePage';
 import { useLanguage } from '../lib/useLanguage';
 import type { Transaction, TransactionType } from '../types';
 
@@ -243,11 +244,11 @@ export function TransactionModal({ transaction, isOpen, onClose }: TransactionMo
               style={{ width: '100%' }}
             >
               {type === 'income' ? (
-                <option value="Income">Income</option>
+                <option value="Income">{lang === 'id' ? 'Pemasukan' : 'Income'}</option>
               ) : (
                 EXPENSE_CATEGORIES.map((cat) => (
                   <option key={cat} value={cat}>
-                    {cat}
+                    {lang === 'id' ? (CATEGORY_NAMES_ID[cat] || cat) : cat}
                   </option>
                 ))
               )}

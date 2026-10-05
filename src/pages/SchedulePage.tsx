@@ -19,6 +19,7 @@ import {
   timeToGridPosition,
   timeToGridHeight,
   getMonthName,
+  getDayName,
   formatDateShort,
   formatDateLong,
   parseTime,
@@ -26,7 +27,7 @@ import {
 import type { ClassSession, Course, SessionException, ExceptionType, CategoryShape, CalendarEvent, EventType } from '../types';
 
 const DEFAULT_GRID_START = 7;
-const GRID_END = 18;
+const GRID_END = 21;
 
 function getHoursForGrid(gridStart: number) {
   const safeStart = Number.isFinite(gridStart)
@@ -824,40 +825,48 @@ export function SchedulePage() {
               className="btn-ghost min-touch-target"
               onClick={prevPeriod}
               aria-label={viewMode === 'today' ? "Previous day" : "Previous week"}
-              style={{ width: 34, height: 34, padding: 0 }}
+              style={{ width: 30, height: 30, padding: 0 }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
                 <polyline points="15 18 9 12 15 6" />
               </svg>
             </button>
-            <button
-              type="button"
-              className="btn-ghost"
-              onClick={goToToday}
-              style={{ fontSize: '0.8125rem', fontWeight: 600, padding: '0.25rem 0.5rem', whiteSpace: 'nowrap', flexShrink: 0 }}
+            <span
+              className="tabular-nums"
+              style={{ fontSize: '0.875rem', fontWeight: 700, padding: '0 0.125rem', whiteSpace: 'nowrap', color: 'var(--on-surface)' }}
             >
-              {t.common.today}
-            </button>
+              {viewMode === 'today'
+                ? `${currentDate.getDate()} ${getMonthName(currentDate.getMonth(), true)}`
+                : (mondayDate ? `${mondayDate.getDate()} ${getMonthName(mondayDate.getMonth(), true)}` : '')}
+            </span>
             <button
               type="button"
               className="btn-ghost min-touch-target"
               onClick={nextPeriod}
               aria-label={viewMode === 'today' ? "Next day" : "Next week"}
-              style={{ width: 34, height: 34, padding: 0 }}
+              style={{ width: 30, height: 30, padding: 0 }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
                 <polyline points="9 18 15 12 9 6" />
               </svg>
             </button>
-            <div style={{ marginLeft: '0.25rem', minWidth: 0 }}>
-              <div style={{ fontSize: '0.625rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--on-surface-variant)' }}>
-                {lang === 'id' ? 'Semester Ganjil 2026' : 'Fall term 2026'}
+            {!isToday(currentDate) && (
+              <button
+                type="button"
+                className="chip"
+                onClick={goToToday}
+                style={{ fontSize: '0.6875rem', padding: '0.125rem 0.375rem', marginLeft: '0.125rem', height: 'auto', flexShrink: 0 }}
+              >
+                {t.common.today}
+              </button>
+            )}
+            <div style={{ marginLeft: '0.375rem', minWidth: 0 }}>
+              <div style={{ fontSize: '0.625rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--on-surface-variant)' }}>
+                {lang === 'id' ? 'Semester Ganjil' : 'Fall term'}
               </div>
-              <h1 className="tabular-nums" style={{ fontSize: '1.125rem', fontWeight: 700, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {viewMode === 'today'
-                  ? `${currentDate.getDate()} ${getMonthName(currentDate.getMonth(), true)}`
-                  : (mondayDate ? `${mondayDate.getDate()} ${getMonthName(mondayDate.getMonth(), true)}` : '')}
-              </h1>
+              <div style={{ fontSize: '0.75rem', fontWeight: 600, margin: 0, color: 'var(--on-surface-variant)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {viewMode === 'today' ? getDayName(currentDate) : (lang === 'id' ? 'Mingguan' : 'Weekly')}
+              </div>
             </div>
           </div>
           <div
@@ -991,7 +1000,9 @@ export function SchedulePage() {
                 color: 'var(--primary)',
               }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--primary)' }} />
-                Up next {nextClass.minutesUntil <= 60 ? `in ${nextClass.minutesUntil}m` : `today`}
+                {lang === 'id'
+                  ? (nextClass.minutesUntil <= 60 ? `Berikutnya dlm ${nextClass.minutesUntil}m` : 'Berikutnya hari ini')
+                  : (nextClass.minutesUntil <= 60 ? `Up next in ${nextClass.minutesUntil}m` : 'Up next today')}
               </span>
               <span
                 className="badge"
@@ -1529,7 +1540,7 @@ export function SchedulePage() {
                   color: 'var(--on-surface-variant)',
                   letterSpacing: '0.01em',
                 }}>
-                  Up next today
+                  {lang === 'id' ? 'Berikutnya hari ini' : 'Up next today'}
                 </span>
                 <span style={{
                   fontSize: '11px',

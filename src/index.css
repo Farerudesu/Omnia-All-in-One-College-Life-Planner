@@ -714,6 +714,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
     margin-top: 1.25rem !important;
     border-radius: 12px !important;
     box-shadow: var(--shadow-sm);
+    padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
   .calendar-toolbar > div:first-child {
@@ -1047,7 +1048,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 
   .ask-omni-composer {
     flex-shrink: 0 !important;
-    padding: 0.5rem 1rem calc(0.5rem + env(safe-area-inset-bottom, 0px)) !important;
+    padding: 0.625rem 1rem calc(58px + env(safe-area-inset-bottom, 0px)) !important;
     background: var(--surface-container-lowest) !important;
     border-top: 0.5px solid var(--outline-variant) !important;
   }
@@ -1097,24 +1098,47 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   .modal-overlay {
     align-items: flex-end;
     padding: 0;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
+    z-index: 1000 !important;
   }
   .modal-content {
     width: 100%;
     max-width: none !important;
-    max-height: calc(92dvh - env(safe-area-inset-top, 0px));
+    max-height: calc(88dvh - env(safe-area-inset-top, 0px));
     overflow-y: auto;
     border-radius: 20px 20px 0 0;
     border: none;
-    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.2);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.25);
+    padding-bottom: calc(2.5rem + env(safe-area-inset-bottom, 0px)) !important;
     background: var(--surface-container);
   }
-  .modal-content > div:first-child,
+  .modal-content > div:first-child {
+    padding: 1rem 1.25rem !important;
+  }
   .modal-content > div:last-child {
-    padding: 1rem !important;
+    padding: 1rem 1.25rem calc(1.75rem + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .modal-form-grid-2col {
+    display: grid;
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem;
+  }
+
+  .settings-page-container,
+  .finance-page-container {
+    padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .schedule-grid-scroll {
+    padding: 0 0.5rem calc(88px + env(safe-area-inset-bottom, 0px)) !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .schedule-grid--week {
+    min-width: 680px !important;
   }
 
   /* ─── Finance summary grid: prevent overflow on narrow screens ─── */
@@ -1124,7 +1148,6 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   .finance-breakdown-grid {
     grid-template-columns: 1fr !important;
   }
-
 }
 
 @media (min-width: 1024px) {
