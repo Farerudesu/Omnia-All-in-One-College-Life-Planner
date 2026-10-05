@@ -595,7 +595,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
     margin-inline-start: 0 !important;
     min-width: 0 !important;
     width: 100% !important;
-    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(76px + max(14px, env(safe-area-inset-bottom, 14px)));
   }
 
   /* ─── Mobile Bottom Navigation Dock (Apple iOS Tab Bar) ─── */
@@ -608,7 +608,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
     backdrop-filter: blur(25px) saturate(180%);
     -webkit-backdrop-filter: blur(25px) saturate(180%);
     border-top: 0.5px solid var(--outline-variant);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-bottom: max(14px, env(safe-area-inset-bottom, 14px));
     z-index: 80;
     box-shadow: var(--mobile-dock-shadow);
   }
@@ -617,11 +617,12 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
     display: flex;
     align-items: center;
     justify-content: space-around;
-    height: 50px;
+    height: 52px;
     width: 100%;
     max-width: 500px;
     margin: 0 auto;
     padding-inline: 0.5rem;
+    padding-top: 4px;
   }
 
   .app-bottom-nav__link {
@@ -684,15 +685,8 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
     pointer-events: none;
   }
 
-  /* ─── Mobile Bottom Sheet Handle (Apple grabber) ─── */
   .mobile-sheet-handle {
-    display: block;
-    width: 36px;
-    height: 5px;
-    border-radius: 999px;
-    background: var(--outline);
-    margin: 8px auto 6px;
-    opacity: 0.4;
+    display: none !important;
   }
 
   .page-header,
@@ -1101,34 +1095,37 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
   }
 
-/* ─── Mobile bottom-sheet modals (Apple iOS Sheet) ─── */
+/* ─── Mobile floating card modals (Full rounded & inset) ─── */
   .modal-overlay {
     position: fixed !important;
     inset: 0 !important;
-    align-items: flex-end;
-    padding: 0;
-    background: rgba(0, 0, 0, 0.65);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: calc(1rem + env(safe-area-inset-top, 0px)) 1rem calc(1.25rem + max(14px, env(safe-area-inset-bottom, 14px))) 1rem !important;
+    background: rgba(0, 0, 0, 0.65) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
     z-index: 99999 !important;
   }
   .modal-content {
-    width: 100%;
-    max-width: none !important;
-    max-height: calc(88dvh - env(safe-area-inset-top, 0px));
+    width: 100% !important;
+    max-width: min(520px, calc(100vw - 2rem)) !important;
+    max-height: min(85dvh, calc(100dvh - 3.5rem - env(safe-area-inset-top, 0px) - max(14px, env(safe-area-inset-bottom, 14px)))) !important;
     display: flex !important;
     flex-direction: column !important;
-    border-radius: 20px 20px 0 0;
-    border: none;
-    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.35);
-    background: var(--surface-container);
+    border-radius: 20px !important;
+    border: 1px solid var(--outline-variant) !important;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4) !important;
+    background: var(--surface-container) !important;
     overflow: hidden !important;
+    margin: auto !important;
   }
   .modal-scroll-body {
     flex: 1 1 auto !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch;
-    padding: 1.25rem 1.25rem calc(2.5rem + env(safe-area-inset-bottom, 0px)) !important;
+    padding: 1.25rem !important;
   }
   .modal-content > div:first-child {
     padding: 1rem 1.25rem 0.75rem !important;
@@ -1144,11 +1141,11 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   .finance-page-container,
   .schedule-page-container,
   .calendar-page-container {
-    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-bottom: calc(90px + max(14px, env(safe-area-inset-bottom, 14px))) !important;
   }
 
   .schedule-grid-scroll {
-    padding: 0 0.5rem calc(96px + env(safe-area-inset-bottom, 0px)) !important;
+    padding: 0 0.5rem calc(90px + max(14px, env(safe-area-inset-bottom, 14px))) !important;
     -webkit-overflow-scrolling: touch;
   }
 
@@ -1190,7 +1187,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   }
 
   .page-content {
-    padding-block: 1rem calc(96px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-block: 1rem calc(90px + max(14px, env(safe-area-inset-bottom, 14px))) !important;
     padding-inline: 1rem;
   }
 
