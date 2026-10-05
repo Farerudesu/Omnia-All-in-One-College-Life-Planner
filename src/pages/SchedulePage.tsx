@@ -2324,7 +2324,7 @@ function ScheduleAddEventModal({
           />
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', paddingTop: '0.5rem' }}>
+        <div className="modal-actions-sticky">
           <button type="button" className="btn-outline" onClick={onClose} disabled={isSubmitting}>
             {isId ? 'Batal' : 'Cancel'}
           </button>
@@ -2618,7 +2618,7 @@ function AddClassModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
           </select>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', paddingTop: '0.5rem' }}>
+        <div className="modal-actions-sticky">
           <button type="button" className="btn-outline" onClick={onClose} disabled={isSubmitting}>
             {isId ? 'Batal' : 'Discard'}
           </button>

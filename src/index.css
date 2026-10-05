@@ -768,30 +768,33 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   }
 
   .calendar-view-modes {
-    flex: 1 1 auto;
+    width: 100% !important;
+    flex: 1 1 100% !important;
+    order: 1 !important;
     display: flex;
     justify-content: space-between;
     margin-inline-end: 0 !important;
+    margin-bottom: 0.25rem;
   }
 
   .calendar-view-modes button {
     flex: 1;
-    min-height: 40px;
+    min-height: 38px;
     padding-inline: 0.375rem !important;
     text-align: center;
   }
 
   .calendar-search {
-    flex: 1 1 100%;
-    min-width: 0;
-    order: 3;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    order: 2 !important;
   }
 
   .calendar-search-input {
     width: 100% !important;
     min-width: 0;
-    font-size: 16px !important;
-    min-height: 40px;
+    font-size: 14px !important;
+    min-height: 38px;
   }
 
   .calendar-search-results {
@@ -799,9 +802,11 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   }
 
   .calendar-add-event {
-    min-height: 40px;
-    flex: 0 0 auto;
+    min-height: 38px;
+    flex: 0 0 auto !important;
+    order: 3 !important;
     padding-inline: 0.75rem !important;
+    white-space: nowrap !important;
   }
 
   /* Week view: swipeable peeking card scroller on mobile (<820px) */
@@ -1083,7 +1088,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 
   .ask-omni-composer {
     flex-shrink: 0 !important;
-    padding: 0.625rem 1rem calc(58px + env(safe-area-inset-bottom, 0px)) !important;
+    padding: 0.625rem 1rem calc(68px + max(14px, env(safe-area-inset-bottom, 14px))) !important;
     background: var(--surface-container-lowest) !important;
     border-top: 0.5px solid var(--outline-variant) !important;
   }
@@ -1169,6 +1174,20 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
     display: grid;
     grid-template-columns: 1fr !important;
     gap: 0.75rem;
+  }
+
+  .modal-actions-sticky {
+    position: sticky;
+    bottom: -1.25rem;
+    margin: 1.25rem -1.25rem -1.25rem -1.25rem;
+    padding: 0.875rem 1.25rem;
+    background: var(--surface-container);
+    border-top: 1px solid var(--outline-variant);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    z-index: 10;
   }
 
   .settings-page-container,

@@ -311,7 +311,7 @@ export function TransactionModal({ transaction, isOpen, onClose }: TransactionMo
           />
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginTop: '0.75rem' }}>
+        <div className="modal-actions-sticky" style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
           {isEditing ? (
             <button
               type="button"

@@ -29,7 +29,7 @@ let settings: UserSettings = {
   semesterStart: '',
   semesterEnd: '',
   breakWeeks: [],
-  monthlyBudget: 1850,
+  monthlyBudget: 2500000,
   currency: 'IDR',
   theme: 'light',
   language: (localStorage.getItem('omnia_language') as 'en' | 'id') || 'id',
@@ -197,7 +197,7 @@ export function clearUserData() {
   assignments = [];
   transactions = [];
   profile = null;
-  settings = { semesterStart: '', semesterEnd: '', breakWeeks: [], monthlyBudget: 1850, currency: 'IDR', theme: 'light' };
+  settings = { semesterStart: '', semesterEnd: '', breakWeeks: [], monthlyBudget: 2500000, currency: 'IDR', theme: 'light' };
   cachedPaymentMethods = null;
   cachedNotifications = null;
   tableStatus = emptyTableStatus();

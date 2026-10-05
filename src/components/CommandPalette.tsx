@@ -4,6 +4,7 @@ import { CalendarDays, Calendar, ClipboardList, CreditCard, Settings, Plus, Pin,
 import * as ds from '../lib/dataService';
 import { useData } from '../lib/useData';
 import { formatCurrency } from '../lib/currency';
+import { useLanguage } from '../lib/useLanguage';
 
 interface CommandPaletteProps {
   isOpen: boolean;
@@ -39,6 +40,7 @@ export function CommandPalette({
   const events = useData(ds.getEvents);
   const transactions = useData(ds.getTransactions);
   const settings = useData(ds.getSettings);
+  const lang = useLanguage();
 
   useEffect(() => {
     if (isOpen) {
@@ -310,7 +312,7 @@ export function CommandPalette({
           <input
             ref={inputRef}
             type="text"
-            placeholder="Search courses, professors, assignments, events, ledger..."
+            placeholder={lang === 'id' ? 'Cari kelas, tugas, kegiatan, keuangan...' : 'Search courses, tasks, events, ledger...'}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             style={{
@@ -329,10 +331,11 @@ export function CommandPalette({
               className="btn-ghost"
               style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
             >
-              Clear
+              {lang === 'id' ? 'Hapus' : 'Clear'}
             </button>
           ) : (
             <span
+              className="hidden-mobile"
               style={{
                 fontSize: '0.6875rem',
                 fontWeight: 600,
@@ -342,9 +345,32 @@ export function CommandPalette({
                 background: 'var(--surface-container)',
               }}
             >
-              ESC to exit
+              ESC
             </span>
           )}
+          <button
+            type="button"
+            onClick={onClose}
+            className="btn-ghost min-touch-target"
+            aria-label="Close search"
+            title="Close"
+            style={{
+              width: 30,
+              height: 30,
+              padding: 0,
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--on-surface-variant)',
+              background: 'var(--surface-container-high)',
+              flexShrink: 0,
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
         </div>
 
         {/* Results list */}

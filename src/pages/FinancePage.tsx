@@ -77,8 +77,12 @@ export function FinancePage() {
     };
   }, [transactions, currentMonth, currentYear]);
 
-  const budgetPercent = (spentThisMonth / settings.monthlyBudget) * 100;
-  const remaining = settings.monthlyBudget - spentThisMonth;
+  const effectiveMonthlyBudget = (currency === 'IDR' && settings.monthlyBudget < 10000)
+    ? 2500000
+    : (settings.monthlyBudget || 2500000);
+
+  const budgetPercent = (spentThisMonth / effectiveMonthlyBudget) * 100;
+  const remaining = effectiveMonthlyBudget - spentThisMonth;
   const daysLeftInMonth = Math.max(1, 30 - now.getDate());
   const dailyAllowance = remaining > 0 ? remaining / daysLeftInMonth : 0;
 
@@ -270,8 +274,8 @@ export function FinancePage() {
             </h2>
             <div className="tabular-nums" style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)' }}>
               {lang === 'id'
-                ? `Terpakai ${formatMoney(spentThisMonth)} dari batas ${formatMoney(settings.monthlyBudget)}`
-                : `${formatMoney(spentThisMonth)} spent of ${formatMoney(settings.monthlyBudget)} cap`}
+                ? `Terpakai ${formatMoney(spentThisMonth)} dari batas ${formatMoney(effectiveMonthlyBudget)}`
+                : `${formatMoney(spentThisMonth)} spent of ${formatMoney(effectiveMonthlyBudget)} cap`}
             </div>
           </div>
           <div style={{
@@ -294,9 +298,9 @@ export function FinancePage() {
             fontSize: '0.75rem', color: 'var(--on-surface-variant)',
           }}>
             <span className="tabular-nums">0% ({formatMoney(0)})</span>
-            <span className="tabular-nums">{lang === 'id' ? `Peringatan (80%: ${formatMoney(settings.monthlyBudget * 0.8)})` : `Warning (80%: ${formatMoney(settings.monthlyBudget * 0.8)})`}</span>
+            <span className="tabular-nums">{lang === 'id' ? `Peringatan (80%: ${formatMoney(effectiveMonthlyBudget * 0.8)})` : `Warning (80%: ${formatMoney(effectiveMonthlyBudget * 0.8)})`}</span>
             <span className="tabular-nums" style={{ color: budgetPercent > 100 ? 'var(--error)' : undefined, fontWeight: budgetPercent > 100 ? 600 : 400 }}>
-              100% ({formatMoney(settings.monthlyBudget)})
+              100% ({formatMoney(effectiveMonthlyBudget)})
             </span>
           </div>
         </div>
@@ -355,9 +359,9 @@ export function FinancePage() {
               </h2>
               <p style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)', lineHeight: 1.6 }}>
                 {lang === 'id' ? (
-                  <>Anda memiliki estimasi alokasi harian sebesar <strong>{formatMoney(dailyAllowance)}</strong> untuk {daysLeftInMonth} hari tersisa di bulan {new Date().toLocaleDateString('id-ID', { month: 'long' })} agar tidak melampaui batas {formatMoney(settings.monthlyBudget)} Anda.</>
+                  <>Anda memiliki estimasi alokasi harian sebesar <strong>{formatMoney(dailyAllowance)}</strong> untuk {daysLeftInMonth} hari tersisa di bulan {new Date().toLocaleDateString('id-ID', { month: 'long' })} agar tidak melampaui batas {formatMoney(effectiveMonthlyBudget)} Anda.</>
                 ) : (
-                  <>You have an estimated daily allowance of <strong>{formatMoney(dailyAllowance)}</strong> for the remaining {daysLeftInMonth} days of {new Date().toLocaleDateString('en-US', { month: 'long' })} without breaching your {formatMoney(settings.monthlyBudget)} ceiling.</>
+                  <>You have an estimated daily allowance of <strong>{formatMoney(dailyAllowance)}</strong> for the remaining {daysLeftInMonth} days of {new Date().toLocaleDateString('en-US', { month: 'long' })} without breaching your {formatMoney(effectiveMonthlyBudget)} ceiling.</>
                 )}
               </p>
             </div>
