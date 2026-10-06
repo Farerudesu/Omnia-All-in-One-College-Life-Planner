@@ -27,6 +27,7 @@ const LEGEND_ITEMS = [
   { key: 'exam', labelEn: 'Exams', labelId: 'Ujian', shape: 'diamond' as CategoryShape, color: 'var(--exams)' },
   { key: 'deadline', labelEn: 'Deadlines', labelId: 'Tenggat', shape: 'outline-square' as CategoryShape, color: 'var(--deadlines)' },
   { key: 'personal', labelEn: 'Personal', labelId: 'Pribadi', shape: 'circle' as CategoryShape, color: 'var(--personal)' },
+  { key: 'lab', labelEn: 'Lab', labelId: 'Praktikum', shape: 'diamond' as CategoryShape, color: 'var(--tertiary)' },
 ];
 
 const CATEGORY_MAP: Record<string, { shape: CategoryShape; color: string }> = {
@@ -35,6 +36,7 @@ const CATEGORY_MAP: Record<string, { shape: CategoryShape; color: string }> = {
   exam: { shape: 'diamond', color: 'var(--exams)' },
   deadline: { shape: 'outline-square', color: 'var(--deadlines)' },
   personal: { shape: 'circle', color: 'var(--personal)' },
+  lab: { shape: 'diamond', color: 'var(--tertiary)' },
   other: { shape: 'circle', color: 'var(--on-surface-variant)' },
 };
 
@@ -164,6 +166,7 @@ export function CalendarPage() {
         type: ev.type,
         time: ev.startTime,
         endTime: ev.endTime,
+        room: ev.location,
         color: ev.color || cat.color,
         shape: cat.shape,
         notes: ev.notes,
@@ -540,7 +543,7 @@ export function CalendarPage() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              marginBottom: '1.25rem',
+              marginBottom: '0.75rem',
               flexWrap: 'wrap',
               gap: '0.75rem',
             }}
@@ -1068,24 +1071,29 @@ export function CalendarPage() {
                                 {item.endTime ? ` – ${formatTime12(item.endTime)}` : ''}
                               </span>
                             )}
-                            {item.room && <span>Room: {item.room}</span>}
+                            {item.room && <span>{item.room}</span>}
                             {item.notes && <span>{item.notes}</span>}
                           </div>
                         </div>
                       </div>
 
-                      <span
-                        className="badge"
-                        style={{
-                          background: `color-mix(in srgb, ${item.color} 15%, transparent)`,
-                          color: item.color,
-                          fontWeight: 600,
-                          fontSize: '0.75rem',
-                          textTransform: 'uppercase',
-                        }}
-                      >
-                        {item.type}
-                      </span>
+                      {item.type !== 'classes' && item.type !== 'class' && (
+                        <span
+                          className="badge"
+                          style={{
+                            background: `color-mix(in srgb, ${item.color} 15%, transparent)`,
+                            color: item.color,
+                            fontWeight: 600,
+                            fontSize: '0.75rem',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          {item.type === 'exam' ? (lang === 'id' ? 'Ujian' : 'Exam')
+                            : item.type === 'deadline' ? (lang === 'id' ? 'Tenggat' : 'Deadline')
+                            : item.type === 'personal' ? (lang === 'id' ? 'Pribadi' : 'Personal')
+                            : item.type}
+                        </span>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -1095,7 +1103,7 @@ export function CalendarPage() {
 
           {/* ══════ VIEW: AGENDA ══════ */}
           {viewMode === 'Agenda' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
               {agendaDates.map(({ date, dateStr, items }) => (
                 <div
                   key={dateStr}
@@ -1103,7 +1111,7 @@ export function CalendarPage() {
                     background: 'var(--surface-container-lowest)',
                     borderRadius: 12,
                     border: '1px solid var(--outline-variant)',
-                    padding: '1.25rem',
+                    padding: '1.25rem 1.5rem',
                   }}
                 >
                   <div
@@ -1112,8 +1120,8 @@ export function CalendarPage() {
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       borderBottom: '1px solid var(--outline-variant)',
-                      paddingBottom: '0.75rem',
-                      marginBottom: '0.75rem',
+                      paddingBottom: '0.875rem',
+                      marginBottom: '1rem',
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -1137,7 +1145,7 @@ export function CalendarPage() {
                     </span>
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     {items.map((item) => (
                       <div
                         key={item.id}
@@ -1145,8 +1153,8 @@ export function CalendarPage() {
                           if (item.rawEvent) setSelectedEventForModal(item.rawEvent);
                         }}
                         style={{
-                          padding: '0.75rem 1rem',
-                          borderRadius: 6,
+                          padding: '0.875rem 1.125rem',
+                          borderRadius: 8,
                           background: `color-mix(in srgb, ${item.color} 5%, var(--surface-container-low))`,
                           borderLeft: `4px solid ${item.color}`,
                           display: 'flex',
@@ -1161,22 +1169,30 @@ export function CalendarPage() {
                           <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--on-surface)' }}>
                             {item.title}
                           </div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', marginTop: '0.125rem' }}>
-                            {item.time ? formatTime12(item.time) : (lang === 'id' ? 'Sepanjang hari' : 'All day')} {item.room ? `· ${item.room}` : ''} {item.notes ? `· ${item.notes}` : ''}
+                          <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                            <span>{item.time ? formatTime12(item.time) : (lang === 'id' ? 'Sepanjang hari' : 'All day')}</span>
+                            {item.room && <span style={{ background: 'var(--surface-container)', padding: '0.1rem 0.35rem', borderRadius: 4, fontWeight: 500 }}>{item.room}</span>}
+                            {item.notes && <span>{item.notes}</span>}
                           </div>
                         </div>
 
-                        <span
-                          className="badge"
-                          style={{
-                            background: `color-mix(in srgb, ${item.color} 15%, transparent)`,
-                            color: item.color,
-                            fontWeight: 600,
-                            fontSize: '0.6875rem',
-                          }}
-                        >
-                          {item.type}
-                        </span>
+                        {item.type !== 'classes' && item.type !== 'class' && (
+                          <span
+                            className="badge"
+                            style={{
+                              background: `color-mix(in srgb, ${item.color} 15%, transparent)`,
+                              color: item.color,
+                              fontWeight: 600,
+                              fontSize: '0.6875rem',
+                              textTransform: 'uppercase',
+                            }}
+                          >
+                            {item.type === 'exam' ? (lang === 'id' ? 'Ujian' : 'Exam')
+                              : item.type === 'deadline' ? (lang === 'id' ? 'Tenggat' : 'Deadline')
+                              : item.type === 'personal' ? (lang === 'id' ? 'Pribadi' : 'Personal')
+                              : item.type}
+                          </span>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -1332,6 +1348,7 @@ function AddEventModal({
   const [endTime, setEndTime] = useState('');
   const [type, setType] = useState<EventType>('personal');
   const [courseId, setCourseId] = useState('');
+  const [location, setLocation] = useState('');
   const [notes, setNotes] = useState('');
   const [titleError, setTitleError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -1358,10 +1375,12 @@ function AddEventModal({
         startTime: startTime || undefined,
         endTime: endTime || undefined,
         type,
+        location: location.trim() || undefined,
         courseId: courseId || undefined,
         notes: notes.trim() || undefined,
       });
       setTitle('');
+      setLocation('');
       setNotes('');
       setTitleError('');
       setIsSubmitting(false);
@@ -1389,7 +1408,7 @@ function AddEventModal({
               setTitle(e.target.value);
               if (titleError && e.target.value.trim()) setTitleError('');
             }}
-            placeholder={lang === 'id' ? 'Contoh: Ujian Tengah Semester, Rapat UKM, Belajar Bersama' : 'e.g. Midterm Exam, Problem Set 3 Due, Club Meeting'}
+            placeholder={lang === 'id' ? 'Contoh: Ujian Tengah Semester, Praktikum SBD, Rapat' : 'e.g. Midterm Exam, Database Lab, Meeting'}
             style={{
               width: '100%',
               borderColor: titleError ? 'var(--error)' : undefined,
@@ -1409,9 +1428,9 @@ function AddEventModal({
             {lang === 'id' ? 'Kategori acara' : 'Event Category'}
           </label>
           <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap' }}>
-            {(['exam', 'deadline', 'personal', 'other'] as EventType[]).map((t) => {
+            {(['class', 'exam', 'deadline', 'personal', 'lab', 'other'] as EventType[]).map((t) => {
               const chipLabel = lang === 'id'
-                ? (t === 'exam' ? 'Ujian' : t === 'deadline' ? 'Tenggat' : t === 'personal' ? 'Pribadi' : 'Lainnya')
+                ? (t === 'class' ? 'Kelas' : t === 'exam' ? 'Ujian' : t === 'deadline' ? 'Tenggat' : t === 'personal' ? 'Pribadi' : t === 'lab' ? 'Praktikum' : 'Lainnya')
                 : (t.charAt(0).toUpperCase() + t.slice(1));
               return (
                 <button
@@ -1469,6 +1488,20 @@ function AddEventModal({
         </div>
 
         <div>
+          <label htmlFor="event-location" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            {lang === 'id' ? 'Lokasi / Ruangan' : 'Location / Room'}
+          </label>
+          <input
+            id="event-location"
+            type="text"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            placeholder={lang === 'id' ? 'contoh: D303, Lab Jarkom, Ruang Seminar' : 'e.g. Room D303, Lab 2, Hall B'}
+            style={{ width: '100%' }}
+          />
+        </div>
+
+        <div>
           <label htmlFor="event-course" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
             {lang === 'id' ? 'Mata Kuliah Terkait (Opsional)' : 'Associated Course (Optional)'}
           </label>
@@ -1476,7 +1509,7 @@ function AddEventModal({
             <option value="">{lang === 'id' ? 'Tidak Ada / Umum' : 'None / General'}</option>
             {courses.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.code} – {c.name}
+                {c.code ? `${c.code} ${c.name}` : c.name}
               </option>
             ))}
           </select>
@@ -1484,13 +1517,13 @@ function AddEventModal({
 
         <div>
           <label htmlFor="event-notes" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-            {lang === 'id' ? 'Catatan & Lokasi' : 'Notes & Location'}
+            {lang === 'id' ? 'Catatan' : 'Notes'}
           </label>
           <textarea
             id="event-notes"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder={lang === 'id' ? 'Ruang kelas, materi persiapan, catatan…' : 'Room number, materials needed, notes…'}
+            placeholder={lang === 'id' ? 'Materi persiapan, perlengkapan yang dibawa, catatan…' : 'Preparation materials, notes…'}
             rows={3}
             style={{ width: '100%', resize: 'vertical' }}
           />

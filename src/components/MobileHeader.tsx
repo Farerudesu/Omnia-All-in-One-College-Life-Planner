@@ -18,6 +18,8 @@ import { useAuth } from '../lib/AuthContext';
 import { useData } from '../lib/useData';
 import * as ds from '../lib/dataService';
 import { Modal } from './Modal';
+import { AddAssignmentModal } from './AddAssignmentModal';
+import { AddTransactionModal } from './AddTransactionModal';
 import type { EventType } from '../types';
 import { EXPENSE_CATEGORIES, type ExpenseCategory } from '../lib/categories';
 import { CATEGORY_NAMES_ID } from '../pages/FinancePage';
@@ -33,6 +35,8 @@ export function MobileHeader() {
 
   const [showProfileDrawer, setShowProfileDrawer] = useState(false);
   const [showQuickAddModal, setShowQuickAddModal] = useState(false);
+  const [showAddTaskModal, setShowAddTaskModal] = useState(false);
+  const [showAddExpenseModal, setShowAddExpenseModal] = useState(false);
   const [quickAddType, setQuickAddType] = useState<'menu' | 'task' | 'event' | 'expense'>('menu');
 
   // Quick Task form state
@@ -199,9 +203,12 @@ export function MobileHeader() {
             <button
               type="button"
               className="mobile-quick-add-tile"
-              onClick={() => setQuickAddType('task')}
+              onClick={() => {
+                setShowQuickAddModal(false);
+                setShowAddTaskModal(true);
+              }}
             >
-              <div className="mobile-quick-add-tile__icon" style={{ background: 'var(--classes)', color: '#fff' }}>
+              <div className="mobile-quick-add-tile__icon" style={{ background: 'var(--surface-container-high)', color: 'var(--on-surface)' }}>
                 <CheckSquare size={20} />
               </div>
               <div className="mobile-quick-add-tile__info">
@@ -215,7 +222,7 @@ export function MobileHeader() {
               className="mobile-quick-add-tile"
               onClick={() => setQuickAddType('event')}
             >
-              <div className="mobile-quick-add-tile__icon" style={{ background: 'var(--exams)', color: '#fff' }}>
+              <div className="mobile-quick-add-tile__icon" style={{ background: 'var(--surface-container-high)', color: 'var(--on-surface)' }}>
                 <CalendarIcon size={20} />
               </div>
               <div className="mobile-quick-add-tile__info">
@@ -227,9 +234,12 @@ export function MobileHeader() {
             <button
               type="button"
               className="mobile-quick-add-tile"
-              onClick={() => setQuickAddType('expense')}
+              onClick={() => {
+                setShowQuickAddModal(false);
+                setShowAddExpenseModal(true);
+              }}
             >
-              <div className="mobile-quick-add-tile__icon" style={{ background: 'var(--tertiary)', color: '#fff' }}>
+              <div className="mobile-quick-add-tile__icon" style={{ background: 'var(--surface-container-high)', color: 'var(--on-surface)' }}>
                 <DollarSign size={20} />
               </div>
               <div className="mobile-quick-add-tile__info">
@@ -246,7 +256,7 @@ export function MobileHeader() {
                 navigate('/ask-omni');
               }}
             >
-              <div className="mobile-quick-add-tile__icon" style={{ background: 'var(--primary)', color: '#fff' }}>
+              <div className="mobile-quick-add-tile__icon" style={{ background: 'var(--surface-container-high)', color: 'var(--on-surface)' }}>
                 <Clock size={20} />
               </div>
               <div className="mobile-quick-add-tile__info">
@@ -585,6 +595,18 @@ export function MobileHeader() {
           </div>
         </div>
       </Modal>
+
+      <AddAssignmentModal
+        isOpen={showAddTaskModal}
+        onClose={() => setShowAddTaskModal(false)}
+      />
+
+      <AddTransactionModal
+        isOpen={showAddExpenseModal}
+        onClose={() => setShowAddExpenseModal(false)}
+        type="expense"
+        currency={settings.currency || 'IDR'}
+      />
     </>
   );
 }

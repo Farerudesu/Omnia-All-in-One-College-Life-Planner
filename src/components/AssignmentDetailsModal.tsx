@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Modal } from './Modal';
 import * as ds from '../lib/dataService';
 import { useData } from '../lib/useData';
-import { CheckCircle, Clock, Circle } from 'lucide-react';
+import { CheckCircle, Clock } from 'lucide-react';
 import type { Assignment, Priority, AssignmentStatus } from '../types';
 import { useLanguage } from '../lib/useLanguage';
 import { formatDateShort, formatTime12 } from '../lib/dateUtils';
@@ -163,17 +163,17 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose }: Assignme
               </select>
             </div>
             <div>
-              <label className="label">Course (Optional)</label>
+              <label className="label">{lang === 'id' ? 'Mata Kuliah (Opsional)' : 'Course (Optional)'}</label>
               <select
                 value={courseId}
                 onChange={(e) => setCourseId(e.target.value)}
                 disabled={category !== 'classes'}
                 style={{ width: '100%' }}
               >
-                <option value="">None</option>
+                <option value="">{lang === 'id' ? 'Tidak ada' : 'None'}</option>
                 {courses.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.code} – {c.name}
+                    {c.code ? `${c.code} ${c.name}` : c.name}
                   </option>
                 ))}
               </select>
@@ -258,22 +258,28 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose }: Assignme
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {/* Header pill & Course badge */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
             {course && (
-              <span
-                style={{
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  background: `${course.color}15`,
-                  color: course.color,
-                  padding: '0.2rem 0.6rem',
-                  borderRadius: 4,
-                }}
-              >
-                {course.code} · {course.name}
-              </span>
+              <div>
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.375rem',
+                    fontSize: '0.8125rem',
+                    fontWeight: 600,
+                    background: `${course.color}15`,
+                    color: course.color,
+                    padding: '0.25rem 0.625rem',
+                    borderRadius: 6,
+                  }}
+                >
+                  <span style={{ fontWeight: 700 }}>{course.code}</span>
+                  <span>{course.name}</span>
+                </span>
+              </div>
             )}
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
               <span
                 className="badge"
                 style={{
@@ -294,11 +300,13 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose }: Assignme
                   textTransform: 'capitalize',
                 }}
               >
-                {assignment.priority} Priority
+                {assignment.priority === 'high' ? (lang === 'id' ? 'Prioritas Tinggi' : 'High Priority')
+                  : assignment.priority === 'medium' ? (lang === 'id' ? 'Prioritas Sedang' : 'Medium Priority')
+                  : (lang === 'id' ? 'Prioritas Rendah' : 'Low Priority')}
               </span>
               <button
                 onClick={handleToggleStatus}
-                className="badge"
+                className="badge min-touch-target"
                 style={{
                   cursor: 'pointer',
                   border: 'none',
@@ -316,15 +324,16 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose }: Assignme
                         : 'var(--on-surface-variant)',
                   fontWeight: 600,
                   fontSize: '0.75rem',
+                  padding: '0.25rem 0.625rem',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
                   {assignment.status === 'done' ? (
-                    <><CheckCircle size={14} /> Completed</>
+                    <><CheckCircle size={14} /> {lang === 'id' ? 'Selesai' : 'Completed'}</>
                   ) : assignment.status === 'in-progress' ? (
-                    <><Clock size={14} /> In Progress</>
+                    <><Clock size={14} /> {lang === 'id' ? 'Sedang Dikerjakan' : 'In Progress'}</>
                   ) : (
-                    <><Circle size={14} /> Not Started</>
+                    <span>{lang === 'id' ? 'Belum Dimulai' : 'Not Started'}</span>
                   )}
                 </div>
               </button>

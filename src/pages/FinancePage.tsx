@@ -2,10 +2,10 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../lib/useData';
 import * as ds from '../lib/dataService';
-import { Modal } from '../components/Modal';
 import { TransactionModal } from '../components/TransactionModal';
-import { formatCurrency, getCurrencyFractionDigits, getCurrencySymbol } from '../lib/currency';
-import type { Transaction, TransactionType } from '../types';
+import { AddTransactionModal } from '../components/AddTransactionModal';
+import { formatCurrency, getCurrencyFractionDigits } from '../lib/currency';
+import type { Transaction } from '../types';
 import { EXPENSE_CATEGORIES, CATEGORY_COLORS } from '../lib/categories';
 import { useLanguage } from '../lib/useLanguage';
 import { translations } from '../lib/i18n';
@@ -14,7 +14,7 @@ import { formatDateNumeric } from '../lib/dateUtils';
 const CATEGORIES = EXPENSE_CATEGORIES;
 
 export const CATEGORY_NAMES_ID: Record<string, string> = {
-  'Food & Groceries': 'Makanan & Kebutuhan',
+  'Food & Groceries': 'Food & Groceries',
   'Transport': 'Transportasi',
   'Academic Supplies': 'Kebutuhan Kuliah',
   'Housing & Utilities': 'Tempat Tinggal & Tagihan',
@@ -549,17 +549,12 @@ export function FinancePage() {
                             {t.type === 'income' ? (
                               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2"><line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" /></svg>
                             ) : (
-                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--on-surface-variant)" strokeWidth="2"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 14 14" /></svg>
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--on-surface-variant)" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19" /><polyline points="19 12 12 19 5 12" /></svg>
                             )}
                           </span>
                           <div>
-                            <div style={{ fontWeight: 600, color: 'var(--on-surface)', display: 'flex', alignItems: 'center', gap: '0.375rem', flexWrap: 'wrap' }}>
+                            <div style={{ fontWeight: 600, color: 'var(--on-surface)' }}>
                               <span>{t.merchant}</span>
-                              {t.paymentMethod && (
-                                <span className="badge" style={{ fontSize: '0.6875rem', padding: '0.1rem 0.4rem', background: 'var(--surface-container-high)', color: 'var(--on-surface-variant)' }}>
-                                  {t.paymentMethod}
-                                </span>
-                              )}
                             </div>
                             {t.notes && <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>{t.notes}</div>}
                           </div>
@@ -761,245 +756,5 @@ function DonutChart({ data, total, currency }: { data: Array<{ category: string;
         </div>
       </div>
     </div>
-  );
-}
-
-// ─── Add Transaction Modal ───
-function AddTransactionModal({
-  isOpen,
-  onClose,
-  type,
-  currency,
-  onScanReceipt,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  type: TransactionType;
-  currency: string;
-  onScanReceipt?: () => void;
-}) {
-  const lang = useLanguage();
-  const paymentMethods = useData(ds.getPaymentMethods);
-  const [merchant, setMerchant] = useState('');
-  const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState<string>(CATEGORIES[0]);
-  const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
-  const [notes, setNotes] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState(paymentMethods[0] || 'QRIS');
-  const [customPaymentMethod, setCustomPaymentMethod] = useState('');
-  const [merchantError, setMerchantError] = useState('');
-  const [amountError, setAmountError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleClose = () => {
-    setMerchantError('');
-    setAmountError('');
-    setCustomPaymentMethod('');
-    setIsSubmitting(false);
-    onClose();
-  };
-
-  const handleSave = () => {
-    let hasError = false;
-    if (!merchant.trim()) {
-      setMerchantError(
-        lang === 'id'
-          ? (type === 'income' ? 'Sumber pemasukan tidak boleh kosong' : 'Nama pengeluaran tidak boleh kosong')
-          : (type === 'income' ? 'Source is required' : 'Merchant description is required')
-      );
-      hasError = true;
-    }
-
-    const parsedAmount = parseFloat(amount);
-    if (!amount.trim() || isNaN(parsedAmount) || parsedAmount <= 0) {
-      setAmountError(
-        lang === 'id'
-          ? (currency === 'IDR' ? 'Nominal harus lebih dari Rp0' : `Nominal harus lebih dari ${getCurrencySymbol(currency)}0`)
-          : `Amount must be greater than ${getCurrencySymbol(currency)}0`
-      );
-      hasError = true;
-    }
-
-    if (hasError) return;
-    if (isSubmitting) return;
-
-    setIsSubmitting(true);
-    try {
-      const resolvedPaymentMethod = paymentMethod === 'custom' ? customPaymentMethod.trim() : paymentMethod;
-      if (paymentMethod === 'custom' && customPaymentMethod.trim()) {
-        ds.addPaymentMethod(customPaymentMethod.trim());
-      }
-
-      ds.addTransaction({
-        merchant: merchant.trim(),
-        amount: parsedAmount,
-        category: type === 'income' ? 'Income' : (category || CATEGORIES[0]),
-        date: date || new Date().toISOString().split('T')[0],
-        type,
-        notes: notes.trim() || undefined,
-        paymentMethod: type === 'expense' ? (resolvedPaymentMethod || undefined) : undefined,
-      });
-      setMerchant('');
-      setAmount('');
-      setNotes('');
-      setCustomPaymentMethod('');
-      setMerchantError('');
-      setAmountError('');
-      setIsSubmitting(false);
-      onClose();
-    } catch {
-      setIsSubmitting(false);
-    }
-  };
-
-  return (
-    <Modal
-      isOpen={isOpen}
-      onClose={handleClose}
-      title={type === 'expense' ? (lang === 'id' ? 'Tambah pengeluaran' : 'Add expense') : (lang === 'id' ? 'Tambah pemasukan' : 'Add income')}
-    >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        {type === 'expense' && onScanReceipt && (
-          <button
-            type="button"
-            className="btn-outline"
-            onClick={onScanReceipt}
-            style={{ width: '100%', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: '0.375rem' }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-              <circle cx="12" cy="13" r="4" />
-            </svg>
-            {lang === 'id' ? 'Pindai struk lewat Omni AI' : 'Scan receipt via Omni AI'}
-          </button>
-        )}
-
-        <div>
-          <label htmlFor="tx-merchant" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-            {type === 'income' ? (lang === 'id' ? 'Sumber dana *' : 'Source *') : (lang === 'id' ? 'Tempat / Pengeluaran *' : 'Merchant / Description *')}
-          </label>
-          <input
-            id="tx-merchant"
-            autoFocus
-            data-autofocus
-            value={merchant}
-            aria-invalid={merchantError ? 'true' : 'false'}
-            aria-describedby={merchantError ? 'tx-merchant-error' : undefined}
-            onChange={(e) => {
-              setMerchant(e.target.value);
-              if (merchantError && e.target.value.trim()) setMerchantError('');
-            }}
-            placeholder={type === 'income' ? (lang === 'id' ? 'Contoh: Beasiswa, Gaji magang' : 'e.g. Stipend') : (lang === 'id' ? 'Contoh: Kantin Teknik, Kopi' : "Contoh: Kantin Kampus")}
-            style={{
-              width: '100%',
-              borderColor: merchantError ? 'var(--error)' : undefined,
-              boxShadow: merchantError ? '0 0 0 2px var(--error-container)' : undefined,
-            }}
-          />
-          {merchantError && (
-            <div id="tx-merchant-error" role="alert" style={{ color: 'var(--error)', fontSize: '0.75rem', marginTop: '0.375rem', fontWeight: 500 }}>
-              {merchantError}
-            </div>
-          )}
-        </div>
-
-        <div>
-          <label htmlFor="tx-amount" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-            {lang === 'id' ? `Nominal (${getCurrencySymbol(currency)}) *` : `Amount (${getCurrencySymbol(currency)}) *`}
-          </label>
-          <input
-            id="tx-amount"
-            type="number"
-            step={String(1 / (10 ** getCurrencyFractionDigits(currency)))}
-            value={amount}
-            aria-invalid={amountError ? 'true' : 'false'}
-            aria-describedby={amountError ? 'tx-amount-error' : undefined}
-            onChange={(e) => {
-              setAmount(e.target.value);
-              if (amountError) setAmountError('');
-            }}
-            placeholder={getCurrencyFractionDigits(currency) === 0 ? '0' : '0.00'}
-            style={{
-              width: '100%',
-              borderColor: amountError ? 'var(--error)' : undefined,
-              boxShadow: amountError ? '0 0 0 2px var(--error-container)' : undefined,
-            }}
-          />
-          {amountError && (
-            <div id="tx-amount-error" role="alert" style={{ color: 'var(--error)', fontSize: '0.75rem', marginTop: '0.375rem', fontWeight: 500 }}>
-              {amountError}
-            </div>
-          )}
-        </div>
-
-        {type === 'expense' && (
-          <div>
-            <label htmlFor="tx-category" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-              {lang === 'id' ? 'Kategori' : 'Category'}
-            </label>
-            <select id="tx-category" value={category} onChange={(e) => setCategory(e.target.value)} style={{ width: '100%' }}>
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>{lang === 'id' ? (CATEGORY_NAMES_ID[c] || c) : c}</option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        {type === 'expense' && (
-          <div>
-            <label htmlFor="tx-payment-method" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-              {lang === 'id' ? 'Metode Pembayaran' : 'Payment Method'}
-            </label>
-            <select
-              id="tx-payment-method"
-              value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value)}
-              style={{ width: '100%', marginBottom: paymentMethod === 'custom' ? '0.5rem' : 0 }}
-            >
-              {paymentMethods.map((pm) => (
-                <option key={pm} value={pm}>{pm}</option>
-              ))}
-              <option value="custom">{lang === 'id' ? 'Lainnya (Kustom)...' : 'Custom...'}</option>
-            </select>
-            {paymentMethod === 'custom' && (
-              <input
-                type="text"
-                value={customPaymentMethod}
-                onChange={(e) => setCustomPaymentMethod(e.target.value)}
-                placeholder={lang === 'id' ? 'Masukkan nama metode pembayaran' : 'Enter payment method name'}
-                style={{ width: '100%' }}
-                autoFocus
-              />
-            )}
-          </div>
-        )}
-
-        <div>
-          <label htmlFor="tx-date" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-            {lang === 'id' ? 'Tanggal' : 'Date'}
-          </label>
-          <input id="tx-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} style={{ width: '100%' }} />
-        </div>
-
-        <div>
-          <label htmlFor="tx-notes" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-            {lang === 'id' ? 'Catatan (opsional)' : 'Notes (optional)'}
-          </label>
-          <textarea id="tx-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={lang === 'id' ? 'Catatan transaksi...' : 'Notes...'} rows={2} style={{ width: '100%', resize: 'vertical' }} />
-        </div>
-
-        <div className="modal-actions-sticky">
-          <button type="button" className="btn-outline" onClick={handleClose} disabled={isSubmitting}>
-            {lang === 'id' ? 'Batal' : 'Cancel'}
-          </button>
-          <button type="button" className="btn-primary" onClick={handleSave} disabled={isSubmitting}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-            {isSubmitting ? (lang === 'id' ? 'Menyimpan…' : 'Saving…') : type === 'expense' ? (lang === 'id' ? 'Tambah pengeluaran' : 'Add expense') : (lang === 'id' ? 'Tambah pemasukan' : 'Add income')}
-          </button>
-        </div>
-      </div>
-    </Modal>
   );
 }

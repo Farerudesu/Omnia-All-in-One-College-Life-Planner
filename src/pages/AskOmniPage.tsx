@@ -118,10 +118,19 @@ function getScheduleContext() {
   };
 }
 
+const SESSION_CHAT_KEY = 'omnia_omni_chat_session';
+
 export function AskOmniPage() {
   const lang = useLanguage();
   const courses = useData(ds.getCourses);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    try {
+      const saved = sessionStorage.getItem(SESSION_CHAT_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [attachment, setAttachment] = useState<ImageAttachment | null>(null);
@@ -141,6 +150,14 @@ export function AskOmniPage() {
   const scrollToBottom = () => {
     endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(SESSION_CHAT_KEY, JSON.stringify(messages));
+    } catch {
+      // ignore quota errors
+    }
+  }, [messages]);
 
   useEffect(() => {
     scrollToBottom();
@@ -456,27 +473,27 @@ export function AskOmniPage() {
       </div>
 
       {/* Chat Area */}
-      <div className="ask-omni-chat-area" style={{ flex: 1, overflowY: 'auto', padding: '1.5rem 1rem', display: 'flex', justifyContent: 'center' }}>
-        <div style={{ width: '100%', maxWidth: 768, display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      <div className="ask-omni-chat-area" style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', justifyContent: 'center' }}>
+        <div style={{ width: '100%', maxWidth: 768, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {messages.length === 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, marginTop: '3rem', padding: '0 1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', margin: '0.75rem auto 0', padding: '0 0.5rem' }}>
               <div style={{
-                width: 72, height: 72, borderRadius: '50%', background: 'var(--primary)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.25rem',
+                width: 56, height: 56, borderRadius: '50%', background: 'var(--primary)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.75rem',
                 color: 'white', boxShadow: 'var(--shadow-sm)',
               }}>
-                <Sparkles size={36} />
+                <Sparkles size={28} />
               </div>
-              <h2 style={{ fontSize: '1.375rem', fontWeight: 700, color: 'var(--on-surface)', marginBottom: '0.5rem', textAlign: 'center' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--on-surface)', marginBottom: '0.375rem', textAlign: 'center' }}>
                 {lang === 'id' ? 'Tanyakan atau catat apa saja untuk perkuliahanmu' : 'Ask me to add anything to your college planner'}
               </h2>
-              <p style={{ color: 'var(--on-surface-variant)', marginBottom: '2rem', textAlign: 'center', maxWidth: 480, fontSize: '0.875rem' }}>
+              <p style={{ color: 'var(--on-surface-variant)', marginBottom: '1.25rem', textAlign: 'center', maxWidth: 460, fontSize: '0.8125rem', lineHeight: 1.4 }}>
                 {lang === 'id'
                   ? 'Beri tahu saya jadwal kuliah, tugas yang perlu dikerjakan, atau pengeluaran harian. Saya akan siapkan konfirmasinya langsung!'
                   : 'Tell me what to schedule, assignments to track, or expenses to log. I’ll prefill a pop-up confirmation so you can review and click Okay!'}
               </p>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem', width: '100%', maxWidth: 460 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%', maxWidth: 460 }}>
                 {suggestions.map((s, idx) => (
                   <button
                     key={idx}
@@ -484,11 +501,11 @@ export function AskOmniPage() {
                     onClick={() => handleSuggestionClick(s.label)}
                     style={{
                       display: 'flex', alignItems: 'center', gap: '0.75rem',
-                      padding: '0.75rem 1rem', borderRadius: 12,
+                      padding: '0.625rem 0.875rem', borderRadius: 10,
                       border: '1px solid var(--outline-variant)',
                       background: 'var(--surface-container-lowest)',
                       color: 'var(--on-surface)',
-                      fontSize: '0.875rem', fontWeight: 600,
+                      fontSize: '0.8125rem', fontWeight: 600,
                       cursor: 'pointer', transition: 'background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease',
                       textAlign: 'left',
                       boxShadow: 'var(--shadow-xs)',

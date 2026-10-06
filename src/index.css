@@ -741,6 +741,10 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
     flex-direction: column !important;
   }
 
+  .calendar-main-layout > .page-content {
+    padding-top: 0.5rem !important;
+  }
+
   .calendar-side-panel {
     width: 100% !important;
     border-left: none !important;

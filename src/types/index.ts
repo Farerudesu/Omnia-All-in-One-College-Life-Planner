@@ -44,7 +44,7 @@ export interface SessionException {
 }
 
 // ─── Events ───
-export type EventType = 'class' | 'exam' | 'deadline' | 'personal' | 'other';
+export type EventType = 'class' | 'exam' | 'deadline' | 'personal' | 'lab' | 'other';
 
 export interface CalendarEvent {
   id: string;
