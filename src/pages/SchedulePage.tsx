@@ -100,6 +100,15 @@ function getClassBadges(
     (exception?.newRoom && exception.newRoom !== session.room)
   );
 
+  if (exception?.type === 'cancelled' || exception?.types?.includes('cancelled')) {
+    badges.push({
+      key: 'cancelled',
+      label: isId ? 'DIBATALKAN' : 'CANCELLED',
+      color: '#b42318',
+      bg: 'rgba(180, 35, 24, 0.14)',
+    });
+  }
+
   if (isMoved) {
     badges.push({
       key: 'moved',
@@ -332,10 +341,7 @@ export function SchedulePage() {
         const exc = ds.getExceptionForDate(s.id, dateStr);
         return { session: s, exception: exc };
       })
-      .filter(({ exception }) => {
-        if (!exception) return true;
-        return exception.type !== 'cancelled' && exception.type !== 'no-class';
-      });
+      .filter(({ exception }) => !exception || exception.type !== 'no-class');
   }
 
   // Get events for a specific day with category filter

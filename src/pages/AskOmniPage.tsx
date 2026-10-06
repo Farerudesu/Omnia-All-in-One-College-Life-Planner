@@ -475,7 +475,7 @@ export function AskOmniPage() {
       </div>
 
       {/* Chat Area */}
-      <div className={`ask-omni-chat-area${messages.length === 0 ? ' is-empty' : ''}`} style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', justifyContent: 'center' }}>
+      <div className={`ask-omni-chat-area${messages.length === 0 ? ' is-empty' : ''}`} style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '1rem', display: 'flex', justifyContent: 'center' }}>
         <div style={{ width: '100%', maxWidth: 768, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {messages.length === 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', margin: '0.75rem auto 0', padding: '0 0.5rem' }}>

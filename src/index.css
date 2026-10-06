@@ -1112,7 +1112,8 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   }
 
   .ask-omni-chat-area.is-empty {
-    flex: 0 1 auto !important;
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
     padding-block: 0.5rem 0 !important;
   }
 
