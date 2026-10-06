@@ -28,6 +28,7 @@ export type ExceptionType =
   | 'room-changed'
   | 'online'
   | 'extra'
+  | 'attended'
   | 'no-class';
 
 export interface SessionException {
