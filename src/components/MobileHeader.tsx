@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Search,
   Plus,
@@ -22,13 +22,10 @@ import type { EventType } from '../types';
 import { EXPENSE_CATEGORIES, type ExpenseCategory } from '../lib/categories';
 import { CATEGORY_NAMES_ID } from '../pages/FinancePage';
 import { useLanguage } from '../lib/useLanguage';
-import { translations } from '../lib/i18n';
 
 export function MobileHeader() {
   const navigate = useNavigate();
-  const location = useLocation();
   const lang = useLanguage();
-  const t = translations[lang].nav;
   const { user, signOut } = useAuth();
   const profile = useData(ds.getProfile);
   const settings = useData(ds.getSettings);
@@ -72,28 +69,6 @@ export function MobileHeader() {
   const handleThemeChange = (theme: 'system' | 'light' | 'dark') => {
     ds.updateSettings({ theme });
   };
-
-  // Contextual page title badge
-  const getPageInfo = () => {
-    switch (location.pathname) {
-      case '/schedule':
-        return { title: t.schedule, subtitle: lang === 'id' ? 'Jadwal Kuliah' : 'Timetable' };
-      case '/assignments':
-        return { title: t.assignments, subtitle: lang === 'id' ? 'Tenggat Waktu' : 'Deliverables' };
-      case '/calendar':
-        return { title: t.calendar, subtitle: lang === 'id' ? 'Akademik' : 'Academic' };
-      case '/finance':
-        return { title: t.finance, subtitle: lang === 'id' ? 'Pembukuan' : 'Ledger' };
-      case '/ask-omni':
-        return { title: t.askOmni, subtitle: lang === 'id' ? 'Asisten AI' : 'AI Advisor' };
-      case '/settings':
-        return { title: t.settings, subtitle: lang === 'id' ? 'Preferensi' : 'Preferences' };
-      default:
-        return { title: 'Omnia', subtitle: 'College Hub' };
-    }
-  };
-
-  const pageInfo = getPageInfo();
 
   const handleCreateTask = (e: React.FormEvent) => {
     e.preventDefault();
@@ -161,7 +136,6 @@ export function MobileHeader() {
             </span>
             <div className="app-mobile-header__brand-text">
               <span className="app-mobile-header__title">Omnia</span>
-              <span className="app-mobile-header__subtitle">{pageInfo.title}</span>
             </div>
           </div>
 

@@ -45,6 +45,100 @@ function scheduleItemHasPassed(date: Date, endTime?: string) {
   return end.getTime() < Date.now();
 }
 
+function getUpcomingBadgeText(date: Date, minutesUntil: number, lang: 'id' | 'en'): string {
+  const now = new Date();
+  const todayStr = toDateString(now);
+  const targetStr = toDateString(date);
+
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = toDateString(tomorrow);
+
+  if (targetStr === todayStr) {
+    if (minutesUntil <= 60) {
+      return lang === 'id' ? `Berikutnya dlm ${minutesUntil}m` : `Up next in ${minutesUntil}m`;
+    }
+    return lang === 'id' ? 'Berikutnya Hari Ini' : 'Up next today';
+  }
+
+  if (targetStr === tomorrowStr) {
+    return lang === 'id' ? 'Berikutnya Besok' : 'Up next tomorrow';
+  }
+
+  const dayName = getDayName(date);
+  return lang === 'id' ? `Berikutnya ${dayName}` : `Up next ${dayName}`;
+}
+
+function getClassBadges(
+  session: ClassSession,
+  course?: Course,
+  exception?: SessionException,
+  isId = false
+): Array<{ key: string; label: string; color: string; bg: string }> {
+  const badges: Array<{ key: string; label: string; color: string; bg: string }> = [];
+
+  const isMoved = Boolean(
+    exception?.type === 'moved' ||
+    exception?.types?.includes('moved') ||
+    (exception?.newStartTime && exception.newStartTime !== session.startTime)
+  );
+
+  const roomStr = (exception?.newRoom || session.room || course?.room || '').toLowerCase();
+  const isOnline = Boolean(
+    exception?.isOnline ||
+    exception?.type === 'online' ||
+    exception?.types?.includes('online') ||
+    roomStr.includes('online') ||
+    roomStr.includes('zoom') ||
+    roomStr.includes('meet') ||
+    roomStr.includes('teams')
+  );
+
+  const isRelocated = Boolean(
+    exception?.type === 'room-changed' ||
+    exception?.types?.includes('room-changed') ||
+    (exception?.newRoom && exception.newRoom !== session.room)
+  );
+
+  if (isMoved) {
+    badges.push({
+      key: 'moved',
+      label: isId ? 'PINDAH' : 'MOVED',
+      color: '#d97706',
+      bg: 'rgba(217, 119, 6, 0.14)',
+    });
+  }
+
+  if (isOnline) {
+    badges.push({
+      key: 'online',
+      label: 'ONLINE',
+      color: '#0284c7',
+      bg: 'rgba(2, 132, 199, 0.14)',
+    });
+  }
+
+  if (isRelocated && !isOnline) {
+    badges.push({
+      key: 'relocated',
+      label: isId ? 'RUANGAN' : 'RELOCATED',
+      color: 'var(--tertiary)',
+      bg: 'color-mix(in srgb, var(--tertiary) 15%, transparent)',
+    });
+  }
+
+  if (exception?.type === 'extra' || exception?.types?.includes('extra')) {
+    badges.push({
+      key: 'extra',
+      label: isId ? 'TAMBAHAN' : 'EXTRA',
+      color: 'var(--primary)',
+      bg: 'color-mix(in srgb, var(--primary) 15%, transparent)',
+    });
+  }
+
+  return badges;
+}
+
 interface DayScheduleBlock {
   id: string;
   kind: 'session' | 'event';
@@ -66,6 +160,7 @@ interface DayScheduleBlock {
 export function SchedulePage() {
   const navigate = useNavigate();
   const lang = useLanguage();
+  const isId = lang === 'id';
   const t = translations[lang] || translations.id;
   const courses = useData(ds.getCourses);
   const sessions = useData(ds.getClassSessions);
@@ -300,8 +395,10 @@ export function SchedulePage() {
       const { hours: eh, minutes: em } = parseTime(endTime);
       const startMinutes = sh * 60 + sm;
       const endMinutes = eh * 60 + em;
-      const top = timeToGridPosition(startTime, gridStart, GRID_END + 1);
-      const height = timeToGridHeight(startTime, endTime, gridStart, GRID_END + 1);
+      const rawTop = timeToGridPosition(startTime, gridStart, GRID_END + 1);
+      const rawHeight = timeToGridHeight(startTime, endTime, gridStart, GRID_END + 1);
+      const top = Math.min(Math.max(rawTop, 0), 96);
+      const height = Math.min(Math.max(rawHeight, 4), Math.max(4, 100 - top));
 
       blocks.push({
         id: session.id,
@@ -334,8 +431,10 @@ export function SchedulePage() {
       const { hours: eh, minutes: em } = parseTime(endTime);
       const startMinutes = sh * 60 + sm;
       const endMinutes = Math.max(startMinutes + 15, eh * 60 + em);
-      const top = timeToGridPosition(startTime, gridStart, GRID_END + 1);
-      const height = timeToGridHeight(startTime, endTime, gridStart, GRID_END + 1);
+      const rawTop = timeToGridPosition(startTime, gridStart, GRID_END + 1);
+      const rawHeight = timeToGridHeight(startTime, endTime, gridStart, GRID_END + 1);
+      const top = Math.min(Math.max(rawTop, 0), 96);
+      const height = Math.min(Math.max(rawHeight, 4), Math.max(4, 100 - top));
 
       blocks.push({
         id: ev.id,
@@ -953,10 +1052,7 @@ export function SchedulePage() {
               </button>
             )}
             <div style={{ marginLeft: '0.375rem', minWidth: 0 }}>
-              <div style={{ fontSize: '0.625rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--on-surface-variant)' }}>
-                {lang === 'id' ? 'Semester Ganjil' : 'Fall term'}
-              </div>
-              <div style={{ fontSize: '0.75rem', fontWeight: 600, margin: 0, color: 'var(--on-surface-variant)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <div style={{ fontSize: '0.8125rem', fontWeight: 700, margin: 0, color: 'var(--on-surface)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {viewMode === 'today' ? getDayName(currentDate) : (lang === 'id' ? 'Mingguan' : 'Weekly')}
               </div>
             </div>
@@ -1077,51 +1173,65 @@ export function SchedulePage() {
               cursor: 'pointer',
               display: 'flex',
               flexDirection: 'column',
-              gap: '0.375rem',
+              gap: '0.5rem',
+              width: '100%',
+              boxSizing: 'border-box',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
               <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.375rem',
                 fontSize: '0.6875rem',
                 fontWeight: 700,
                 textTransform: 'uppercase',
                 letterSpacing: '0.04em',
                 color: 'var(--primary)',
+                minWidth: 0,
               }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--primary)' }} />
-                {lang === 'id'
-                  ? (nextClass.minutesUntil <= 60 ? `Berikutnya dlm ${nextClass.minutesUntil}m` : 'Berikutnya hari ini')
-                  : (nextClass.minutesUntil <= 60 ? `Up next in ${nextClass.minutesUntil}m` : 'Up next today')}
+                {getUpcomingBadgeText(nextClass.date, nextClass.minutesUntil, lang)}
               </span>
-              <span
-                className="badge"
-                style={{
-                  background: `color-mix(in srgb, ${nextClass.course.color || 'var(--primary)'} 15%, transparent)`,
-                  color: nextClass.course.color || 'var(--primary)',
-                  fontWeight: 700,
-                  fontSize: '0.6875rem',
-                }}
-              >
-                {nextClass.course.code}
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', flexWrap: 'wrap' }}>
+                <span
+                  className="badge"
+                  style={{
+                    background: `color-mix(in srgb, ${nextClass.course.color || 'var(--primary)'} 15%, transparent)`,
+                    color: nextClass.course.color || 'var(--primary)',
+                    fontWeight: 700,
+                    fontSize: '0.6875rem',
+                  }}
+                >
+                  {nextClass.course.code}
+                </span>
+                {getClassBadges(nextClass.session, nextClass.course, nextClass.exception, isId).map((b) => (
+                  <span
+                    key={b.key}
+                    className="badge"
+                    style={{
+                      background: b.bg,
+                      color: b.color,
+                      fontWeight: 700,
+                      fontSize: '0.625rem',
+                      letterSpacing: '0.02em',
+                    }}
+                  >
+                    {b.label}
+                  </span>
+                ))}
+              </div>
             </div>
-            <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--on-surface)' }}>
+            <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--on-surface)', overflowWrap: 'anywhere', lineHeight: 1.3 }}>
               {nextClass.course.name}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)', flexWrap: 'wrap' }}>
               <span className="tabular-nums" style={{ fontWeight: 600, color: 'var(--on-surface)' }}>
                 {formatTime12(nextClass.startTime)} – {formatTime12(nextClass.endTime)}
               </span>
-              <span>•</span>
-              <span>{nextClass.room}</span>
+              <span style={{ background: 'var(--surface-container)', padding: '0.15rem 0.45rem', borderRadius: 6, fontWeight: 500, color: 'var(--on-surface)' }}>
+                {nextClass.room}
+              </span>
               {nextClass.course.professor && (
-                <>
-                  <span>•</span>
-                  <span>{nextClass.course.professor}</span>
-                </>
+                <span style={{ color: 'var(--on-surface-variant)' }}>
+                  {nextClass.course.professor}
+                </span>
               )}
             </div>
           </div>
@@ -1235,85 +1345,111 @@ export function SchedulePage() {
             const validGridStarts = dayScheduleData.map((day) => day.gridStart).filter(Number.isFinite);
             const gridStart = validGridStarts.length > 0 ? Math.min(...validGridStarts) : DEFAULT_GRID_START;
             const hours = getHoursForGrid(gridStart);
+            const stripDays = weekDates.slice(0, 5);
             return (
               <>
-                {viewMode === 'week' && (
-                  <div
-                    className="show-mobile schedule-week-nav-bar"
-                    style={{
-                      padding: '0.5rem 0.75rem 0.5rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '0.5rem',
-                      background: 'var(--surface-container-lowest)',
-                      borderBottom: '1px solid var(--outline-variant)',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', overflowX: 'auto', flex: 1, scrollbarWidth: 'none' }}>
-                      {displayDays.map((date, idx) => {
-                        const dayNames = lang === 'id' ? ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'] : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-                        const dayIdx = getISODay(date) - 1;
-                        const isCurrentDay = isToday(date);
-                        return (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => scrollToDay(idx)}
-                            className="min-touch-target"
-                            style={{
-                              flex: '1 0 auto',
-                              minWidth: 46,
-                              padding: '0.3rem 0.4rem',
-                              borderRadius: 8,
-                              border: isCurrentDay ? '1px solid var(--primary)' : '1px solid var(--outline-variant)',
-                              background: isCurrentDay ? 'var(--primary)' : 'var(--surface-container-low)',
-                              color: isCurrentDay ? 'var(--on-primary)' : 'var(--on-surface)',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'center',
-                              cursor: 'pointer',
-                              transition: 'background 0.15s, color 0.15s',
-                            }}
-                          >
-                            <span style={{ fontSize: '0.625rem', fontWeight: 700, textTransform: 'uppercase', opacity: isCurrentDay ? 0.9 : 0.7 }}>
-                              {dayNames[dayIdx] || 'DAY'}
-                            </span>
-                            <span className="tabular-nums" style={{ fontSize: '0.8125rem', fontWeight: 700, lineHeight: 1.1 }}>
-                              {date.getDate()}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <div style={{ display: 'flex', gap: '0.25rem', flexShrink: 0 }}>
-                      <button
-                        type="button"
-                        onClick={() => scrollGridBy(-160)}
-                        className="btn-ghost min-touch-target"
-                        aria-label="Scroll left"
-                        title="Scroll left"
-                        style={{ width: 32, height: 32, padding: 0, borderRadius: 8, background: 'var(--surface-container-low)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
-                          <polyline points="15 18 9 12 15 6" />
-                        </svg>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => scrollGridBy(160)}
-                        className="btn-ghost min-touch-target"
-                        aria-label="Scroll right"
-                        title="Scroll right"
-                        style={{ width: 32, height: 32, padding: 0, borderRadius: 8, background: 'var(--surface-container-low)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
-                          <polyline points="9 18 15 12 9 6" />
-                        </svg>
-                      </button>
-                    </div>
+                <div
+                  className="show-mobile schedule-week-nav-bar"
+                  style={{
+                    padding: '0.625rem 0.875rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '0.75rem',
+                    background: 'var(--surface-container-lowest)',
+                    borderBottom: '1px solid var(--outline-variant)',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflowX: 'auto', flex: 1, scrollbarWidth: 'none', padding: '2px 0' }}>
+                    {stripDays.map((date, idx) => {
+                      const dayNames = lang === 'id' ? ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'] : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                      const dayIdx = getISODay(date) - 1;
+                      const isSelected = toDateString(date) === toDateString(currentDate);
+                      const isCurrentToday = isToday(date);
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            if (viewMode === 'today') {
+                              setCurrentDate(date);
+                            } else {
+                              scrollToDay(idx);
+                              setCurrentDate(date);
+                            }
+                          }}
+                          className="min-touch-target"
+                          style={{
+                            flex: '1 0 auto',
+                            minWidth: 50,
+                            padding: '0.45rem 0.4rem',
+                            borderRadius: 10,
+                            border: isSelected
+                              ? '1.5px solid var(--primary)'
+                              : '1px solid var(--outline-variant)',
+                            background: isSelected
+                              ? 'var(--primary)'
+                              : isCurrentToday
+                                ? 'var(--surface-container-high)'
+                                : 'var(--surface-container-low)',
+                            color: isSelected ? 'var(--on-primary)' : 'var(--on-surface)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            cursor: 'pointer',
+                            boxShadow: isSelected ? '0 2px 6px rgba(0,0,0,0.12)' : 'none',
+                            transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
+                          }}
+                        >
+                          <span style={{ fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', opacity: isSelected ? 0.95 : 0.7 }}>
+                            {dayNames[dayIdx] || 'DAY'}
+                          </span>
+                          <span className="tabular-nums" style={{ fontSize: '0.875rem', fontWeight: 700, lineHeight: 1.1 }}>
+                            {date.getDate()}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
-                )}
+                  <div style={{ display: 'flex', gap: '0.375rem', flexShrink: 0 }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (viewMode === 'today') {
+                          prevPeriod();
+                        } else {
+                          scrollGridBy(-160);
+                        }
+                      }}
+                      className="btn-ghost min-touch-target"
+                      aria-label="Previous"
+                      title="Previous"
+                      style={{ width: 36, height: 36, padding: 0, borderRadius: 10, background: 'var(--surface-container-low)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                        <polyline points="15 18 9 12 15 6" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (viewMode === 'today') {
+                          nextPeriod();
+                        } else {
+                          scrollGridBy(160);
+                        }
+                      }}
+                      className="btn-ghost min-touch-target"
+                      aria-label="Next"
+                      title="Next"
+                      style={{ width: 36, height: 36, padding: 0, borderRadius: 10, background: 'var(--surface-container-low)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                        <polyline points="9 18 15 12 9 6" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
                 <div
                   ref={gridScrollRef}
                   className="schedule-grid-scroll"
@@ -1327,7 +1463,10 @@ export function SchedulePage() {
                     touchAction: 'pan-x pan-y',
                   }}
                 >
-                  <div className={`schedule-grid ${viewMode === 'today' ? 'schedule-grid--today' : 'schedule-grid--week'}`} style={{
+                  <div
+                    key={viewMode === 'today' ? toDateString(currentDate) : 'week-view'}
+                    className={`schedule-grid ${viewMode === 'today' ? 'schedule-grid--today' : 'schedule-grid--week'} schedule-grid-animated`}
+                    style={{
                     display: 'grid',
                     gridTemplateColumns: viewMode === 'today' ? '70px 1fr' : `70px repeat(${displayDays.length}, minmax(130px, 1fr))`,
                     border: '1px solid var(--outline-variant)',
@@ -1592,22 +1731,34 @@ export function SchedulePage() {
                                 </svg>
                                 <span style={{ fontSize: '0.625rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{room}</span>
                               </div>
-                              {exception && (
-                                <div style={{
-                                  display: 'flex', alignItems: 'center', gap: '0.25rem',
-                                  marginTop: '0.2rem',
-                                }}>
-                                  <span style={{
-                                    fontSize: '11px',
-                                    fontWeight: 600,
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.6px',
-                                    color: exception.type === 'room-changed' ? 'var(--tertiary)' : 'var(--error)',
+                              {(() => {
+                                const badges = getClassBadges(session, course, exception, isId);
+                                if (badges.length === 0) return null;
+                                return (
+                                  <div style={{
+                                    display: 'flex', alignItems: 'center', gap: '0.25rem',
+                                    marginTop: '0.2rem', flexWrap: 'wrap',
                                   }}>
-                                    {exception.type === 'room-changed' ? 'Relocated' : exception.type}
-                                  </span>
-                                </div>
-                              )}
+                                    {badges.map((b) => (
+                                      <span
+                                        key={b.key}
+                                        style={{
+                                          fontSize: '9px',
+                                          fontWeight: 700,
+                                          textTransform: 'uppercase',
+                                          letterSpacing: '0.4px',
+                                          color: b.color,
+                                          background: b.bg,
+                                          padding: '0.05rem 0.25rem',
+                                          borderRadius: 4,
+                                        }}
+                                      >
+                                        {b.label}
+                                      </span>
+                                    ))}
+                                  </div>
+                                );
+                              })()}
                               {!isMultiCol && (
                                 <div style={{
                                   display: 'flex', alignItems: 'center', gap: '0.25rem',
@@ -1733,7 +1884,7 @@ export function SchedulePage() {
             }}>
               <div style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                marginBottom: '0.75rem',
+                marginBottom: '0.75rem', gap: '0.5rem', flexWrap: 'wrap',
               }}>
                 <span style={{
                   fontSize: '0.75rem',
@@ -1741,17 +1892,36 @@ export function SchedulePage() {
                   color: 'var(--on-surface-variant)',
                   letterSpacing: '0.01em',
                 }}>
-                  {lang === 'id' ? 'Berikutnya hari ini' : 'Up next today'}
+                  {getUpcomingBadgeText(nextClass.date, nextClass.minutesUntil, lang)}
                 </span>
-                <span style={{
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  color: nextClass.course.color || 'var(--primary)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.6px',
-                }}>
-                  {nextClass.course.code}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', flexWrap: 'wrap' }}>
+                  <span style={{
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    color: nextClass.course.color || 'var(--primary)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.6px',
+                  }}>
+                    {nextClass.course.code}
+                  </span>
+                  {getClassBadges(nextClass.session, nextClass.course, nextClass.exception, isId).map((b) => (
+                    <span
+                      key={b.key}
+                      style={{
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.4px',
+                        color: b.color,
+                        background: b.bg,
+                        padding: '0.1rem 0.35rem',
+                        borderRadius: 4,
+                      }}
+                    >
+                      {b.label}
+                    </span>
+                  ))}
+                </div>
               </div>
 
               <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--on-surface)' }}>
@@ -1892,25 +2062,36 @@ export function SchedulePage() {
                   <div style={{
                     fontSize: '0.75rem', color: 'var(--on-surface-variant)',
                     marginTop: '0.25rem',
-                    display: 'flex', alignItems: 'center', gap: '0.375rem',
+                    display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap',
                   }}>
                     <span>{room}</span>
-                    <span>·</span>
-                    <span>{course.professor}</span>
+                    {course.professor && <span>{course.professor}</span>}
                   </div>
-                  {exception && (
-                    <div style={{ marginTop: '0.375rem' }}>
-                      <span style={{
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.6px',
-                        color: exception.type === 'room-changed' ? 'var(--tertiary)' : 'var(--error)',
-                      }}>
-                        {exception.type === 'room-changed' ? 'Relocated' : exception.type}
-                      </span>
-                    </div>
-                  )}
+                  {(() => {
+                    const badges = getClassBadges(session, course, exception, isId);
+                    if (badges.length === 0) return null;
+                    return (
+                      <div style={{ marginTop: '0.375rem', display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                        {badges.map((b) => (
+                          <span
+                            key={b.key}
+                            style={{
+                              fontSize: '10px',
+                              fontWeight: 700,
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.4px',
+                              color: b.color,
+                              background: b.bg,
+                              padding: '0.08rem 0.3rem',
+                              borderRadius: 4,
+                            }}
+                          >
+                            {b.label}
+                          </span>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
               );
             })}
@@ -2651,39 +2832,96 @@ function ClassDetailsModal({
   const lang = useLanguage();
   const isId = lang === 'id';
   const [scope, setScope] = useState<'this-day' | 'all-future'>('this-day');
-  const [excType, setExcType] = useState<ExceptionType | ''>('');
+  const [excType, setExcType] = useState<ExceptionType | ''>(exception?.type || '');
+  const [isOnline, setIsOnline] = useState<boolean>(() => {
+    return Boolean(
+      exception?.isOnline ||
+      exception?.type === 'online' ||
+      exception?.types?.includes('online') ||
+      (exception?.newRoom || session.room || course.room || '').toLowerCase().includes('online')
+    );
+  });
   const [instructor, setInstructor] = useState(course.professor || '');
-  const [newRoom, setNewRoom] = useState('');
-  const [newStartTime, setNewStartTime] = useState('');
-  const [newEndTime, setNewEndTime] = useState('');
-  const [note, setNote] = useState('');
+  const [newRoom, setNewRoom] = useState(exception?.newRoom || session.room || course.room || '');
+  const [newStartTime, setNewStartTime] = useState(exception?.newStartTime || session.startTime || '08:00');
+  const [newEndTime, setNewEndTime] = useState(exception?.newEndTime || session.endTime || '09:30');
+  const [note, setNote] = useState(exception?.note || '');
+  const [timeError, setTimeError] = useState<string | null>(null);
 
   const dateStr = formatDateLong(date);
   const startTime = exception?.newStartTime || session.startTime;
   const endTime = exception?.newEndTime || session.endTime;
   const room = exception?.newRoom || session.room;
 
+  const validateTimes = (start: string, end: string) => {
+    if (!start || !end) {
+      return isId ? 'Waktu mulai dan selesai wajib diisi' : 'Start and end times are required';
+    }
+    const { hours: sh, minutes: sm } = parseTime(start);
+    const { hours: eh, minutes: em } = parseTime(end);
+    const startMins = sh * 60 + sm;
+    const endMins = eh * 60 + em;
+    if (endMins <= startMins) {
+      return isId ? 'Waktu selesai harus setelah waktu mulai' : 'End time must be after start time';
+    }
+    if (sh < 6 || sh >= 21) {
+      return isId ? 'Jam mulai harus antara 06:00 dan 21:00 (rentang grid)' : 'Start time must be between 06:00 and 21:00';
+    }
+    if (eh > 22 || (eh === 21 && em > 30)) {
+      return isId ? 'Jam selesai tidak boleh melebihi 21:30' : 'End time cannot be later than 21:30';
+    }
+    return null;
+  };
+
   const handleSave = () => {
+    setTimeError(null);
+    const isMoving = scope === 'all-future' || excType === 'moved' || newStartTime !== session.startTime || newEndTime !== session.endTime;
+    if (isMoving) {
+      const err = validateTimes(newStartTime, newEndTime);
+      if (err) {
+        setTimeError(err);
+        return;
+      }
+    }
+
     if (instructor.trim() !== (course.professor || '')) {
       ds.updateCourse(course.id, { professor: instructor.trim() || undefined });
     }
-    if (scope === 'this-day' && excType) {
+
+    if (scope === 'all-future') {
+      // Edit recurring session & course directly
+      const sessionUpdates: Partial<ClassSession> = {};
+      if (newRoom.trim()) sessionUpdates.room = newRoom.trim();
+      if (newStartTime) sessionUpdates.startTime = newStartTime;
+      if (newEndTime) sessionUpdates.endTime = newEndTime;
+      ds.updateClassSession(session.id, sessionUpdates);
+
+      // Permanently update course room and instructor
+      ds.updateCourse(course.id, {
+        professor: instructor.trim() || undefined,
+        room: newRoom.trim() || undefined,
+      });
+    } else {
+      // Single-day exception
+      const activeTypes: ExceptionType[] = [];
+      if (excType && excType !== 'online') activeTypes.push(excType);
+      if (isOnline) activeTypes.push('online');
+      if (activeTypes.length === 0 && (newStartTime !== session.startTime || newEndTime !== session.endTime)) {
+        activeTypes.push('moved');
+      }
+
+      const primaryType = activeTypes[0] || (isOnline ? 'online' : (excType || 'room-changed'));
       ds.addSessionException({
         classSessionId: session.id,
         date: toDateString(date),
-        type: excType,
-        newStartTime: newStartTime || undefined,
-        newEndTime: newEndTime || undefined,
-        newRoom: newRoom || undefined,
-        note: note || undefined,
+        type: primaryType,
+        types: activeTypes,
+        isOnline,
+        newStartTime: (activeTypes.includes('moved') || newStartTime !== session.startTime) ? newStartTime : undefined,
+        newEndTime: (activeTypes.includes('moved') || newEndTime !== session.endTime) ? newEndTime : undefined,
+        newRoom: (activeTypes.includes('room-changed') || newRoom.trim() !== session.room) ? newRoom.trim() : undefined,
+        note: note.trim() || undefined,
       });
-    } else if (scope === 'all-future') {
-      // Edit recurring session directly
-      const updates: Partial<ClassSession> = {};
-      if (newRoom) updates.room = newRoom;
-      if (newStartTime) updates.startTime = newStartTime;
-      if (newEndTime) updates.endTime = newEndTime;
-      ds.updateClassSession(session.id, updates);
     }
     onClose();
   };
@@ -2714,23 +2952,23 @@ function ClassDetailsModal({
             <path d="M3 10h18M8 2v4M16 2v4" />
           </svg>
           <span style={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em', fontFamily: 'var(--font-heading)' }}>
-            {isId ? 'Mengubah Pertemuan:' : 'Modifying occurrence:'}
+            {isId ? 'Pertemuan:' : 'Occurrence:'}
           </span>
         </div>
         <span className="tabular-nums" style={{ fontWeight: 600 }}>{dateStr}</span>
       </div>
 
       {/* Scope choice */}
-      <div style={{ marginBottom: '1rem' }}>
+      <div style={{ marginBottom: '1.25rem' }}>
         <div style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           marginBottom: '0.5rem',
         }}>
-          <span style={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '0.6875rem', letterSpacing: '0.05em' }}>
+          <span style={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '0.6875rem', letterSpacing: '0.05em', color: 'var(--on-surface-variant)' }}>
             {isId ? 'Cakupan perubahan' : 'Scope choice'}
           </span>
           <span style={{ fontSize: '0.6875rem', color: 'var(--on-surface-variant)' }}>
-            {isId ? 'Pilih frekuensi perubahan' : 'Select change frequency'}
+            {scope === 'all-future' ? (isId ? 'Ubah permanen dosen & ruangan' : 'Permanently edit instructor & room') : (isId ? 'Hanya untuk hari ini' : 'Single day exception')}
           </span>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
@@ -2738,165 +2976,307 @@ function ClassDetailsModal({
             type="button"
             className={scope === 'this-day' ? 'chip active' : 'chip'}
             onClick={() => setScope('this-day')}
-            style={{ padding: '0.5rem 1rem', borderRadius: 8, justifyContent: 'center' }}
+            style={{ padding: '0.5rem 0.75rem', borderRadius: 8, justifyContent: 'center', fontWeight: 600, fontSize: '0.75rem' }}
           >
-            {isId ? 'Hari ini saja' : 'This day only'}
+            {isId ? 'Pengecualian hari ini' : 'This day only'}
           </button>
           <button
             type="button"
             className={scope === 'all-future' ? 'chip active' : 'chip'}
             onClick={() => setScope('all-future')}
-            style={{ padding: '0.5rem 1rem', borderRadius: 8, justifyContent: 'center' }}
+            style={{ padding: '0.5rem 0.75rem', borderRadius: 8, justifyContent: 'center', fontWeight: 600, fontSize: '0.75rem' }}
           >
-            {isId ? 'Semua minggu mendatang' : 'All future weeks'}
+            {isId ? 'Permanen (semua minggu)' : 'All future weeks'}
           </button>
         </div>
       </div>
 
-      {/* Course info */}
-      <div style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid var(--outline-variant)' }}>
-        <h4>{course.code} {course.name}</h4>
-        <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.5rem', fontSize: '0.8125rem' }}>
+      {/* Course info preview */}
+      <div style={{ marginBottom: '1rem', paddingBottom: '0.875rem', borderBottom: '1px solid var(--outline-variant)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+          <h4 style={{ margin: 0 }}>{course.code} {course.name}</h4>
+          <span className="badge" style={{ background: `color-mix(in srgb, ${course.color || 'var(--primary)'} 15%, transparent)`, color: course.color || 'var(--primary)', fontWeight: 700, fontSize: '0.6875rem' }}>
+            {course.code}
+          </span>
+        </div>
+        <div style={{ display: 'flex', gap: '1.25rem', marginTop: '0.5rem', fontSize: '0.8125rem', color: 'var(--on-surface-variant)', flexWrap: 'wrap' }}>
           <div className="tabular-nums" style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-              <rect x="3" y="4" width="18" height="18" rx="2" />
-              <path d="M3 10h18M8 2v4M16 2v4" />
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
             </svg>
-            {dateStr}
-            <span style={{ color: 'var(--on-surface-variant)' }}>
-              {formatTime12(startTime)}–{formatTime12(endTime)}
-            </span>
+            <span>{formatTime12(startTime)}–{formatTime12(endTime)}</span>
           </div>
-        </div>
-        <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.25rem', fontSize: '0.8125rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
               <circle cx="12" cy="10" r="3" />
             </svg>
-            {room}
+            <span>{room}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
             </svg>
-            {instructor || course.professor || (isId ? 'Dosen belum ditentukan' : 'Instructor TBA')}
+            <span>{instructor || course.professor || (isId ? 'Dosen belum diisi' : 'Instructor TBA')}</span>
           </div>
         </div>
       </div>
 
-      {/* Instructor field */}
-      <div style={{ marginBottom: '1rem' }}>
-        <label htmlFor="class-instructor-edit" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.25rem' }}>
-          {isId ? 'Dosen Pengampu' : 'Instructor'}
-        </label>
-        <input
-          id="class-instructor-edit"
-          value={instructor}
-          onChange={(e) => setInstructor(e.target.value)}
-          placeholder={isId ? 'contoh: Dr. Budi Santoso' : 'e.g. Dr. Jane Smith'}
-          style={{ width: '100%' }}
-        />
-      </div>
-
-      {/* Exception types (only for "this day only") */}
-      {scope === 'this-day' && (
-        <div style={{ marginBottom: '1rem' }}>
-          <div style={{
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            marginBottom: '0.5rem',
-          }}>
-            <span style={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '0.6875rem', letterSpacing: '0.05em' }}>
-              {isId ? 'Pengecualian satu hari' : 'Single-day exceptions'}
-            </span>
-            <span className="tabular-nums" style={{ fontSize: '0.6875rem', color: 'var(--on-surface-variant)' }}>
-              {isId ? `Hanya untuk ${dateStr}` : `Apply to ${getMonthName(date.getMonth(), true)} ${date.getDate()} only`}
-            </span>
+      {/* Scope: Permanent Changes Form */}
+      {scope === 'all-future' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', marginBottom: '1rem' }}>
+          <div style={{ background: 'var(--surface-container-low)', padding: '0.75rem', borderRadius: 8, fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>
+            {isId
+              ? 'Perubahan ini akan mengubah informasi dosen, ruangan, dan jadwal kuliah secara permanen untuk semester ini.'
+              : 'These changes will permanently update instructor, room, and timetable for all upcoming weeks.'}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
-            {excTypes.map((et) => (
-              <button
-                key={et.type}
-                type="button"
-                className={excType === et.type ? 'card' : 'card'}
-                onClick={() => setExcType(excType === et.type ? '' : et.type)}
-                style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center',
-                  gap: '0.375rem', padding: '0.75rem',
-                  cursor: 'pointer',
-                  border: excType === et.type
-                    ? '2px solid var(--primary)'
-                    : '1px solid var(--outline-variant)',
-                  background: excType === et.type
-                    ? 'var(--surface-container)'
-                    : 'var(--surface-container-lowest)',
-                  borderRadius: 8,
-                  textAlign: 'center',
+
+          <div>
+            <label htmlFor="class-instructor-perm" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.25rem' }}>
+              {isId ? 'Dosen Pengampu (Permanen)' : 'Instructor (Permanent)'}
+            </label>
+            <input
+              id="class-instructor-perm"
+              value={instructor}
+              onChange={(e) => setInstructor(e.target.value)}
+              placeholder={isId ? 'contoh: Dr. Budi Santoso' : 'e.g. Dr. Jane Smith'}
+              style={{ width: '100%' }}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="class-room-perm" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.25rem' }}>
+              {isId ? 'Lokasi / Ruangan (Permanen)' : 'Location / Room (Permanent)'}
+            </label>
+            <input
+              id="class-room-perm"
+              value={newRoom}
+              onChange={(e) => setNewRoom(e.target.value)}
+              placeholder={isId ? 'contoh: C402 / Lab 3' : 'e.g. C402 / Lab 3'}
+              style={{ width: '100%' }}
+            />
+          </div>
+
+          <div className="modal-form-grid-2col">
+            <div>
+              <label htmlFor="class-start-perm" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.25rem' }}>
+                {isId ? 'Jam Mulai' : 'Start Time'}
+              </label>
+              <input
+                id="class-start-perm"
+                className="tabular-nums"
+                type="time"
+                value={newStartTime}
+                onChange={(e) => {
+                  setNewStartTime(e.target.value);
+                  setTimeError(null);
                 }}
-              >
-                <span style={{ fontSize: '1.25rem' }}>{et.icon}</span>
-                <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>{et.label}</span>
-              </button>
-            ))}
+                style={{ width: '100%' }}
+              />
+            </div>
+            <div>
+              <label htmlFor="class-end-perm" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.25rem' }}>
+                {isId ? 'Jam Selesai' : 'End Time'}
+              </label>
+              <input
+                id="class-end-perm"
+                className="tabular-nums"
+                type="time"
+                value={newEndTime}
+                onChange={(e) => {
+                  setNewEndTime(e.target.value);
+                  setTimeError(null);
+                }}
+                style={{ width: '100%' }}
+              />
+            </div>
           </div>
         </div>
       )}
 
-      {/* New room/time fields (contextual) */}
-      {(excType === 'moved' || excType === 'room-changed' || scope === 'all-future') && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
-          {(excType === 'room-changed' || scope === 'all-future') && (
-            <div>
-              <label htmlFor="new-room-input" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.25rem' }}>
-                {isId ? 'Ruangan baru' : 'New room'}
-              </label>
-              <input id="new-room-input" value={newRoom} onChange={(e) => setNewRoom(e.target.value)} placeholder="e.g. A-103" style={{ width: '100%' }} />
+      {/* Scope: Single Day Exceptions Form */}
+      {scope === 'this-day' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', marginBottom: '1rem' }}>
+          <div>
+            <label htmlFor="class-instructor-edit" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.25rem' }}>
+              {isId ? 'Dosen Pengampu' : 'Instructor'}
+            </label>
+            <input
+              id="class-instructor-edit"
+              value={instructor}
+              onChange={(e) => setInstructor(e.target.value)}
+              placeholder={isId ? 'contoh: Dr. Budi Santoso' : 'e.g. Dr. Jane Smith'}
+              style={{ width: '100%' }}
+            />
+          </div>
+
+          <div>
+            <div style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              marginBottom: '0.5rem',
+            }}>
+              <span style={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '0.6875rem', letterSpacing: '0.05em' }}>
+                {isId ? 'Status Pertemuan Hari Ini' : 'Single-day exceptions'}
+              </span>
+              <span className="tabular-nums" style={{ fontSize: '0.6875rem', color: 'var(--on-surface-variant)' }}>
+                {isId ? `Hanya untuk ${dateStr}` : `Apply to ${getMonthName(date.getMonth(), true)} ${date.getDate()} only`}
+              </span>
             </div>
-          )}
-          {(excType === 'moved' || scope === 'all-future') && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+              {excTypes.map((et) => {
+                const isActive = excType === et.type;
+                return (
+                  <button
+                    key={et.type}
+                    type="button"
+                    className="card min-touch-target"
+                    onClick={() => {
+                      if (et.type === 'online') {
+                        setIsOnline(!isOnline);
+                        if (excType === 'online') setExcType('');
+                      } else {
+                        setExcType(excType === et.type ? '' : et.type);
+                      }
+                    }}
+                    style={{
+                      display: 'flex', flexDirection: 'column', alignItems: 'center',
+                      gap: '0.375rem', padding: '0.75rem',
+                      cursor: 'pointer',
+                      border: (isActive || (et.type === 'online' && isOnline))
+                        ? '2px solid var(--primary)'
+                        : '1px solid var(--outline-variant)',
+                      background: (isActive || (et.type === 'online' && isOnline))
+                        ? 'var(--surface-container)'
+                        : 'var(--surface-container-lowest)',
+                      borderRadius: 8,
+                      textAlign: 'center',
+                    }}
+                  >
+                    <span style={{ fontSize: '1.25rem' }}>{et.icon}</span>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>{et.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Toggle Online Option that can coexist with any exception like Moved */}
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600 }}>
+            <input
+              type="checkbox"
+              checked={isOnline}
+              onChange={(e) => setIsOnline(e.target.checked)}
+              style={{ width: 16, height: 16, accentColor: 'var(--primary)' }}
+            />
+            <span>{isId ? 'Kelas diadakan Online (tampilkan badge ONLINE)' : 'Class held online (display ONLINE badge)'}</span>
+          </label>
+
+          {/* Time fields (when moved or manually adjusting time) */}
+          {(excType === 'moved' || excType === 'extra') && (
             <div className="modal-form-grid-2col">
               <div>
                 <label htmlFor="new-start-time-input" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.25rem' }}>
                   {isId ? 'Mulai baru' : 'New start'}
                 </label>
-                <input id="new-start-time-input" className="tabular-nums" type="time" value={newStartTime} onChange={(e) => setNewStartTime(e.target.value)} style={{ width: '100%' }} />
+                <input
+                  id="new-start-time-input"
+                  className="tabular-nums"
+                  type="time"
+                  value={newStartTime}
+                  onChange={(e) => {
+                    setNewStartTime(e.target.value);
+                    setTimeError(null);
+                  }}
+                  style={{ width: '100%' }}
+                />
               </div>
               <div>
                 <label htmlFor="new-end-time-input" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.25rem' }}>
                   {isId ? 'Selesai baru' : 'New end'}
                 </label>
-                <input id="new-end-time-input" className="tabular-nums" type="time" value={newEndTime} onChange={(e) => setNewEndTime(e.target.value)} style={{ width: '100%' }} />
+                <input
+                  id="new-end-time-input"
+                  className="tabular-nums"
+                  type="time"
+                  value={newEndTime}
+                  onChange={(e) => {
+                    setNewEndTime(e.target.value);
+                    setTimeError(null);
+                  }}
+                  style={{ width: '100%' }}
+                />
               </div>
             </div>
           )}
+
+          {/* Room field */}
+          {(excType === 'room-changed' || excType === 'moved' || !isOnline) && (
+            <div>
+              <label htmlFor="new-room-input" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.25rem' }}>
+                {isId ? 'Ruangan hari ini' : 'Room for today'}
+              </label>
+              <input
+                id="new-room-input"
+                value={newRoom}
+                onChange={(e) => setNewRoom(e.target.value)}
+                placeholder={isId ? 'contoh: C402 / D303' : 'e.g. C402 / D303'}
+                style={{ width: '100%' }}
+              />
+            </div>
+          )}
+
+          {/* Note */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+              <label htmlFor="class-note-input" style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+                {isId ? 'Catatan pertemuan' : 'Note for this class'}
+              </label>
+              <span style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>
+                {isId ? 'Opsional' : 'Optional'}
+              </span>
+            </div>
+            <textarea
+              id="class-note-input"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder={isId ? 'contoh: Bawa laptop, kuis di awal jam...' : 'e.g., Bring laptop, quiz at start...'}
+              rows={3}
+              style={{ width: '100%', resize: 'vertical' }}
+            />
+          </div>
         </div>
       )}
 
-      {/* Note */}
-      <div style={{ marginBottom: '1rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-          <label htmlFor="class-note-input" style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
-            {isId ? 'Catatan pertemuan' : 'Note for this class'}
-          </label>
-          <span style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>
-            {isId ? 'Opsional' : 'Optional'}
-          </span>
+      {/* Time validation error message */}
+      {timeError && (
+        <div style={{
+          padding: '0.625rem 0.875rem',
+          background: 'color-mix(in srgb, var(--error) 12%, var(--surface-container-lowest))',
+          border: '1px solid var(--error)',
+          color: 'var(--error)',
+          borderRadius: 8,
+          fontSize: '0.75rem',
+          fontWeight: 600,
+          marginBottom: '1rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+        }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <span>{timeError}</span>
         </div>
-        <textarea
-          id="class-note-input"
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          placeholder={isId ? 'contoh: Bawa laptop, kuis di awal jam...' : 'e.g., Bring laptop, quiz at start, attending remotely...'}
-          rows={3}
-          style={{ width: '100%', resize: 'vertical' }}
-        />
-      </div>
+      )}
 
       <div className="modal-actions-sticky">
-        <button type="button" className="btn-outline" onClick={onClose}>
+        <button type="button" className="btn-outline min-touch-target" onClick={onClose}>
           {isId ? 'Batal' : 'Discard'}
         </button>
-        <button type="button" className="btn-primary" onClick={handleSave}>
+        <button type="button" className="btn-primary min-touch-target" onClick={handleSave}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
             <polyline points="20 6 9 17 4 12" />
           </svg>

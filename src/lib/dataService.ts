@@ -382,6 +382,19 @@ export function getExceptionForDate(sessionId: string, date: string): SessionExc
 }
 
 export function addSessionException(exc: Omit<SessionException, 'id'>): SessionException {
+  const existingIndex = sessionExceptions.findIndex(
+    (e) => e.classSessionId === exc.classSessionId && e.date === exc.date
+  );
+  if (existingIndex >= 0) {
+    const updated: SessionException = { ...sessionExceptions[existingIndex], ...exc };
+    sessionExceptions = [
+      ...sessionExceptions.slice(0, existingIndex),
+      updated,
+      ...sessionExceptions.slice(existingIndex + 1),
+    ];
+    notify();
+    return updated;
+  }
   const newExc = { ...exc, id: genId() };
   sessionExceptions = [...sessionExceptions, newExc];
   notify();

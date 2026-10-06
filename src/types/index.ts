@@ -35,6 +35,8 @@ export interface SessionException {
   classSessionId: string;
   date: string;         // "YYYY-MM-DD"
   type: ExceptionType;
+  types?: ExceptionType[];
+  isOnline?: boolean;
   newStartTime?: string;
   newEndTime?: string;
   newRoom?: string;
