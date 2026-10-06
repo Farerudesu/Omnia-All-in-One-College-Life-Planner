@@ -2944,7 +2944,6 @@ function ClassDetailsModal({
   const excTypes: { type: ExceptionType; label: string; icon: React.ReactNode }[] = [
     { type: 'cancelled', label: isId ? 'Batal' : 'Cancel', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> },
     { type: 'moved', label: isId ? 'Pindah Jam' : 'Move', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
-    { type: 'room-changed', label: isId ? 'Ruangan' : 'Room', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> },
     { type: 'online', label: isId ? 'Online' : 'Online', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> },
     { type: 'extra', label: isId ? 'Kelas Tambahan' : 'Extra class', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> },
     { type: 'attended', label: isId ? 'Masuk' : 'Attended', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="5 12 10 17 19 7"/></svg> },
@@ -3291,3 +3290,4 @@ function ClassDetailsModal({
     </Modal>
   );
 }
+
