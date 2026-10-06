@@ -1111,6 +1111,32 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
     -webkit-overflow-scrolling: touch;
   }
 
+  .ask-omni-chat-area.is-empty {
+    flex: 0 1 auto !important;
+    padding-block: 0.5rem 0 !important;
+  }
+
+  .ask-omni-chat-area.is-empty > div {
+    gap: 0 !important;
+  }
+
+  .ask-omni-chat-area.is-empty > div > div:first-child {
+    margin-top: 0 !important;
+  }
+
+  .ask-omni-chat-area.is-empty h2 {
+    margin-top: 0 !important;
+    margin-bottom: 0.25rem !important;
+  }
+
+  .ask-omni-chat-area.is-empty p {
+    margin-bottom: 0.5rem !important;
+  }
+
+  .ask-omni-chat-area.is-empty .ask-omni-suggestions {
+    gap: 0.375rem !important;
+  }
+
   .ask-omni-composer {
     flex-shrink: 0 !important;
     padding: 0.625rem 1rem calc(68px + max(14px, env(safe-area-inset-bottom, 14px))) !important;

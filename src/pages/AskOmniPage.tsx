@@ -120,17 +120,19 @@ function getScheduleContext() {
 
 const SESSION_CHAT_KEY = 'omnia_omni_chat_session';
 
+function loadChatHistory(): Message[] {
+  try {
+    const saved = localStorage.getItem(SESSION_CHAT_KEY) || sessionStorage.getItem(SESSION_CHAT_KEY);
+    return saved ? JSON.parse(saved) : [];
+  } catch {
+    return [];
+  }
+}
+
 export function AskOmniPage() {
   const lang = useLanguage();
   const courses = useData(ds.getCourses);
-  const [messages, setMessages] = useState<Message[]>(() => {
-    try {
-      const saved = sessionStorage.getItem(SESSION_CHAT_KEY);
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [messages, setMessages] = useState<Message[]>(loadChatHistory);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [attachment, setAttachment] = useState<ImageAttachment | null>(null);
@@ -153,7 +155,7 @@ export function AskOmniPage() {
 
   useEffect(() => {
     try {
-      sessionStorage.setItem(SESSION_CHAT_KEY, JSON.stringify(messages));
+      localStorage.setItem(SESSION_CHAT_KEY, JSON.stringify(messages));
     } catch {
       // ignore quota errors
     }
@@ -473,7 +475,7 @@ export function AskOmniPage() {
       </div>
 
       {/* Chat Area */}
-      <div className="ask-omni-chat-area" style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', justifyContent: 'center' }}>
+      <div className={`ask-omni-chat-area${messages.length === 0 ? ' is-empty' : ''}`} style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', justifyContent: 'center' }}>
         <div style={{ width: '100%', maxWidth: 768, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {messages.length === 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', margin: '0.75rem auto 0', padding: '0 0.5rem' }}>
@@ -493,7 +495,7 @@ export function AskOmniPage() {
                   : 'Tell me what to schedule, assignments to track, or expenses to log. I’ll prefill a pop-up confirmation so you can review and click Okay!'}
               </p>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%', maxWidth: 460 }}>
+              <div className="ask-omni-suggestions" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%', maxWidth: 460 }}>
                 {suggestions.map((s, idx) => (
                   <button
                     key={idx}
@@ -587,7 +589,7 @@ export function AskOmniPage() {
                           letterSpacing: '0.04em',
                         }}>
                           {msg.prefilledData.type === 'expense' ? <DollarSign size={13} /> : msg.prefilledData.type === 'task' ? <CheckSquare size={13} /> : <Calendar size={13} />}
-                          Prefilled {msg.prefilledData.type === 'expense' ? 'Expense' : msg.prefilledData.type === 'task' ? 'Assignment' : 'Schedule Event'}
+                          {lang === 'id' ? 'Siap dikonfirmasi' : 'Ready to confirm'} {lang === 'id' ? (msg.prefilledData.type === 'expense' ? 'Pengeluaran' : msg.prefilledData.type === 'task' ? 'Tugas' : 'Acara') : (msg.prefilledData.type === 'expense' ? 'Expense' : msg.prefilledData.type === 'task' ? 'Assignment' : 'Schedule Event')}
                         </span>
                         {msg.actionStatus === 'saved' ? (
                           <span style={{
@@ -601,11 +603,11 @@ export function AskOmniPage() {
                             padding: '0.2rem 0.5rem',
                             borderRadius: 6,
                           }}>
-                            <Check size={12} /> Saved to {msg.prefilledData.type === 'expense' ? 'Finance' : msg.prefilledData.type === 'task' ? 'Tasks' : 'Schedule'}
+                            <Check size={12} /> {lang === 'id' ? 'Tersimpan di' : 'Saved to'} {lang === 'id' ? (msg.prefilledData.type === 'expense' ? 'Keuangan' : msg.prefilledData.type === 'task' ? 'Tugas' : 'Jadwal') : (msg.prefilledData.type === 'expense' ? 'Finance' : msg.prefilledData.type === 'task' ? 'Tasks' : 'Schedule')}
                           </span>
                         ) : (
                           <span style={{ fontSize: '0.6875rem', color: 'var(--on-surface-variant)', fontWeight: 600 }}>
-                            Ready to confirm
+                            {lang === 'id' ? 'Siap dikonfirmasi' : 'Ready to confirm'}
                           </span>
                         )}
                       </div>
@@ -639,7 +641,7 @@ export function AskOmniPage() {
                             }}
                           >
                             <Sparkles size={14} />
-                            Open Pop-up & Confirm
+                            {lang === 'id' ? 'Buka Pop-up & Konfirmasi' : 'Open Pop-up & Confirm'}
                           </button>
                         </div>
                       )}
