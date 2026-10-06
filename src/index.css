@@ -1140,7 +1140,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 
   .ask-omni-composer {
     flex-shrink: 0 !important;
-    padding: 0.625rem 1rem calc(68px + max(14px, env(safe-area-inset-bottom, 14px))) !important;
+    padding: 0.625rem 1rem max(14px, env(safe-area-inset-bottom, 14px)) !important;
     background: var(--surface-container-lowest) !important;
     border-top: 0.5px solid var(--outline-variant) !important;
   }
