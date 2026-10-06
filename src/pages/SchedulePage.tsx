@@ -201,7 +201,7 @@ export function SchedulePage() {
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (e.button !== 0) return;
     const target = e.target as HTMLElement;
-    if (target.closest('button, a, input, select, textarea')) return;
+    if (target.closest('button, a, input, select, textarea, [role="button"]')) return;
 
     const container = gridScrollRef.current;
     if (!container) return;
@@ -3008,13 +3008,13 @@ function ClassDetailsModal({
 
       {/* Course info preview */}
       <div style={{ marginBottom: '1rem', paddingBottom: '0.875rem', borderBottom: '1px solid var(--outline-variant)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-          <h4 style={{ margin: 0 }}>{course.code} {course.name}</h4>
-          <span className="badge" style={{ background: `color-mix(in srgb, ${course.color || 'var(--primary)'} 15%, transparent)`, color: course.color || 'var(--primary)', fontWeight: 700, fontSize: '0.6875rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <h4 style={{ margin: 0, flex: 1 }}>{course.code} {course.name}</h4>
+          <span style={{ background: `color-mix(in srgb, ${course.color || 'var(--primary)'} 15%, transparent)`, color: course.color || 'var(--primary)', fontWeight: 700, fontSize: '0.6875rem', padding: '0.125rem 0.375rem', borderRadius: 4 }}>
             {course.code}
           </span>
         </div>
-        <div style={{ display: 'flex', gap: '1.25rem', marginTop: '0.5rem', fontSize: '0.8125rem', color: 'var(--on-surface-variant)', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '1rem', marginTop: '0.625rem', paddingTop: '0.625rem', borderTop: '1px solid var(--outline-variant)', fontSize: '0.8125rem', color: 'var(--on-surface-variant)', flexWrap: 'wrap' }}>
           <div className="tabular-nums" style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
               <circle cx="12" cy="12" r="10" />
