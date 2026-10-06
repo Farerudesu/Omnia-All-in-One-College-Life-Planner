@@ -543,7 +543,7 @@ export function CalendarPage() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              marginBottom: '0.75rem',
+              marginBottom: '1.25rem',
               flexWrap: 'wrap',
               gap: '0.75rem',
             }}
@@ -673,7 +673,9 @@ export function CalendarPage() {
                         {date.getDate()}
                       </span>
                       {today && (
-                        <span className="calendar-month-today" style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--primary)' }}>Today</span>
+                        <span className="calendar-month-today" style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--primary)' }}>
+                          {lang === 'id' ? 'Hari Ini' : 'Today'}
+                        </span>
                       )}
                     </div>
 
@@ -990,7 +992,7 @@ export function CalendarPage() {
                       ))}
                       {items.length === 0 && (
                         <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', opacity: 0.6, marginTop: '2rem', textAlign: 'center' }}>
-                          No events
+                          {lang === 'id' ? 'Tidak ada kegiatan' : 'No events'}
                         </div>
                       )}
                     </div>
@@ -1091,6 +1093,7 @@ export function CalendarPage() {
                           {item.type === 'exam' ? (lang === 'id' ? 'Ujian' : 'Exam')
                             : item.type === 'deadline' ? (lang === 'id' ? 'Tenggat' : 'Deadline')
                             : item.type === 'personal' ? (lang === 'id' ? 'Pribadi' : 'Personal')
+                            : item.type === 'lab' ? (lang === 'id' ? 'Praktikum' : 'Lab')
                             : item.type}
                         </span>
                       )}
@@ -1109,9 +1112,9 @@ export function CalendarPage() {
                   key={dateStr}
                   style={{
                     background: 'var(--surface-container-lowest)',
-                    borderRadius: 12,
+                    borderRadius: 14,
                     border: '1px solid var(--outline-variant)',
-                    padding: '1.25rem 1.5rem',
+                    padding: '1.25rem 1.125rem',
                   }}
                 >
                   <div
@@ -1281,17 +1284,23 @@ export function CalendarPage() {
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.375rem' }}>
                       <CategoryIndicator shape={item.shape} color={item.color} size={8} />
-                      <span
-                        className="badge"
-                        style={{
-                          background: `color-mix(in srgb, ${item.color} 15%, transparent)`,
-                          color: item.color,
-                          fontWeight: 600,
-                          fontSize: '0.6875rem',
-                        }}
-                      >
-                        {item.type.charAt(0).toUpperCase() + item.type.slice(1)}
-                      </span>
+                      {item.type !== 'classes' && item.type !== 'class' && (
+                        <span
+                          className="badge"
+                          style={{
+                            background: `color-mix(in srgb, ${item.color} 15%, transparent)`,
+                            color: item.color,
+                            fontWeight: 600,
+                            fontSize: '0.6875rem',
+                          }}
+                        >
+                          {item.type === 'exam' ? (lang === 'id' ? 'Ujian' : 'Exam')
+                            : item.type === 'deadline' ? (lang === 'id' ? 'Tenggat' : 'Deadline')
+                            : item.type === 'personal' ? (lang === 'id' ? 'Pribadi' : 'Personal')
+                            : item.type === 'lab' ? (lang === 'id' ? 'Praktikum' : 'Lab')
+                            : item.type}
+                        </span>
+                      )}
                     </div>
                     <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--on-surface)' }}>{item.title}</div>
                     {item.time && (
