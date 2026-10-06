@@ -39,6 +39,24 @@ export type DataTable = 'transactions' | 'classes' | 'events' | 'assignments' | 
 export interface TableStatus { loading: boolean; error: string | null }
 
 const DATA_TABLES: DataTable[] = ['transactions', 'classes', 'events', 'assignments', 'profiles', 'user_settings'];
+const SESSION_EXCEPTIONS_KEY = 'omnia_session_exceptions';
+
+function loadStoredExceptions(): SessionException[] {
+  try {
+    const stored = localStorage.getItem(SESSION_EXCEPTIONS_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveStoredExceptions() {
+  try {
+    localStorage.setItem(SESSION_EXCEPTIONS_KEY, JSON.stringify(sessionExceptions));
+  } catch {
+    // Ignore storage quota failures.
+  }
+}
 const emptyTableStatus = (): Record<DataTable, TableStatus> => Object.fromEntries(
   DATA_TABLES.map((table) => [table, { loading: false, error: null }])
 ) as Record<DataTable, TableStatus>;
@@ -183,6 +201,7 @@ async function refreshTable(table: DataTable) {
 
 export async function loadUserData(userId: string) {
   activeUserId = userId;
+  sessionExceptions = loadStoredExceptions();
   settings = { ...settings, currency: 'IDR' };
   await refreshTable('user_settings');
   await Promise.all(DATA_TABLES.filter((table) => table !== 'user_settings').map((table) => refreshTable(table)));
@@ -392,11 +411,13 @@ export function addSessionException(exc: Omit<SessionException, 'id'>): SessionE
       updated,
       ...sessionExceptions.slice(existingIndex + 1),
     ];
+    saveStoredExceptions();
     notify();
     return updated;
   }
   const newExc = { ...exc, id: genId() };
   sessionExceptions = [...sessionExceptions, newExc];
+  saveStoredExceptions();
   notify();
   return newExc;
 }
@@ -405,11 +426,13 @@ export function updateSessionException(id: string, data: Partial<SessionExceptio
   sessionExceptions = sessionExceptions.map((e) =>
     e.id === id ? { ...e, ...data } : e
   );
+  saveStoredExceptions();
   notify();
 }
 
 export function deleteSessionException(id: string): void {
   sessionExceptions = sessionExceptions.filter((e) => e.id !== id);
+  saveStoredExceptions();
   notify();
 }
 
