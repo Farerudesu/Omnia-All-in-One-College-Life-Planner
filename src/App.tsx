@@ -43,7 +43,8 @@ function VersionPage() {
   return (
     <main style={{ padding: '2rem', fontFamily: 'monospace' }}>
       <h1>Omnia version</h1>
-      <p>Build: 2026-10-07 QA fixes</p>
+      <p>Version: 1.1</p>
+      <p>Build: 2026-10-07 21:01:43 +08:00</p>
       <p>Changelog: budget persistence, schedule exception persistence, 7-day week view, course rename/delete, Omni message wrapping</p>
       <p>Commit: verify with GitHub deployment</p>
     </main>
