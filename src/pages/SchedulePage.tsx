@@ -2862,6 +2862,8 @@ function ClassDetailsModal({
   const [newStartTime, setNewStartTime] = useState(exception?.newStartTime || session.startTime || '08:00');
   const [newEndTime, setNewEndTime] = useState(exception?.newEndTime || session.endTime || '09:30');
   const [note, setNote] = useState(exception?.note || '');
+  const [courseName, setCourseName] = useState(course.name);
+  const [showDeleteCourse, setShowDeleteCourse] = useState(false);
   const [timeError, setTimeError] = useState<string | null>(null);
 
   const dateStr = formatDateLong(date);
@@ -2900,6 +2902,12 @@ function ClassDetailsModal({
       }
     }
 
+    if (courseName.trim() && courseName.trim() !== course.name) {
+      ds.updateCourse(course.id, { name: courseName.trim() });
+    }
+    if (courseName.trim() && courseName.trim() !== course.name) {
+      ds.updateCourse(course.id, { name: courseName.trim() });
+    }
     if (instructor.trim() !== (course.professor || '')) {
       ds.updateCourse(course.id, { professor: instructor.trim() || undefined });
     }
@@ -2973,6 +2981,26 @@ function ClassDetailsModal({
         </div>
         <span className="tabular-nums" style={{ fontWeight: 600 }}>{dateStr}</span>
       </div>
+
+      {/* Mata kuliah */}
+      <div style={{ marginBottom: '1.25rem', padding: '0.875rem', border: '1px solid var(--outline-variant)', borderRadius: 10 }}>
+        <div style={{ fontWeight: 700, marginBottom: '0.5rem' }}>Mata kuliah</div>
+        <label className="label" htmlFor="course-name">Nama mata kuliah</label>
+        <input id="course-name" value={courseName} onChange={(e) => setCourseName(e.target.value)} style={{ width: '100%' }} />
+        <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', marginTop: '0.5rem' }}>Berlaku untuk SEMUA sesi mata kuliah ini.</div>
+        <button type="button" className="btn-outline" onClick={() => setShowDeleteCourse(true)} style={{ marginTop: '0.75rem', color: 'var(--error)' }}>Hapus mata kuliah</button>
+      </div>
+
+      {showDeleteCourse && (
+        <div role="dialog" aria-modal="true" style={{ padding: '1rem', border: '1px solid var(--error)', borderRadius: 10, marginBottom: '1rem', background: 'var(--surface-container-lowest)' }}>
+          <strong>Hapus {course.name}?</strong>
+          <p>Semua sesi mata kuliah ini dan tugas terkait akan ikut terhapus.</p>
+          <div className="modal-actions-sticky">
+            <button type="button" className="btn-outline" onClick={() => setShowDeleteCourse(false)}>Batal</button>
+            <button type="button" className="btn-primary" onClick={() => { ds.deleteCourse(course.id); onClose(); }}>Hapus</button>
+          </div>
+        </div>
+      )}
 
       {/* Scope choice */}
       <div style={{ marginBottom: '1.25rem' }}>

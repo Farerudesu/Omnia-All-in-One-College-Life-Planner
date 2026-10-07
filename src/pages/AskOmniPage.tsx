@@ -540,6 +540,7 @@ export function AskOmniPage() {
                   <div style={{
                     maxWidth: '85%',
                     padding: '0.875rem 1.125rem',
+                    overflowWrap: 'anywhere',
                     borderRadius: 18,
                     borderTopLeftRadius: msg.role === 'assistant' ? 4 : 18,
                     borderBottomRightRadius: msg.role === 'user' ? 4 : 18,
