@@ -632,6 +632,14 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
     padding-bottom: calc(76px + max(14px, env(safe-area-inset-bottom, 14px)));
   }
 
+  .ask-omni-composer {
+    position: sticky;
+    bottom: 0;
+    z-index: 70;
+    margin-bottom: calc(-76px - max(14px, env(safe-area-inset-bottom, 14px)));
+    padding-bottom: calc(1rem + max(14px, env(safe-area-inset-bottom, 14px))) !important;
+  }
+
   /* ─── Mobile Bottom Navigation Dock (Apple iOS Tab Bar) ─── */
   .app-bottom-nav {
     display: flex;

@@ -62,13 +62,14 @@ function getScheduleContext() {
     const classes = sessions.flatMap((session) => {
       if (!session.daysOfWeek.includes(getISODay(date))) return [];
       const exception = exceptions.find((item) => item.classSessionId === session.id && item.date === dateString);
-      if (exception?.type === 'cancelled' || exception?.type === 'no-class') return [];
+      if (exception?.type === 'no-class') return [];
       const course = courses.get(session.courseId);
       return [{
         date: dateString,
         weekday,
         kind: 'class' as const,
         title: course ? `${course.code} - ${course.name}` : 'Class',
+        status: exception?.type === 'cancelled' || exception?.types?.includes('cancelled') ? 'cancelled' : undefined,
         startTime: exception?.newStartTime || session.startTime,
         endTime: exception?.newEndTime || session.endTime,
         location: exception?.newRoom || session.room || course?.room,

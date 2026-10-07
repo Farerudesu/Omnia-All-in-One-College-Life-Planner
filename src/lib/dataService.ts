@@ -378,6 +378,7 @@ export function updateClassSession(id: string, data: Partial<ClassSession>): voi
   if (data.startTime !== undefined) row.jam_mulai = data.startTime;
   if (data.endTime !== undefined) row.jam_selesai = data.endTime;
   if (data.type !== undefined) row.tipe = data.type;
+  if (data.daysOfWeek?.length) row.hari = ['', 'senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu'][data.daysOfWeek[0]];
   void mutateTable('classes', () => getClient().from('classes').update(row).eq('id', id).eq('user_id', activeUserId));
 }
 
