@@ -1691,6 +1691,7 @@ export function SchedulePage() {
                               role="button"
                               tabIndex={0}
                               aria-label={`${course.code} ${course.name}, ${formatTime12(block.startTime)} to ${formatTime12(block.endTime)} in ${room}`}
+                              onPointerDown={(e) => e.stopPropagation()}
                               onClick={() => {
                                 if (hasDraggedRef.current) return;
                                 setSelectedBlock({ session, course, date, exception });
@@ -1803,6 +1804,7 @@ export function SchedulePage() {
                               className="schedule-item-block"
                               role="button"
                               tabIndex={0}
+                              onPointerDown={(e) => e.stopPropagation()}
                               onClick={() => {
                                 if (hasDraggedRef.current) return;
                                 setSelectedEventForModal(ev);

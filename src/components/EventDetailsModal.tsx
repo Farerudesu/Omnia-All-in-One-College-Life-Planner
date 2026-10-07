@@ -270,18 +270,17 @@ export function EventDetailsModal({ event, isOpen, onClose }: EventDetailsModalP
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          {/* Header pill & Type */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          {/* Header: Type & Course */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <CategoryIndicator shape={shape} color={color} size={10} />
               <span
-                className="badge"
                 style={{
-                  background: `color-mix(in srgb, ${color} 15%, transparent)`,
                   color: color,
                   fontWeight: 600,
                   fontSize: '0.75rem',
                   textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
                 }}
               >
                 {getTypeName(event.type)}
@@ -292,10 +291,9 @@ export function EventDetailsModal({ event, isOpen, onClose }: EventDetailsModalP
                 style={{
                   fontSize: '0.75rem',
                   fontWeight: 600,
-                  background: `${course.color}15`,
                   color: course.color,
-                  padding: '0.2rem 0.5rem',
-                  borderRadius: 4,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
                 }}
               >
                 {course.code}
