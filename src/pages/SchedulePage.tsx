@@ -642,13 +642,13 @@ export function SchedulePage() {
       daySess.forEach(({ session, exception }) => {
         const start = exception?.newStartTime || session.startTime;
         const end = exception?.newEndTime || session.endTime;
-        if (start && end) {
+        if (start && end && exception?.type !== 'cancelled' && !exception?.types?.includes('cancelled')) {
           totalMinutes += durationMinutes(start, end);
         }
       });
     });
     return {
-      hours: Math.round(totalMinutes / 60),
+      hours: Number((totalMinutes / 60).toFixed(1)),
       pace: totalMinutes / 60 <= 20 ? 'Balanced pace' : 'Heavy load',
     };
   }, [sessions, exceptions, weekDates]);
@@ -864,7 +864,6 @@ export function SchedulePage() {
             {[
               { label: 'Day', action: () => setViewMode('today'), active: viewMode === 'today' },
               { label: 'Week', action: () => setViewMode('week'), active: viewMode === 'week' },
-              { label: 'Month', action: () => navigate('/calendar'), active: false },
               { label: 'Agenda', action: () => navigate('/calendar'), active: false },
             ].map((v) => (
               <button
@@ -1350,7 +1349,7 @@ export function SchedulePage() {
 
           {/* ─── Week / Day Grid ─── */}
           {(() => {
-            const displayDays = viewMode === 'today' ? [currentDate] : weekDates.slice(0, 5);
+            const displayDays = viewMode === 'today' ? [currentDate] : weekDates;
             const dayScheduleData = displayDays.map((date) => {
               const daySessions = getSessionsForDay(date);
               const dayEvents = getEventsForDay(date);
@@ -1360,7 +1359,7 @@ export function SchedulePage() {
             const validGridStarts = dayScheduleData.map((day) => day.gridStart).filter(Number.isFinite);
             const gridStart = validGridStarts.length > 0 ? Math.min(...validGridStarts) : DEFAULT_GRID_START;
             const hours = getHoursForGrid(gridStart);
-            const stripDays = weekDates.slice(0, 5);
+            const stripDays = weekDates;
             return (
               <>
                 <div
@@ -1989,7 +1988,7 @@ export function SchedulePage() {
                   borderRadius: 'var(--radius-sm)',
                 }}
               >
-                View course details
+                Ubah kelas
               </button>
             </div>
           )}
@@ -2005,14 +2004,14 @@ export function SchedulePage() {
                   <line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" />
                   <line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" />
                 </svg>
-                <h3 style={{ fontSize: '0.9375rem', fontWeight: 600 }}>Today's schedule</h3>
+                <h3 style={{ fontSize: '0.9375rem', fontWeight: 600 }}>Jadwal hari ini</h3>
               </div>
               <span className="tabular-nums" style={{
                 fontSize: '0.75rem',
                 color: 'var(--on-surface-variant)',
               }}>
-                {todaySessions.length} {todaySessions.length === 1 ? 'class' : 'classes'}
-                {todayEvents.length > 0 ? ` · ${todayEvents.length} ${todayEvents.length === 1 ? 'event' : 'events'}` : ''}
+                {todaySessions.length} kelas
+                {todayEvents.length > 0 ? ` · ${todayEvents.length} ${'acara'}` : ''}
               </span>
             </div>
 
@@ -2255,9 +2254,9 @@ export function SchedulePage() {
                 </svg>
               </div>
               <div>
-                <h4 style={{ fontSize: '0.9375rem' }}>Weekly load overview</h4>
+                <h4 style={{ fontSize: '0.9375rem' }}>Ringkasan beban mingguan</h4>
                 <p className="tabular-nums" style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>
-                  {weeklyLoad.hours} contact hours · {weeklyLoad.pace}
+                  {weeklyLoad.hours.toFixed(1)} jam kuliah · {weeklyLoad.pace === 'Balanced pace' ? 'Beban seimbang' : 'Beban tinggi'}
                 </p>
               </div>
             </div>
@@ -2890,7 +2889,7 @@ function ClassDetailsModal({
     return null;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setTimeError(null);
     const isMoving = scope === 'all-future' || excType === 'moved' || newStartTime !== session.startTime || newEndTime !== session.endTime;
     if (isMoving) {
@@ -2928,7 +2927,7 @@ function ClassDetailsModal({
       }
 
       const primaryType = activeTypes[0] || (isOnline ? 'online' : (excType || 'room-changed'));
-      ds.addSessionException({
+      await ds.addSessionException({
         classSessionId: session.id,
         date: toDateString(date),
         type: primaryType,
@@ -3292,4 +3291,6 @@ function ClassDetailsModal({
     </Modal>
   );
 }
+
+
 

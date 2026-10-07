@@ -127,7 +127,7 @@ export function Sidebar({ isCollapsed, onToggle }: { isCollapsed?: boolean; onTo
               <button
                 className="btn-primary"
                 style={{ width: 36, height: 36, padding: 0, borderRadius: 8 }}
-                aria-label={lang === 'id' ? 'Tambah acara' : 'Create event'}
+                aria-label={lang === 'id' ? 'Buat item' : 'Create item'}
                 onClick={() => setShowQuickAdd(true)}
               >
                 <Plus size={18} />
@@ -139,7 +139,7 @@ export function Sidebar({ isCollapsed, onToggle }: { isCollapsed?: boolean; onTo
                 onClick={() => setShowQuickAdd(true)}
               >
                 <Plus size={16} />
-                <span>{lang === 'id' ? 'Tambah acara' : 'Create event'}</span>
+                <span>{lang === 'id' ? 'Buat item' : 'Create item'}</span>
               </button>
             )}
           </div>
@@ -485,7 +485,7 @@ function QuickAddModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
   const [time, setTime] = useState('10:00');
   const [type, setType] = useState<EventType>('personal');
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!title.trim()) return;
     if (tab === 'event') {
       ds.addEvent({
@@ -495,7 +495,7 @@ function QuickAddModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
         type,
       });
     } else {
-      ds.addAssignment({
+      await ds.addAssignment({
         title: title.trim(),
         courseId: 'course-1',
         dueDate: `${date}T${time || '23:59'}:00`,

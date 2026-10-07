@@ -115,7 +115,7 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose }: Assignme
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEditing ? 'Edit Assignment' : 'Deliverable Details'}
+      title={isEditing ? (lang === 'id' ? 'Edit tugas' : 'Edit Assignment') : (lang === 'id' ? 'Detail tugas' : 'Deliverable Details')}
     >
       {isEditing ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>

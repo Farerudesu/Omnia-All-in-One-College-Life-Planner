@@ -949,6 +949,28 @@ export function SettingsPage() {
               </button>
             </div>
 
+            {/* Course management */}
+            <div className="card">
+              <h3 style={{ fontSize: '1.125rem', marginBottom: '0.75rem' }}>{language === 'id' ? 'Mata kuliah' : 'Courses'}</h3>
+              {courses.length === 0 ? (
+                <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.8125rem' }}>{language === 'id' ? 'Belum ada mata kuliah.' : 'No courses yet.'}</p>
+              ) : courses.map((course) => (
+                <div key={course.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.625rem 0', borderBottom: '1px solid var(--outline-variant)' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <strong>{course.code}</strong>
+                    <div style={{ color: 'var(--on-surface-variant)', fontSize: '0.8125rem' }}>{course.name}</div>
+                  </div>
+                  <button type="button" className="btn-ghost" onClick={() => {
+                    const name = window.prompt(language === 'id' ? 'Nama mata kuliah baru' : 'New course name', course.name)?.trim();
+                    if (name && name !== course.name) ds.updateCourse(course.id, { name });
+                  }}>{language === 'id' ? 'Ubah nama' : 'Rename'}</button>
+                  <button type="button" className="btn-ghost" onClick={() => {
+                    if (window.confirm(language === 'id' ? `Hapus ${course.name}? Jadwal mata kuliah ikut terhapus.` : `Delete ${course.name}? Its schedule will also be deleted.`)) ds.deleteCourse(course.id);
+                  }} style={{ color: 'var(--error)' }}>{language === 'id' ? 'Hapus' : 'Delete'}</button>
+                </div>
+              ))}
+            </div>
+
             {/* Data & Export */}
             <div className="card">
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>

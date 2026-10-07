@@ -74,10 +74,10 @@ export function MobileHeader() {
     ds.updateSettings({ theme });
   };
 
-  const handleCreateTask = (e: React.FormEvent) => {
+  const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!taskTitle.trim()) return;
-    ds.addAssignment({
+    await ds.addAssignment({
       title: taskTitle.trim(),
       courseId: taskCourseId || (courses[0]?.id ?? 'course-1'),
       dueDate: `${taskDueDate}T23:59`,

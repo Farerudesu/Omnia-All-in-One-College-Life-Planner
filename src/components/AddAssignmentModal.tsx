@@ -30,7 +30,7 @@ export function AddAssignmentModal({ isOpen, onClose }: AddAssignmentModalProps)
     onClose();
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!title.trim()) {
       setTitleError(lang === 'id' ? 'Judul tidak boleh kosong' : 'Title is required');
       return;
@@ -41,7 +41,7 @@ export function AddAssignmentModal({ isOpen, onClose }: AddAssignmentModalProps)
 
     try {
       const finalDueDate = dueDate || new Date().toISOString().split('T')[0];
-      ds.addAssignment({
+      await ds.addAssignment({
         courseId: courseId || undefined,
         category: (category as any) || 'other',
         title: title.trim(),

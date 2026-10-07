@@ -329,7 +329,7 @@ export function AskOmniPage() {
         confirmationText = `Added **${savedEvent.title}** to your schedule for ${dateLabel}${savedEvent.startTime ? ` at ${savedEvent.startTime}${savedEvent.endTime ? `–${savedEvent.endTime}` : ''}` : ''}.`;
       } else if (data.type === 'task') {
         const dueTime = data.dueTime || (data.startTime ? data.startTime : '23:59');
-        const savedTask = ds.addAssignment({
+        const savedTask = await ds.addAssignment({
           title: data.title.trim(),
           dueDate: `${data.date}T${dueTime}`,
           courseId: data.courseId,
@@ -789,10 +789,10 @@ export function AskOmniPage() {
           onClose={() => setPrefilledModal(null)}
           title={
             prefilledModal.data.type === 'expense'
-              ? 'Log Campus Expense'
+              ? 'Catat pengeluaran kampus'
               : prefilledModal.data.type === 'task'
-              ? 'Add Assignment / Task'
-              : 'Add Event to Schedule'
+              ? 'Tambah tugas kuliah'
+              : 'Tambah acara ke jadwal'
           }
           maxWidth="520px"
         >

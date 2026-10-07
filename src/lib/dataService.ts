@@ -77,8 +77,9 @@ async function refreshSessionExceptions() {
   sessionExceptions = ((data || []) as DbRow[]).map(exceptionFromRow);
 }
 
-function persistSessionException(exception: SessionException) {
-  void getClient().from('session_exceptions').upsert(exceptionRow(exception), { onConflict: 'user_id,class_session_id,date' });
+async function persistSessionException(exception: SessionException) {
+  const { error } = await getClient().from('session_exceptions').upsert(exceptionRow(exception), { onConflict: 'user_id,class_session_id,date' });
+  if (error) throw error;
 }
 const emptyTableStatus = (): Record<DataTable, TableStatus> => Object.fromEntries(
   DATA_TABLES.map((table) => [table, { loading: false, error: null }])
@@ -115,7 +116,7 @@ const dayNumbers: Record<string, number> = {
   senin: 1, selasa: 2, rabu: 3, kamis: 4, jumat: 5, sabtu: 6, minggu: 7,
 };
 
-async function refreshTable(table: DataTable) {
+async function refreshTable(table: DataTable, attempt = 0) {
   if (!activeUserId) return;
   setTableStatus(table, { loading: true, error: null });
 
@@ -206,6 +207,7 @@ async function refreshTable(table: DataTable) {
         ...settings,
         semesterStart: row ? rowText(row, 'term_start_date') : '',
         semesterEnd: row ? rowText(row, 'term_end_date') : '',
+        monthlyBudget: row ? rowNumber(row, 'monthly_budget', settings.monthlyBudget) : settings.monthlyBudget,
         termName: row ? rowText(row, 'term_name') : '',
         firstDayOfWeek: row ? rowText(row, 'first_day_of_week', 'monday') : 'monday',
         notifEnabled: row ? row.notif_enabled !== false : true,
@@ -218,6 +220,10 @@ async function refreshTable(table: DataTable) {
     setTableStatus(table, { loading: false, error: null });
     notify();
   } catch (error) {
+    if (attempt < 2) {
+      await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
+      return refreshTable(table, attempt + 1);
+    }
     setTableStatus(table, { loading: false, error: errorMessage(error) });
   }
 }
@@ -424,24 +430,24 @@ export function getExceptionForDate(sessionId: string, date: string): SessionExc
   );
 }
 
-export function addSessionException(exc: Omit<SessionException, 'id'>): SessionException {
+export async function addSessionException(exc: Omit<SessionException, 'id'>): Promise<SessionException> {
   const existingIndex = sessionExceptions.findIndex(
     (e) => e.classSessionId === exc.classSessionId && e.date === exc.date
   );
   if (existingIndex >= 0) {
     const updated: SessionException = { ...sessionExceptions[existingIndex], ...exc };
+    await persistSessionException(updated);
     sessionExceptions = [
       ...sessionExceptions.slice(0, existingIndex),
       updated,
       ...sessionExceptions.slice(existingIndex + 1),
     ];
-    persistSessionException(updated);
     notify();
     return updated;
   }
   const newExc = { ...exc, id: genId() };
+  await persistSessionException(newExc);
   sessionExceptions = [...sessionExceptions, newExc];
-  persistSessionException(newExc);
   notify();
   return newExc;
 }
@@ -498,9 +504,11 @@ export function getAssignments(): Assignment[] {
   return assignments;
 }
 
-export function addAssignment(assignment: Omit<Assignment, 'id'>): Assignment {
+export async function addAssignment(assignment: Omit<Assignment, 'id'>): Promise<Assignment> {
   const newAssignment = { ...assignment, id: genId() };
-  void mutateTable('assignments', () => getClient().from('assignments').insert(ownedRow(assignmentRow(assignment))));
+  const { error } = await getClient().from('assignments').insert(ownedRow(assignmentRow(assignment)));
+  if (error) throw error;
+  await refreshTable('assignments');
   return newAssignment;
 }
 
@@ -636,6 +644,9 @@ export async function uploadProfileAvatar(file: File): Promise<string> {
 
 export function updateSettings(data: Partial<UserSettings>): void {
   settings = { ...settings, ...data };
+  if (settings.theme === 'dark' || settings.theme === 'light') {
+    localStorage.setItem('omnia_theme', settings.theme);
+  }
   notify();
   const row = {
     term_name: settings.termName ?? null,
@@ -645,6 +656,7 @@ export function updateSettings(data: Partial<UserSettings>): void {
     theme: settings.theme === 'dark' ? 'dark' : 'light',
     first_day_of_week: settings.firstDayOfWeek ?? 'monday',
     notif_enabled: settings.notifEnabled ?? true,
+    monthly_budget: Math.max(0, Math.round(settings.monthlyBudget || 0)),
   };
   void mutateTable('user_settings', async () => {
     const client = getClient();
