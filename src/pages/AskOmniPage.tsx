@@ -138,6 +138,7 @@ export function AskOmniPage() {
   const [isTyping, setIsTyping] = useState(false);
   const [attachment, setAttachment] = useState<ImageAttachment | null>(null);
   const [requestError, setRequestError] = useState('');
+  const [retryText, setRetryText] = useState('');
 
   // Prefilled Data Pop-up Modal State
   const [prefilledModal, setPrefilledModal] = useState<{
@@ -171,6 +172,7 @@ export function AskOmniPage() {
     if (isTyping) return;
 
     const userText = input.trim();
+    setRetryText('');
 
     // Check if the user is confirming a pending proposal (e.g. "tambahkan", "add", "oke", "ya")
     if (isConfirmationIntent(userText)) {
@@ -278,11 +280,7 @@ export function AskOmniPage() {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to reach Omni. Try again.';
       setRequestError(message);
-      setMessages((prev) => [...prev, {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: 'Omni could not reply just now. Please try again in a moment.',
-      }]);
+      setRetryText(userMessage.content);
     } finally {
       setIsTyping(false);
     }
@@ -779,7 +777,10 @@ export function AskOmniPage() {
               <Send size={18} style={{ transform: 'translateX(-1px) translateY(1px)' }} />
             </button>
           </div>
-          {requestError && <div role="alert" style={{ color: 'var(--error)', fontSize: '0.8125rem', paddingLeft: '0.75rem' }}>{requestError}</div>}
+          {requestError && <div role="alert" style={{ color: 'var(--error)', fontSize: '0.8125rem', paddingLeft: '0.75rem' }}>
+            {requestError}
+            {retryText && <button type="button" className="btn-ghost" onClick={() => { setInput(retryText); setRequestError(''); setRetryText(''); }} style={{ marginLeft: '0.5rem', color: 'inherit' }}>Coba lagi</button>}
+          </div>}
         </div>
       </div>
 
