@@ -41,7 +41,6 @@ export interface SessionException {
   newStartTime?: string;
   newEndTime?: string;
   newRoom?: string;
-  newProfessor?: string;
   note?: string;
 }
 
