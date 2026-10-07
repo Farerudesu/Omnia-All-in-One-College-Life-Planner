@@ -20,7 +20,7 @@ export function DataState() {
   }));
 
   if (loadingTables.length > 0) {
-    return <div role="status" aria-live="polite" style={{ padding: '0.625rem 1rem', color: 'var(--on-surface-variant)', fontSize: '0.8125rem' }}>
+    return <div role="status" aria-live="polite" style={{     minHeight: '12rem', padding: '3rem 1rem', textAlign: 'center', color: 'var(--on-surface-variant)', fontSize: '0.8125rem' }}>
       Loading {loadingTables.join(', ')}…
     </div>;
   }
@@ -29,8 +29,8 @@ export function DataState() {
     return (
       <div role="alert" style={{ margin: '0.75rem 1.5rem', padding: '0.75rem 1rem', border: '1px solid var(--error-container)', borderRadius: 'var(--radius-sm)', color: 'var(--on-error-container)', background: 'var(--error-container)', fontSize: '0.8125rem' }}>
         <div>{failedTables.map(({ table, error }) => `${table}: ${error}`).join(' · ')}</div>
-        <button type="button" className="btn-ghost" onClick={() => void refreshUserData()} style={{ marginTop: '0.375rem', color: 'inherit', gap: '0.375rem' }}>
-          <RefreshCw size={14} aria-hidden="true" /> Retry data loading
+        <button type="button" className="btn-ghost" onClick={() => void refreshUserData()} style={{ marginTop: '0.75rem', color: 'inherit', gap: '0.375rem' }}>
+          <RefreshCw size={14} aria-hidden="true" /> Coba lagi
         </button>
       </div>
     );
