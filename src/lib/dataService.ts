@@ -39,23 +39,46 @@ export type DataTable = 'transactions' | 'classes' | 'events' | 'assignments' | 
 export interface TableStatus { loading: boolean; error: string | null }
 
 const DATA_TABLES: DataTable[] = ['transactions', 'classes', 'events', 'assignments', 'profiles', 'user_settings'];
-const SESSION_EXCEPTIONS_KEY = 'omnia_session_exceptions';
-
-function loadStoredExceptions(): SessionException[] {
-  try {
-    const stored = localStorage.getItem(SESSION_EXCEPTIONS_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
+function exceptionFromRow(row: DbRow): SessionException {
+  return {
+    id: rowText(row, 'id'),
+    classSessionId: rowText(row, 'class_session_id'),
+    date: rowText(row, 'date'),
+    type: rowText(row, 'type') as SessionException['type'],
+    types: Array.isArray(row.types) ? row.types as SessionException['type'][] : undefined,
+    isOnline: typeof row.is_online === 'boolean' ? row.is_online : undefined,
+    newStartTime: rowText(row, 'new_start_time') || undefined,
+    newEndTime: rowText(row, 'new_end_time') || undefined,
+    newRoom: rowText(row, 'new_room') || undefined,
+    note: rowText(row, 'note') || undefined,
+  };
 }
 
-function saveStoredExceptions() {
-  try {
-    localStorage.setItem(SESSION_EXCEPTIONS_KEY, JSON.stringify(sessionExceptions));
-  } catch {
-    // Ignore storage quota failures.
-  }
+function exceptionRow(exception: SessionException) {
+  return {
+    id: exception.id,
+    user_id: activeUserId,
+    class_session_id: exception.classSessionId,
+    date: exception.date,
+    type: exception.type,
+    types: exception.types || null,
+    is_online: exception.isOnline ?? null,
+    new_start_time: exception.newStartTime || null,
+    new_end_time: exception.newEndTime || null,
+    new_room: exception.newRoom || null,
+    note: exception.note || null,
+  };
+}
+
+async function refreshSessionExceptions() {
+  if (!activeUserId) return;
+  const { data, error } = await getClient().from('session_exceptions').select('*').eq('user_id', activeUserId);
+  if (error) throw error;
+  sessionExceptions = ((data || []) as DbRow[]).map(exceptionFromRow);
+}
+
+function persistSessionException(exception: SessionException) {
+  void getClient().from('session_exceptions').upsert(exceptionRow(exception), { onConflict: 'user_id,class_session_id,date' });
 }
 const emptyTableStatus = (): Record<DataTable, TableStatus> => Object.fromEntries(
   DATA_TABLES.map((table) => [table, { loading: false, error: null }])
@@ -201,7 +224,7 @@ async function refreshTable(table: DataTable) {
 
 export async function loadUserData(userId: string) {
   activeUserId = userId;
-  sessionExceptions = loadStoredExceptions();
+  await refreshSessionExceptions();
   settings = { ...settings, currency: 'IDR' };
   await refreshTable('user_settings');
   await Promise.all(DATA_TABLES.filter((table) => table !== 'user_settings').map((table) => refreshTable(table)));
@@ -412,13 +435,13 @@ export function addSessionException(exc: Omit<SessionException, 'id'>): SessionE
       updated,
       ...sessionExceptions.slice(existingIndex + 1),
     ];
-    saveStoredExceptions();
+    persistSessionException(updated);
     notify();
     return updated;
   }
   const newExc = { ...exc, id: genId() };
   sessionExceptions = [...sessionExceptions, newExc];
-  saveStoredExceptions();
+  persistSessionException(newExc);
   notify();
   return newExc;
 }
@@ -427,13 +450,14 @@ export function updateSessionException(id: string, data: Partial<SessionExceptio
   sessionExceptions = sessionExceptions.map((e) =>
     e.id === id ? { ...e, ...data } : e
   );
-  saveStoredExceptions();
+  const updated = sessionExceptions.find((e) => e.id === id);
+  if (updated) persistSessionException(updated);
   notify();
 }
 
 export function deleteSessionException(id: string): void {
   sessionExceptions = sessionExceptions.filter((e) => e.id !== id);
-  saveStoredExceptions();
+  void getClient().from('session_exceptions').delete().eq('id', id).eq('user_id', activeUserId);
   notify();
 }
 
