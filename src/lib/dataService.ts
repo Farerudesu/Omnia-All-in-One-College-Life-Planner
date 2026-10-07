@@ -50,6 +50,7 @@ function exceptionFromRow(row: DbRow): SessionException {
     newStartTime: rowText(row, 'new_start_time') || undefined,
     newEndTime: rowText(row, 'new_end_time') || undefined,
     newRoom: rowText(row, 'new_room') || undefined,
+    newProfessor: rowText(row, 'new_professor') || undefined,
     note: rowText(row, 'note') || undefined,
   };
 }
@@ -66,6 +67,7 @@ function exceptionRow(exception: SessionException) {
     new_start_time: exception.newStartTime || null,
     new_end_time: exception.newEndTime || null,
     new_room: exception.newRoom || null,
+    new_professor: exception.newProfessor || null,
     note: exception.note || null,
   };
 }
