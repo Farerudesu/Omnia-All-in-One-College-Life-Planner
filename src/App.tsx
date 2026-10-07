@@ -17,6 +17,7 @@ export default function App() {
       <AuthProvider>
         <BrowserRouter>
           <Routes>
+          <Route path="/version" element={<VersionPage />} />
           <Route path="/signin" element={<SignInRoute />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route element={<RequireAuth />}>
@@ -35,6 +36,16 @@ export default function App() {
       </BrowserRouter>
     </AuthProvider>
     </ErrorBoundary>
+  );
+}
+
+function VersionPage() {
+  return (
+    <main style={{ padding: '2rem', fontFamily: 'monospace' }}>
+      <h1>Omnia version</h1>
+      <p>Build: 2026-10-07 QA fixes</p>
+      <p>Commit: verify with GitHub deployment</p>
+    </main>
   );
 }
 
