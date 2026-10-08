@@ -1048,7 +1048,10 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 
   .assignment-filter-list {
     gap: 0.5rem !important;
-  }
+      overflow-x: auto !important;
+      scrollbar-width: thin;
+      mask-image: linear-gradient(to right, transparent, black 0.75rem, black calc(100% - 1.25rem), transparent);
+    }
 
   .assignment-search-actions {
     flex: 1 1 100% !important;
