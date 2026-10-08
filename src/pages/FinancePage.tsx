@@ -54,7 +54,8 @@ export function FinancePage() {
     const catTotals = new Map<string, number>();
 
     transactions.forEach((t) => {
-      const txDate = new Date(t.date);
+      const [year, month, day] = t.date.split('-').map(Number);
+      const txDate = new Date(year, month - 1, day);
       const isThisMonth = txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear;
 
       if (isThisMonth) {
