@@ -199,8 +199,11 @@ export function FinancePage() {
             <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface-variant)', marginBottom: '0.25rem' }}>
               {lang === 'id' ? 'Sisa anggaran' : 'Remaining budget'}
             </div>
-            <div className="tabular-nums" style={{ fontSize: '2.5rem', fontWeight: 700, fontFamily: 'var(--font-heading)', color: remaining > 0 ? 'var(--on-surface)' : 'var(--error)' }}>
+            <div className="tabular-nums" style={{ fontSize: '2.5rem', fontWeight: 700, fontFamily: 'var(--font-heading)', color: remaining > 0 ? 'var(--on-surface)' : 'var(--error)', whiteSpace: 'nowrap' }}>
               {formatMoney(remaining)}
+            </div>
+            <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>
+              {lang === 'id' ? `Batas budget bulanan: ${formatMoney(effectiveMonthlyBudget)}. Ini sisa dari batas tersebut setelah pengeluaran.` : `Monthly budget limit: ${formatMoney(effectiveMonthlyBudget)}. This is what remains after expenses.`}
             </div>
           </div>
 
@@ -217,7 +220,7 @@ export function FinancePage() {
               <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface-variant)', marginBottom: '0.25rem' }}>
                 {t.finance.balance}
               </div>
-              <div className="tabular-nums" style={{ fontSize: '2rem', fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--on-surface)' }}>
+              <div className="tabular-nums" style={{ fontSize: '2rem', fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--on-surface)', whiteSpace: 'nowrap' }}>
                 {formatMoney(balance)}
               </div>
             </div>
@@ -275,7 +278,7 @@ export function FinancePage() {
               <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface-variant)', marginBottom: '0.25rem' }}>
                 {lang === 'id' ? 'Alokasi Belanja Aman Harian' : 'Daily Safe Burn Runway'}
               </div>
-              <div className="tabular-nums" style={{ fontSize: '2rem', fontWeight: 700, fontFamily: 'var(--font-heading)', color: remaining > 0 ? 'var(--on-surface)' : 'var(--error)' }}>
+              <div className="tabular-nums" style={{ fontSize: '2rem', fontWeight: 700, fontFamily: 'var(--font-heading)', color: remaining > 0 ? 'var(--on-surface)' : 'var(--error)', whiteSpace: 'nowrap' }}>
                 {formatMoney(dailyAllowance)} <span style={{ fontSize: '0.9375rem', fontWeight: 500, color: 'var(--on-surface-variant)' }}>{lang === 'id' ? '/ hari' : '/ day'}</span>
               </div>
             </div>
