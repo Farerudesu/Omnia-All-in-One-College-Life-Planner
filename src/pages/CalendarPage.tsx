@@ -742,9 +742,9 @@ export function CalendarPage() {
                         </div>
                       ))}
                       {items.length > 3 && (
-                        <span className="calendar-month-overflow" style={{ fontSize: '0.625rem', color: 'var(--on-surface-variant)', fontWeight: 600, padding: '0.5rem' }}>
+                        <button type="button" className="calendar-month-overflow min-touch-target" onClick={() => { setSelectedDate(date); setViewMode('Agenda'); }} style={{ fontSize: '0.625rem', color: 'var(--on-surface-variant)', fontWeight: 600, padding: '0.5rem', background: 'none', border: 0, textAlign: 'left' }}>
                           +{items.length - 3} lainnya
-                        </span>
+                        </button>
                       )}
                     </div>
                   </div>
