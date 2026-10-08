@@ -550,9 +550,9 @@ function QuickAddModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
               {lang === 'id' ? 'Kategori' : 'Category'}
             </div>
             <div role="group" aria-labelledby="quick-category-label" style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap' }}>
-              {(['exam', 'deadline', 'personal', 'other'] as EventType[]).map((t) => {
+              {(['class', 'exam', 'deadline', 'personal', 'lab', 'other'] as EventType[]).map((t) => {
                 const chipLabel = lang === 'id'
-                  ? (t === 'exam' ? 'Ujian' : t === 'deadline' ? 'Tenggat' : t === 'personal' ? 'Pribadi' : 'Lainnya')
+                  ? (t === 'class' ? 'Kelas' : t === 'exam' ? 'Ujian' : t === 'deadline' ? 'Tenggat' : t === 'personal' ? 'Pribadi' : t === 'lab' ? 'Praktikum' : 'Lainnya')
                   : (t.charAt(0).toUpperCase() + t.slice(1));
                 return (
                   <button
