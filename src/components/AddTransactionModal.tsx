@@ -6,7 +6,7 @@ import type { TransactionType } from '../types';
 import { EXPENSE_CATEGORIES } from '../lib/categories';
 import { useLanguage } from '../lib/useLanguage';
 import { getCurrencySymbol, getCurrencyFractionDigits } from '../lib/currency';
-import { formatDateNumeric } from '../lib/dateUtils';
+import { formatDateNumeric, localDateString } from '../lib/dateUtils';
 
 const CATEGORIES = EXPENSE_CATEGORIES;
 
@@ -41,7 +41,7 @@ export function AddTransactionModal({
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState<string>(CATEGORIES[0]);
   const [isManualDate, setIsManualDate] = useState(false);
-  const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(() => localDateString());
   const [time, setTime] = useState(() => {
     const d = new Date();
     return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
@@ -63,7 +63,7 @@ export function AddTransactionModal({
       setMerchant(saved.merchant || '');
       setAmount(saved.amount || '');
       setCategory(saved.category || CATEGORIES[0]);
-      setDate(saved.date || new Date().toISOString().split('T')[0]);
+      setDate(saved.date || localDateString());
       setTime(saved.time || time);
       setNotes(saved.notes || '');
       setPaymentMethod(saved.paymentMethod || paymentMethods[0] || 'QRIS');
@@ -115,7 +115,7 @@ export function AddTransactionModal({
         ds.addPaymentMethod(customPaymentMethod.trim());
       }
 
-      const finalDate = isManualDate && date ? date : new Date().toISOString().split('T')[0];
+      const finalDate = isManualDate && date ? date : localDateString();
 
       ds.addTransaction({
         merchant: merchant.trim(),
@@ -344,3 +344,4 @@ export function AddTransactionModal({
     </Modal>
   );
 }
+

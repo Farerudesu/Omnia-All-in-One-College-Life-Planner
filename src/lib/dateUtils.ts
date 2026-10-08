@@ -86,6 +86,10 @@ export function formatTime24(time: string): string {
 }
 
 /** Format numeric date: "05/10/2026" (ID) or "10/05/2026" (EN) */
+export function localDateString(date = new Date()): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
 export function formatDateNumeric(date: Date | string): string {
   const d = typeof date === 'string' ? parseDate(date.split('T')[0]) : date;
   if (!d || !(d instanceof Date) || isNaN(d.getTime())) return '';
