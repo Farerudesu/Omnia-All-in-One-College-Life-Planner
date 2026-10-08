@@ -891,12 +891,12 @@ export function SchedulePage() {
           <div style={{ position: 'relative' }}>
             <button
               type="button"
-              className="btn-ghost"
+              className="btn-ghost min-touch-target"
               onClick={() => {
                 setShowNotifications(!showNotifications);
               }}
               style={{ position: 'relative', padding: '0.45rem', borderRadius: '50%' }}
-              aria-label="Notifications"
+              aria-label={isId ? 'Notifikasi' : 'Notifications'}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
