@@ -472,9 +472,11 @@ export function getEvents(): CalendarEvent[] {
   return events;
 }
 
-export function addEvent(event: Omit<CalendarEvent, 'id'>): CalendarEvent {
+export async function addEvent(event: Omit<CalendarEvent, 'id'>): Promise<CalendarEvent> {
   const newEvent = { ...event, id: genId() };
-  void mutateTable('events', () => getClient().from('events').insert(ownedRow(eventRow(event))));
+  const { error } = await getClient().from('events').insert(ownedRow(eventRow(event)));
+  if (error) throw error;
+  await refreshTable('events');
   return newEvent;
 }
 

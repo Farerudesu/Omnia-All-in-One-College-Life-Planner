@@ -1368,7 +1368,7 @@ function AddEventModal({
     onClose();
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!title.trim()) {
       setTitleError(lang === 'id' ? 'Judul kegiatan tidak boleh kosong' : 'Event title is required');
       return;
@@ -1378,7 +1378,7 @@ function AddEventModal({
     setIsSubmitting(true);
 
     try {
-      ds.addEvent({
+      await ds.addEvent({
         title: title.trim(),
         date,
         startTime: startTime || undefined,
