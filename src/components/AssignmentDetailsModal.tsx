@@ -193,7 +193,7 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose }: Assignme
 
           <div className="modal-form-grid-2col">
             <div>
-              <label className="label">Priority</label>
+              <label className="label">{lang === 'id' ? 'Prioritas' : 'Priority'}</label>
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as Priority)}

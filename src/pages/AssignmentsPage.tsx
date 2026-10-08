@@ -447,7 +447,7 @@ function AssignmentRow({
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                   <path d="M12 19V5M5 12l7-7 7 7"/>
                 </svg>
-                High Priority
+                Prioritas tinggi
               </div>
             </>
           )}
@@ -456,7 +456,7 @@ function AssignmentRow({
           {assignment.status === 'in-progress' && (
             <>
               <span style={{ opacity: 0.4 }}>·</span>
-              <span style={{ color: 'var(--primary)', fontWeight: 600 }}>In progress</span>
+              <span style={{ color: 'var(--primary)', fontWeight: 600 }}>Sedang dikerjakan</span>
             </>
           )}
         </div>
