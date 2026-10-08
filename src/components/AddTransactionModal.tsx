@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Modal } from './Modal';
 import * as ds from '../lib/dataService';
 import { useData } from '../lib/useData';
@@ -52,6 +52,28 @@ export function AddTransactionModal({
   const [merchantError, setMerchantError] = useState('');
   const [amountError, setAmountError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const draftKey = `omnia_transaction_draft_${type}`;
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const draft = localStorage.getItem(draftKey);
+    if (!draft) return;
+    try {
+      const saved = JSON.parse(draft) as Partial<{ merchant: string; amount: string; category: string; date: string; time: string; notes: string; paymentMethod: string }>;
+      setMerchant(saved.merchant || '');
+      setAmount(saved.amount || '');
+      setCategory(saved.category || CATEGORIES[0]);
+      setDate(saved.date || new Date().toISOString().split('T')[0]);
+      setTime(saved.time || time);
+      setNotes(saved.notes || '');
+      setPaymentMethod(saved.paymentMethod || paymentMethods[0] || 'QRIS');
+    } catch { localStorage.removeItem(draftKey); }
+  }, [isOpen, draftKey]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    localStorage.setItem(draftKey, JSON.stringify({ merchant, amount, category, date, time, notes, paymentMethod }));
+  }, [isOpen, draftKey, merchant, amount, category, date, time, notes, paymentMethod]);
 
   const handleClose = () => {
     setMerchantError('');
@@ -112,6 +134,7 @@ export function AddTransactionModal({
       setAmountError('');
       setIsManualDate(false);
       setIsSubmitting(false);
+      localStorage.removeItem(draftKey);
       onClose();
     } catch {
       setIsSubmitting(false);
