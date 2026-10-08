@@ -2551,6 +2551,7 @@ function AddClassModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
   const [color, setColor] = useState('#1b4332');
   const [type, setType] = useState<'lecture' | 'lab' | 'tutorial' | 'seminar'>('lecture');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [saveAndAdd, setSaveAndAdd] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -2598,6 +2599,8 @@ function AddClassModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
 
     setIsSubmitting(true);
     try {
+      const keepOpen = saveAndAdd;
+      setSaveAndAdd(false);
       await ds.addClassSession({
         courseId: '',
         daysOfWeek: days,
@@ -2621,7 +2624,7 @@ function AddClassModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
       setDaysError(null);
       setRoom('');
       setColor('#1b4332');
-      onClose();
+      if (!keepOpen) onClose();
     } finally {
       setIsSubmitting(false);
     }
@@ -2818,6 +2821,9 @@ function AddClassModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
         <div className="modal-actions-sticky">
           <button type="button" className="btn-outline" onClick={onClose} disabled={isSubmitting}>
             {isId ? 'Batal' : 'Discard'}
+          </button>
+          <button type="button" className="btn-outline" onClick={() => setSaveAndAdd(true)} disabled={isSubmitting}>
+            {isId ? 'Simpan & tambah lagi' : 'Save & add another'}
           </button>
           <button type="button" className="btn-primary" onClick={handleSave} disabled={isSubmitting}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">

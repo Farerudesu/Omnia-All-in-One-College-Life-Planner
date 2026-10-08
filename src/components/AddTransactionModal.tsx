@@ -127,9 +127,9 @@ export function AddTransactionModal({
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         {type === 'expense' && onScanReceipt && (
           <div style={{
-            background: 'var(--surface-container-low)',
+            background: 'transparent',
             borderRadius: 'var(--radius-sm)',
-            padding: '0.875rem 1rem',
+            padding: '0.25rem 0',
             border: '1px solid var(--outline-variant)',
             display: 'flex',
             alignItems: 'center',
