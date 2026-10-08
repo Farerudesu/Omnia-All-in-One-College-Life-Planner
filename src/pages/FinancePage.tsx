@@ -607,7 +607,7 @@ export function FinancePage() {
                             aria-label={`Edit transaction from ${t.merchant}`}
                             title={lang === 'id' ? 'Ubah transaksi' : 'Edit transaction'}
                             style={{
-                              width: 32, height: 32,
+                              width: 44, height: 44,
                               padding: 0,
                               borderRadius: 'var(--radius-sm)',
                               border: '1px solid var(--outline-variant)',

@@ -11,6 +11,7 @@ import type {
 import { supabase } from './supabase.js';
 import { getCurrencyScale, normalizeCurrency } from './currency';
 import { normalizeTransactionCategory } from './categories';
+import { localDateString } from './dateUtils';
 
 // simple id generator
 let _counter = Date.now();
@@ -824,7 +825,7 @@ export function getNotifications(): AppNotification[] {
         const sessionMinutes = sh * 60 + sm;
         const diff = sessionMinutes - currentMinutes;
         if (diff >= -30 && diff <= 120) {
-          const id = `class-${session.id}-${now.toISOString().split('T')[0]}`;
+          const id = `class-${session.id}-${localDateString(now)}`;
           result.push({
             id,
             title: isId
@@ -863,7 +864,7 @@ export function getNotifications(): AppNotification[] {
   }
 
   // 3. Events occurring today
-  const todayStr = now.toISOString().split('T')[0];
+  const todayStr = localDateString(now);
   for (const ev of events) {
     if (ev.date === todayStr) {
       const id = `event-${ev.id}`;
