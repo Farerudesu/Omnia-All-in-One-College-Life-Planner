@@ -742,9 +742,9 @@ export function CalendarPage() {
                         </div>
                       ))}
                       {items.length > 3 && (
-                        <button type="button" className="calendar-month-overflow min-touch-target" style={{ fontSize: '0.625rem', color: 'var(--on-surface-variant)', fontWeight: 600, background: 'none', border: 0, padding: '0.5rem' }}>
+                        <span className="calendar-month-overflow" style={{ fontSize: '0.625rem', color: 'var(--on-surface-variant)', fontWeight: 600, padding: '0.5rem' }}>
                           +{items.length - 3} lainnya
-                        </button>
+                        </span>
                       )}
                     </div>
                   </div>
