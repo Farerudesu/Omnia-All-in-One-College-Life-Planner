@@ -44,9 +44,9 @@ function VersionPage() {
     <main style={{ padding: '2rem', fontFamily: 'monospace' }}>
       <h1>Omnia version</h1>
       <p>Version: 1.1</p>
-      <p>Build: 2026-10-07 21:01:43 +08:00</p>
-      <p>Changelog: budget persistence, schedule exception persistence, 7-day week view, course rename/delete, Omni message wrapping</p>
-      <p>Commit: verify with GitHub deployment</p>
+      <p>Build: 2026-10-08 09:35:28 +08:00</p>
+      <p>Commit: a3b2798</p>
+      <p>Changelog: loading states, date-scoped schedule exceptions, budget persistence, local timezone dates, 7-day schedule, course rename/delete, mobile overflow, touch targets, Omni retry</p>
     </main>
   );
 }
