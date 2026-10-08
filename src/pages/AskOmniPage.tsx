@@ -124,7 +124,10 @@ const SESSION_CHAT_KEY = 'omnia_omni_chat_session';
 function loadChatHistory(): Message[] {
   try {
     const saved = localStorage.getItem(SESSION_CHAT_KEY) || sessionStorage.getItem(SESSION_CHAT_KEY);
-    return saved ? JSON.parse(saved) : [];
+    const history = saved ? JSON.parse(saved) : [];
+    return history.filter((message: Message) => !(
+      message.role === 'assistant' && /having trouble replying|unable to reach|failed to send request|try again in a moment/i.test(message.content)
+    ));
   } catch {
     return [];
   }

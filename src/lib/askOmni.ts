@@ -95,6 +95,9 @@ export async function askOmni(request: AskOmniRequest): Promise<AskOmniResponse>
     const { data, error } = result;
     if (error) throw new Error(isId ? 'Omni tidak bisa dihubungi. Tekan Coba lagi.' : 'Omni could not be reached. Press Try again.');
     if (!data || typeof data.reply !== 'string') throw new Error(isId ? 'Omni memberikan respons yang tidak terduga.' : 'Omni returned an unexpected response.');
+    if (/having trouble replying|unable to reach|failed to send request|try again in a moment/i.test(data.reply)) {
+      throw new Error(isId ? 'Omni sedang bermasalah. Tekan Coba lagi.' : 'Omni is having trouble. Press Try again.');
+    }
     return data;
   } catch (err: any) {
     if (err?.message?.includes('Omni lagi lambat')) {
