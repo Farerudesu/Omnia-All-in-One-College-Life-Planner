@@ -79,12 +79,21 @@ export async function askOmni(request: AskOmniRequest): Promise<AskOmniResponse>
   });
 
   try {
-    const invokePromise = supabase.functions.invoke<AskOmniResponse>('ask-omni', {
-      body: request,
-    });
+    let result = await Promise.race([
+      supabase.functions.invoke<AskOmniResponse>('ask-omni', { body: request }),
+      timeoutPromise,
+    ]);
 
-    const { data, error } = await Promise.race([invokePromise, timeoutPromise]);
-    if (error) throw new Error(error.message || (isId ? 'Omni lagi lambat, coba lagi ya' : 'Unable to reach Omni. Try again.'));
+    if (result.error && /failed to send request|fetch|network|502|503/i.test(result.error.message || '')) {
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      result = await Promise.race([
+        supabase.functions.invoke<AskOmniResponse>('ask-omni', { body: request }),
+        timeoutPromise,
+      ]);
+    }
+
+    const { data, error } = result;
+    if (error) throw new Error(isId ? 'Omni tidak bisa dihubungi. Tekan Coba lagi.' : 'Omni could not be reached. Press Try again.');
     if (!data || typeof data.reply !== 'string') throw new Error(isId ? 'Omni memberikan respons yang tidak terduga.' : 'Omni returned an unexpected response.');
     return data;
   } catch (err: any) {
