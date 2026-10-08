@@ -142,8 +142,8 @@ export function SignInPage() {
             letterSpacing: '-0.02em',
           }}>
             {signInMethod === 'sms'
-              ? isSmsCodeSent ? 'Enter your SMS code' : 'Sign in with your phone'
-              : isSignUp ? 'Create your account' : 'Welcome back to Omnia'}
+              ? isSmsCodeSent ? 'Masukkan kode SMS' : 'Masuk dengan nomor telepon'
+              : isSignUp ? 'Buat akun' : 'Selamat datang kembali di Omnia'}
           </h1>
           <p style={{
             textAlign: 'center',
@@ -154,11 +154,11 @@ export function SignInPage() {
           }}>
             {signInMethod === 'sms'
               ? isSmsCodeSent
-                ? `Enter the code sent to ${phone}.`
+                ? `Masukkan kode yang dikirim ke ${phone}.`
                 : 'We’ll text you a one-time code. New phone numbers can create an account.'
               : isSignUp
-              ? 'Keep your classes, assignments, and plans together in one place.'
-              : 'Sign in to see your classes, assignments, and plans.'}
+              ? 'Simpan kelas, tugas, dan rencana kuliah di satu tempat.'
+              : 'Masuk untuk melihat kelas, tugas, dan rencana kuliah.'}
           </p>
 
           <div className="signin-method-switch" role="group" aria-label="Sign-in method">
@@ -433,8 +433,8 @@ export function SignInPage() {
             color: 'var(--on-surface-variant)',
           }}>
             {signInMethod === 'sms'
-              ? 'A new account is created if this phone number is not registered.'
-              : isSignUp ? 'Already have an account? ' : "Need an account? "}
+              ? 'Akun baru dibuat jika nomor telepon belum terdaftar.'
+              : isSignUp ? 'Sudah punya akun? ' : 'Belum punya akun? '}
             {signInMethod === 'email' && (
             <button
               type="button"
@@ -487,3 +487,4 @@ export function SignInPage() {
     </div>
   );
 }
+
