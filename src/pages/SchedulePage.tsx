@@ -1994,7 +1994,7 @@ export function SchedulePage() {
           )}
 
           {/* Today's Schedule */}
-          <div style={{ padding: '0 1rem' }}>
+          <div style={{ display: 'none', padding: '0 1rem' }}>
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               marginBottom: '0.75rem',
