@@ -185,6 +185,24 @@ export function FinancePage() {
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
         }}>
+          {/* Hero: remaining budget */}
+          <div className="finance-summary-item" style={{
+            padding: '1.5rem',
+            background: 'var(--surface-container-lowest)',
+            borderRight: '1px solid var(--outline-variant)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            gridColumn: 'span 2',
+          }}>
+            <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface-variant)', marginBottom: '0.25rem' }}>
+              {lang === 'id' ? 'Sisa anggaran' : 'Remaining budget'}
+            </div>
+            <div className="tabular-nums" style={{ fontSize: '2.5rem', fontWeight: 700, fontFamily: 'var(--font-heading)', color: remaining > 0 ? 'var(--on-surface)' : 'var(--error)' }}>
+              {formatMoney(remaining)}
+            </div>
+          </div>
+
           {/* Section 1: Liquid Balance */}
           <div className="finance-summary-item" style={{
             padding: '1.5rem',
