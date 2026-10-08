@@ -187,7 +187,7 @@ export function FinancePage() {
           gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
         }}>
           {/* Hero: remaining budget */}
-          <div className="finance-summary-item" style={{
+          <div className="finance-summary-item finance-summary-hero" style={{
             padding: '1.5rem',
             background: 'var(--surface-container-lowest)',
             borderRight: '1px solid var(--outline-variant)',

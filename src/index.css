@@ -1334,9 +1334,15 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   }
 
   .finance-summary-item {
+    min-width: 0;
+    overflow: hidden;
     padding: 1rem !important;
     border-inline-end: 0 !important;
     border-bottom: 1px solid var(--outline-variant);
+  }
+
+  .finance-summary-hero {
+    grid-column: auto !important;
   }
 
   .finance-summary-item:last-child {
