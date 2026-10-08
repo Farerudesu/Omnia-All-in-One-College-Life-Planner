@@ -1374,7 +1374,7 @@ export function SchedulePage() {
                     borderBottom: '1px solid var(--outline-variant)',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflowX: 'auto', flex: 1, scrollbarWidth: 'none', padding: '2px 0' }}>
+                  <div className="horizontal-scroll-chips" style={{ alignItems: 'center', overflowX: 'auto', flex: 1, padding: '2px 1rem 2px 0' }}>
                     {stripDays.map((date, idx) => {
                       const dayNames = lang === 'id' ? ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'] : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
                       const dayIdx = getISODay(date) - 1;
