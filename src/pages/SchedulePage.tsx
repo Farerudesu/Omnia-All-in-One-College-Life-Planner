@@ -862,9 +862,9 @@ export function SchedulePage() {
             overflow: 'hidden',
           }}>
             {[
-              { label: 'Day', action: () => setViewMode('today'), active: viewMode === 'today' },
-              { label: 'Week', action: () => setViewMode('week'), active: viewMode === 'week' },
-              { label: 'Agenda', action: () => navigate('/calendar'), active: false },
+              { label: isId ? 'Hari' : 'Day', action: () => setViewMode('today'), active: viewMode === 'today' },
+                            { label: isId ? 'Minggu' : 'Week', action: () => setViewMode('week'), active: viewMode === 'week' },
+                            { label: isId ? 'Agenda' : 'Agenda', action: () => navigate('/calendar'), active: false },
             ].map((v) => (
               <button
                 key={v.label}
