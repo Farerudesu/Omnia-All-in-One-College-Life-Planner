@@ -18,6 +18,7 @@ export function EventDetailsModal({ event, isOpen, onClose }: EventDetailsModalP
   const lang = useLanguage();
   const isId = lang === 'id';
   const courses = useData(ds.getCourses);
+  const uniqueCourses = courses.filter((course, index, list) => list.findIndex((item) => `${item.code}|${item.name}` === `${course.code}|${course.name}`) === index);
   const [isEditing, setIsEditing] = useState(false);
 
   // Edit form state
@@ -240,7 +241,7 @@ export function EventDetailsModal({ event, isOpen, onClose }: EventDetailsModalP
               style={{ width: '100%' }}
             >
               <option value="">{isId ? 'Tidak ada / Umum' : 'None / General'}</option>
-              {courses.map((c) => (
+              {uniqueCourses.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.code} – {c.name}
                 </option>

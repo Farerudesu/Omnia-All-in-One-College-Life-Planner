@@ -13,6 +13,7 @@ export interface AddAssignmentModalProps {
 export function AddAssignmentModal({ isOpen, onClose }: AddAssignmentModalProps) {
   const lang = useLanguage();
   const courses = useData(ds.getCourses);
+  const uniqueCourses = courses.filter((course, index, list) => list.findIndex((item) => `${item.code}|${item.name}` === `${course.code}|${course.name}`) === index);
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<string>('classes');
   const [courseId, setCourseId] = useState('');
@@ -112,7 +113,7 @@ export function AddAssignmentModal({ isOpen, onClose }: AddAssignmentModalProps)
             </label>
             <select id="assignment-course" value={courseId} onChange={(e) => setCourseId(e.target.value)} disabled={category !== 'classes'} style={{ width: '100%' }}>
               <option value="">{lang === 'id' ? 'Tidak ada' : 'None'}</option>
-              {courses.map((c) => (
+              {uniqueCourses.map((c) => (
                 <option key={c.id} value={c.id}>{c.code ? `${c.code} ${c.name}` : c.name}</option>
               ))}
             </select>
