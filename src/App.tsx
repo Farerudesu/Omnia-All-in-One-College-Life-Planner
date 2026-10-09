@@ -43,10 +43,10 @@ function VersionPage() {
   return (
     <main style={{ padding: '2rem', fontFamily: 'monospace' }}>
       <h1>Omnia version</h1>
-      <p>Version: 1.1</p>
-      <p>Build: 2026-10-08 10:04:00 +08:00</p>
-      <p>Commit: 980374f</p>
-      <p>Changelog: chat scroll clearance, readable finance amounts and budget-limit explanation, loading states, schedule persistence, local timezone dates, course actions, mobile overflow, Omni retry</p>
+      <p>Version: 1.2</p>
+      <p>Build: 2026-10-10 06:27:00 +08:00</p>
+      <p>Commit: e2dfa74</p>
+      <p>Changelog: payment-method history and ratio, unified quick add, loading skeleton, mobile Ask Omni scrolling and input anchoring</p>
     </main>
   );
 }
