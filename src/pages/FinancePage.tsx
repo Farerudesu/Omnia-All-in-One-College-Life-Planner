@@ -559,11 +559,11 @@ export function FinancePage() {
                               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--on-surface-variant)" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19" /><polyline points="19 12 12 19 5 12" /></svg>
                             )}
                           </span>
-                          <div>
-                            <div style={{ fontWeight: 600, color: 'var(--on-surface)' }}>
+                          <div style={{ minWidth: 0, flex: 1, overflowWrap: 'anywhere' }}>
+                            <div style={{ fontWeight: 600, color: 'var(--on-surface)', overflowWrap: 'anywhere', wordBreak: 'break-word' }} title={t.merchant}>
                               <span>{t.merchant}</span>
                             </div>
-                            {t.notes && <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>{t.notes}</div>}
+                            {t.notes && <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{t.notes}</div>}
                           </div>
                         </div>
                       </td>

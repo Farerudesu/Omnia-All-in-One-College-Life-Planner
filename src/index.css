@@ -988,6 +988,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 
   .finance-transaction-date,
   .finance-transaction-category,
+  .finance-transaction-payment,
   .finance-transaction-amount {
     display: inline-block !important;
     width: auto !important;
@@ -995,14 +996,57 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
     font-size: 0.75rem !important;
   }
 
+  .finance-transaction-category,
+  .finance-transaction-payment {
+    width: calc(50% - 0.375rem) !important;
+    box-sizing: border-box;
+    vertical-align: top;
+  }
+
+  .finance-transaction-payment {
+    width: calc(50% - 3rem) !important;
+    margin-inline-end: 0 !important;
+    text-align: start !important;
+    max-width: calc(50% - 3rem);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .finance-transaction-amount {
-    float: inline-end;
+    position: absolute;
+    inset-block-end: 0.625rem;
+    inset-inline-end: 0;
+    float: none;
+    display: block !important;
+    width: auto !important;
+    max-width: calc(50% - 0.375rem);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-sizing: border-box;
+    padding: 0 !important;
     margin-inline-end: 0 !important;
     font-size: 0.875rem !important;
+    text-align: right !important;
+    white-space: nowrap;
   }
 
   .finance-transaction-merchant {
-    padding-inline-end: 5rem !important;
+    width: calc(50% - 3rem) !important;
+    max-width: calc(50% - 3rem);
+    padding-inline-end: 0 !important;
+  }
+
+  .finance-transaction-merchant > div {
+    min-width: 0;
+    padding-inline-end: 0;
+    box-sizing: border-box;
+  }
+
+  .finance-transaction-merchant > div > div:first-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .finance-transaction-actions {
