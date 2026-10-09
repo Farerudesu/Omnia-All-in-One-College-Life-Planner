@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search,
@@ -55,6 +55,16 @@ export function MobileHeader() {
   const [expenseTitle, setExpenseTitle] = useState('');
   const [expenseAmount, setExpenseAmount] = useState('');
   const [expenseCategory, setExpenseCategory] = useState<ExpenseCategory>('Food & Groceries');
+
+  useEffect(() => {
+    const openQuickAdd = (event: Event) => {
+      const type = (event as CustomEvent<'menu' | 'task' | 'event' | 'expense'>).detail || 'menu';
+      setQuickAddType(type);
+      setShowQuickAddModal(true);
+    };
+    window.addEventListener('open-quick-add', openQuickAdd);
+    return () => window.removeEventListener('open-quick-add', openQuickAdd);
+  }, []);
 
   const displayName = profile?.fullName || user?.email?.split('@')[0] || 'Omnia Student';
   const displayEmail = profile?.universityEmail || user?.email || '';

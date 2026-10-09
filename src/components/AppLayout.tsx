@@ -6,12 +6,14 @@ import { BottomNav } from './BottomNav';
 import { CommandPalette } from './CommandPalette';
 import { DataState } from './DataState';
 import { ErrorBoundary } from './ErrorBoundary';
-import { useData } from '../lib/useData';
+import { useData, useDataStatus } from '../lib/useData';
 import * as ds from '../lib/dataService';
 
 export function AppLayout() {
   const location = useLocation();
   const settings = useData(ds.getSettings);
+  const dataStatus = useDataStatus();
+  const isDataLoading = Object.values(dataStatus).some((state) => state.loading);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     return localStorage.getItem('omnia_sidebar_collapsed') === 'true';
   });
@@ -72,8 +74,12 @@ export function AppLayout() {
 
       <div className="app-content-wrapper">
         <MobileHeader />
-        <main id="main-content" tabIndex={-1} className="app-main" style={{ outline: 'none' }}>
-          <DataState />
+        <main id="main-content" tabIndex={-1} className="app-main" style={{ outline: 'none', position: 'relative' }}>
+          {isDataLoading && (
+            <div style={{ position: 'absolute', inset: 0, zIndex: 10, background: 'var(--surface)', minHeight: 'calc(100vh - 5rem)' }}>
+              <DataState />
+            </div>
+          )}
           <ErrorBoundary>
             <Outlet />
           </ErrorBoundary>

@@ -1136,7 +1136,7 @@ export function SchedulePage() {
           <button
             type="button"
             className="btn-outline"
-            onClick={() => setShowAddEvent(true)}
+            onClick={() => window.dispatchEvent(new CustomEvent('open-quick-add', { detail: 'event' }))}
             style={{ flex: 1, justifyContent: 'center', fontSize: '0.8125rem', padding: '0.45rem 0.5rem', minHeight: 36, borderRadius: 10 }}
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">

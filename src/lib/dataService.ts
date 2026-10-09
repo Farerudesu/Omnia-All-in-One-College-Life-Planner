@@ -82,10 +82,10 @@ async function persistSessionException(exception: SessionException) {
   const { error } = await getClient().from('session_exceptions').upsert(exceptionRow(exception), { onConflict: 'user_id,class_session_id,date' });
   if (error) throw error;
 }
-const emptyTableStatus = (): Record<DataTable, TableStatus> => Object.fromEntries(
-  DATA_TABLES.map((table) => [table, { loading: false, error: null }])
+const emptyTableStatus = (loading = false): Record<DataTable, TableStatus> => Object.fromEntries(
+  DATA_TABLES.map((table) => [table, { loading, error: null }])
 ) as Record<DataTable, TableStatus>;
-let tableStatus = emptyTableStatus();
+let tableStatus = emptyTableStatus(true);
 
 type DbRow = Record<string, unknown>;
 
@@ -249,7 +249,7 @@ export function clearUserData() {
   settings = { semesterStart: '', semesterEnd: '', breakWeeks: [], monthlyBudget: 2500000, currency: 'IDR', theme: 'light' };
   cachedPaymentMethods = null;
   cachedNotifications = null;
-  tableStatus = emptyTableStatus();
+  tableStatus = emptyTableStatus(true);
   notify();
 }
 

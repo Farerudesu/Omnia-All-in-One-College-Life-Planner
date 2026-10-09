@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+@keyframes omnia-skeleton {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; }
+}
+
 .omni-markdown {
   overflow-wrap: anywhere;
   font-size: 0.9375rem;
@@ -632,12 +641,28 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
     padding-bottom: calc(96px + max(14px, env(safe-area-inset-bottom, 14px)));
   }
 
+  .app-main:has(.ask-omni-page) {
+    padding-bottom: 0 !important;
+  }
+
+  .ask-omni-page {
+    height: calc(100dvh - 64px - 76px - max(14px, env(safe-area-inset-bottom, 14px))) !important;
+    min-height: 0 !important;
+    overflow: hidden;
+  }
+
+  .ask-omni-chat-area {
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    padding-bottom: 1rem !important;
+  }
+
   .ask-omni-composer {
-    position: sticky;
-    bottom: 0;
-    z-index: 70;
-    margin-bottom: calc(-76px - max(14px, env(safe-area-inset-bottom, 14px)));
-    padding-bottom: calc(1rem + max(14px, env(safe-area-inset-bottom, 14px))) !important;
+    position: static;
+    z-index: auto;
+    margin-bottom: 0;
+    padding: 0.5rem 0.75rem 0.75rem !important;
   }
 
   /* ─── Mobile Bottom Navigation Dock (Apple iOS Tab Bar) ─── */

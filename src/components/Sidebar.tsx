@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { CategoryIndicator } from './CategoryIndicator';
 import { OmniaLogo } from './OmniaLogo';
 import { PanelLeft, Plus, Calendar, CheckSquare, Clock, DollarSign, Settings, Eye, EyeOff, Search, LogOut, Sparkles } from 'lucide-react';
@@ -22,11 +22,8 @@ const categories = [
 
 export function Sidebar({ isCollapsed, onToggle }: { isCollapsed?: boolean; onToggle?: () => void }) {
   const navigate = useNavigate();
-  const location = useLocation();
   const lang = useLanguage();
   const t = translations[lang].nav;
-  const isScheduleOrCalendar = location.pathname.startsWith('/schedule') || location.pathname.startsWith('/calendar');
-
   const navItems = [
     { to: '/schedule', label: t.schedule, icon: Clock },
     { to: '/assignments', label: t.assignments, icon: CheckSquare },
@@ -121,14 +118,13 @@ export function Sidebar({ isCollapsed, onToggle }: { isCollapsed?: boolean; onTo
         </div>
 
         {/* Primary Action Button: Active & Functional (hidden on schedule/calendar to avoid redundant add buttons) */}
-        {!isScheduleOrCalendar && (
-          <div style={{ padding: '0.875rem 0.875rem 0.5rem', display: 'flex', justifyContent: 'center' }}>
+        <div style={{ padding: '0.875rem 0.875rem 0.5rem', display: 'flex', justifyContent: 'center' }}>
             {isCollapsed ? (
               <button
                 className="btn-primary"
                 style={{ width: 36, height: 36, padding: 0, borderRadius: 8 }}
                 aria-label={lang === 'id' ? 'Buat item' : 'Create item'}
-                onClick={() => setShowQuickAdd(true)}
+                onClick={() => window.dispatchEvent(new CustomEvent('open-quick-add', { detail: 'menu' }))}
               >
                 <Plus size={18} />
               </button>
@@ -136,14 +132,13 @@ export function Sidebar({ isCollapsed, onToggle }: { isCollapsed?: boolean; onTo
               <button
                 className="btn-primary"
                 style={{ width: '100%', justifyContent: 'center', borderRadius: 8 }}
-                onClick={() => setShowQuickAdd(true)}
+                onClick={() => window.dispatchEvent(new CustomEvent('open-quick-add', { detail: 'menu' }))}
               >
                 <Plus size={16} />
                 <span>{lang === 'id' ? 'Buat item' : 'Create item'}</span>
               </button>
             )}
           </div>
-        )}
 
         {/* Navigation list */}
         <nav style={{ padding: '0.5rem 0.625rem', display: 'flex', flexDirection: 'column', gap: '0.125rem' }}>

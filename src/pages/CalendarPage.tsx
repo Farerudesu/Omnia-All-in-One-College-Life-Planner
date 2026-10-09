@@ -447,7 +447,7 @@ export function CalendarPage() {
 
           <button
             className="btn-primary calendar-add-event"
-            onClick={() => setShowAddEvent(true)}
+            onClick={() => window.dispatchEvent(new CustomEvent('open-quick-add', { detail: 'event' }))}
             style={{ padding: '0.45rem 0.875rem', fontSize: '0.8125rem' }}
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">

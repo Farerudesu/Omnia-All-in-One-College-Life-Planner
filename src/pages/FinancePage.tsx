@@ -48,10 +48,11 @@ export function FinancePage() {
   const currentYear = now.getFullYear();
 
   // Calculate financial summaries
-  const { balance, incomeThisMonth, spentThisMonth, categoryBreakdown } = useMemo(() => {
+  const { balance, incomeThisMonth, spentThisMonth, categoryBreakdown, paymentBreakdown } = useMemo(() => {
     let income = 0;
     let expense = 0;
     const catTotals = new Map<string, number>();
+    const paymentTotals = new Map<string, number>();
 
     transactions.forEach((t) => {
       const [year, month, day] = t.date.split('-').map(Number);
@@ -64,6 +65,8 @@ export function FinancePage() {
         } else {
           expense += t.amount;
           catTotals.set(t.category, (catTotals.get(t.category) || 0) + t.amount);
+          const paymentMethod = t.paymentMethod || 'Tidak dicatat';
+          paymentTotals.set(paymentMethod, (paymentTotals.get(paymentMethod) || 0) + t.amount);
         }
       }
     });
@@ -75,6 +78,9 @@ export function FinancePage() {
       categoryBreakdown: Array.from(catTotals.entries())
         .map(([cat, amount]) => ({ category: cat, amount }))
         .sort((a, b) => b.amount - a.amount),
+      paymentBreakdown: Array.from(paymentTotals.entries())
+      .map(([method, amount]) => ({ method, amount }))
+      .sort((a, b) => b.amount - a.amount),
     };
   }, [transactions, currentMonth, currentYear]);
 
@@ -364,42 +370,21 @@ export function FinancePage() {
             </div>
           </div>
 
-          {/* Smart Advisory */}
+          {/* Payment method ratio */}
           <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.5rem' }}>
-                <span className="badge" style={{
-                  background: budgetPercent > 100 ? 'color-mix(in srgb, var(--error) 15%, transparent)' : 'color-mix(in srgb, var(--primary) 12%, transparent)',
-                  color: budgetPercent > 100 ? 'var(--error)' : 'var(--primary)',
-                  fontWeight: 600,
-                }}>
-                  {lang === 'id' ? (budgetPercent > 100 ? 'Perlu Perhatian' : 'Sesuai Rencana') : (budgetPercent > 100 ? 'Attention Needed' : 'On Track')}
-                </span>
-              </div>
-              <h2 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>
-                {lang === 'id' ? (budgetPercent > 100 ? 'Melebihi Proyeksi Batas Bulanan' : 'Pengeluaran Terkendali Sesuai Target') : (budgetPercent > 100 ? 'Over Projected Monthly Limit' : 'Pacing is Well Within Target')}
-              </h2>
-              <p style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)', lineHeight: 1.6 }}>
-                {lang === 'id' ? (
-                  <>Anda memiliki estimasi alokasi harian sebesar <strong>{formatMoney(dailyAllowance)}</strong> untuk {daysLeftInMonth} hari tersisa di bulan {new Date().toLocaleDateString('id-ID', { month: 'long' })} agar tidak melampaui batas {formatMoney(effectiveMonthlyBudget)} Anda.</>
-                ) : (
-                  <>You have an estimated daily allowance of <strong>{formatMoney(dailyAllowance)}</strong> for the remaining {daysLeftInMonth} days of {new Date().toLocaleDateString('en-US', { month: 'long' })} without breaching your {formatMoney(effectiveMonthlyBudget)} ceiling.</>
-                )}
-              </p>
-            </div>
-            <div style={{
-              marginTop: '1.5rem',
-              padding: '0.875rem',
-              borderRadius: 'var(--radius-sm)',
-              background: 'var(--surface-container)',
-              fontSize: '0.8125rem',
-              color: 'var(--on-surface-variant)',
-            }}>
-              {lang === 'id' ? (
-                <>💡 <em>Tips Mahasiswa:</em> Belanja kebutuhan di hari tertentu seringkali menawarkan diskon kantin atau koperasi kampus untuk menjaga dana cadangan Anda.</>
-              ) : (
-                <>💡 <em>Scholar Tip:</em> Grocery shopping on Wednesdays typically yields campus co-op discounts, helping protect your discretionary cushion.</>
-              )}
+              <h2 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>{lang === 'id' ? 'Rasio Penggunaan Metode Bayar' : 'Payment Method Usage Ratio'}</h2>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)', marginBottom: '1rem' }}>{lang === 'id' ? 'Proporsi pengeluaran bulan ini berdasarkan metode pembayaran.' : 'This month’s spending share by payment method.'}</p>
+              {paymentBreakdown.length > 0 ? paymentBreakdown.map((item) => (
+                <div key={item.method} style={{ marginBottom: '0.75rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', marginBottom: '0.25rem' }}>
+                    <span>{item.method}</span><strong>{Math.round((item.amount / spentThisMonth) * 100)}%</strong>
+                  </div>
+                  <div style={{ height: 8, borderRadius: 4, background: 'var(--surface-container-high)', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${(item.amount / spentThisMonth) * 100}%`, background: 'var(--primary)', borderRadius: 4 }} />
+                  </div>
+                </div>
+              )) : <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.875rem' }}>{lang === 'id' ? 'Belum ada data metode pembayaran.' : 'No payment method data yet.'}</p>}
             </div>
           </div>
         </div>
@@ -516,8 +501,8 @@ export function FinancePage() {
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--outline-variant)' }}>
                     {(lang === 'id'
-                      ? ['Tanggal', 'Tempat / Pengeluaran', 'Kategori', 'Nominal', 'Aksi']
-                      : ['Date', 'Merchant / Description', 'Category', 'Amount', 'Actions']
+                      ? ['Tanggal', 'Tempat / Pengeluaran', 'Kategori', 'Metode Pembayaran', 'Nominal', 'Aksi']
+                                            : ['Date', 'Merchant / Description', 'Category', 'Payment Method', 'Amount', 'Actions']
                     ).map((h, idx) => (
                       <th
                         key={h}
@@ -526,8 +511,8 @@ export function FinancePage() {
                           fontSize: '0.75rem',
                           fontWeight: 600,
                           color: 'var(--on-surface-variant)',
-                          textAlign: idx === 3 ? 'right' : idx === 4 ? 'center' : 'left',
-                          width: idx === 4 ? 90 : undefined,
+                          textAlign: idx === 4 ? 'right' : idx === 5 ? 'center' : 'left',
+                                                    width: idx === 5 ? 90 : undefined,
                         }}
                       >
                         {h}
@@ -590,6 +575,9 @@ export function FinancePage() {
                         }}>
                           {t.category}
                         </span>
+                      </td>
+                      <td data-label={lang === 'id' ? 'Metode Pembayaran' : 'Payment Method'} className="finance-transaction-payment" style={{ padding: '0.75rem', fontSize: '0.8125rem', color: 'var(--on-surface-variant)' }}>
+                        {t.type === 'expense' ? (t.paymentMethod || (lang === 'id' ? 'Tidak dicatat' : 'Not recorded')) : '—'}
                       </td>
                       <td data-label={lang === 'id' ? 'Nominal' : 'Amount'} className="finance-transaction-amount tabular-nums" style={{
                         padding: '0.75rem', fontSize: '0.875rem', fontWeight: 600,
