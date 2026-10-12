@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Modal } from './Modal';
 import * as ds from '../lib/dataService';
 import { useData } from '../lib/useData';
@@ -31,6 +31,22 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose, openInEdit
   const [reminderMinutes, setReminderMinutes] = useState(0);
   const [titleError, setTitleError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const uniqueCourses = useMemo(() => {
+    const map = new Map<string, typeof courses[0]>();
+    for (const c of courses) {
+      const key = `${c.code || ''}|${c.name}`;
+      if (!map.has(key) || c.id === courseId) {
+        map.set(key, c);
+      }
+    }
+    const list = Array.from(map.values());
+    if (courseId && !list.some((c) => c.id === courseId)) {
+      const cur = courses.find((c) => c.id === courseId);
+      if (cur) list.unshift(cur);
+    }
+    return list;
+  }, [courses, courseId]);
 
   useEffect(() => {
     if (assignment) {
@@ -152,29 +168,36 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose, openInEdit
 
           <div className="modal-form-grid-2col">
             <div>
-              <label className="label">Category</label>
+              <label htmlFor="edit-assignment-category" className="label">{lang === 'id' ? 'Kategori' : 'Category'}</label>
               <select
+                id="edit-assignment-category"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 style={{ width: '100%' }}
               >
-                <option value="classes">Coursework</option>
-                <option value="personal">Personal</option>
-                <option value="exam">Exam Prep</option>
-                <option value="deadline">General Deadline</option>
-                <option value="other">Other</option>
+                <option value="classes">{lang === 'id' ? 'Tugas Kuliah' : 'Coursework'}</option>
+                <option value="personal">{lang === 'id' ? 'Pribadi' : 'Personal'}</option>
+                <option value="exam">{lang === 'id' ? 'Persiapan Ujian' : 'Exam Prep'}</option>
+                <option value="deadline">{lang === 'id' ? 'Tenggat Umum' : 'General Deadline'}</option>
+                <option value="other">{lang === 'id' ? 'Lainnya' : 'Other'}</option>
               </select>
             </div>
             <div>
-              <label className="label">{lang === 'id' ? 'Mata Kuliah (Opsional)' : 'Course (Optional)'}</label>
+              <label htmlFor="edit-assignment-course" className="label">{lang === 'id' ? 'Mata Kuliah (Opsional)' : 'Course (Optional)'}</label>
               <select
+                id="edit-assignment-course"
                 value={courseId}
-                onChange={(e) => setCourseId(e.target.value)}
-                disabled={category !== 'classes'}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setCourseId(val);
+                  if (val && (category === 'personal' || category === 'other')) {
+                    setCategory('classes');
+                  }
+                }}
                 style={{ width: '100%' }}
               >
                 <option value="">{lang === 'id' ? 'Tidak ada' : 'None'}</option>
-                {courses.map((c) => (
+                {uniqueCourses.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.code ? `${c.code} ${c.name}` : c.name}
                   </option>

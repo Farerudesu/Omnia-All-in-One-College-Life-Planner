@@ -516,6 +516,23 @@ export async function addAssignment(assignment: Omit<Assignment, 'id'>): Promise
 }
 
 export function updateAssignment(id: string, data: Partial<Assignment>): void {
+  assignments = assignments.map((a) => {
+    if (a.id !== id) return a;
+    const updated = { ...a, ...data };
+    if ('courseId' in data) {
+      if (data.courseId) {
+        if (!data.category || data.category === 'personal' || data.category === 'other') {
+          updated.category = 'classes';
+        }
+      } else {
+        if (!data.category || data.category === 'classes') {
+          updated.category = 'personal';
+        }
+      }
+    }
+    return updated;
+  });
+  notify();
   void mutateTable('assignments', () => getClient().from('assignments').update(assignmentRow(data)).eq('id', id).eq('user_id', activeUserId));
 }
 

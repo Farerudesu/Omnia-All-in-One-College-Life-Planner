@@ -111,7 +111,18 @@ export function AddAssignmentModal({ isOpen, onClose }: AddAssignmentModalProps)
             <label htmlFor="assignment-course" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
               {lang === 'id' ? 'Mata Kuliah (Opsional)' : 'Course (Optional)'}
             </label>
-            <select id="assignment-course" value={courseId} onChange={(e) => setCourseId(e.target.value)} disabled={category !== 'classes'} style={{ width: '100%' }}>
+            <select
+              id="assignment-course"
+              value={courseId}
+              onChange={(e) => {
+                const val = e.target.value;
+                setCourseId(val);
+                if (val && (category === 'personal' || category === 'other')) {
+                  setCategory('classes');
+                }
+              }}
+              style={{ width: '100%' }}
+            >
               <option value="">{lang === 'id' ? 'Tidak ada' : 'None'}</option>
               {uniqueCourses.map((c) => (
                 <option key={c.id} value={c.id}>{c.code ? `${c.code} ${c.name}` : c.name}</option>
