@@ -151,6 +151,11 @@ export function AskOmniPage() {
   const [isSavingPrefilled, setIsSavingPrefilled] = useState(false);
   const [prefilledError, setPrefilledError] = useState('');
 
+  // Receipt queue: sequential popup flow for multi-item receipts
+  const [receiptQueue, setReceiptQueue] = useState<PrefilledData[]>([]);
+  const [receiptTotal, setReceiptTotal] = useState<number | null>(null);
+  const [receiptSavedAmounts, setReceiptSavedAmounts] = useState<number[]>([]);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
 
@@ -220,12 +225,11 @@ export function AskOmniPage() {
         scheduleContext: getScheduleContext(),
       });
 
-      let aiPrefilled: PrefilledData | undefined = undefined;
-      if (response.proposedAction) {
-        // Map proposedAction to PrefilledData
-        const action = response.proposedAction;
+      // Helper: map a ProposedAction to PrefilledData
+      const mapAction = (action: typeof response.proposedAction): PrefilledData | undefined => {
+        if (!action) return undefined;
         if (action.type === 'event') {
-          aiPrefilled = {
+          return {
             type: 'event',
             title: action.title,
             date: action.date,
@@ -236,7 +240,7 @@ export function AskOmniPage() {
             eventType: 'personal',
           };
         } else if (action.type === 'task') {
-          aiPrefilled = {
+          return {
             type: 'task',
             title: action.title,
             date: action.date,
@@ -246,7 +250,7 @@ export function AskOmniPage() {
             notes: action.notes,
           };
         } else if (action.type === 'expense') {
-          aiPrefilled = {
+          return {
             type: 'expense',
             title: action.title,
             date: action.date,
@@ -256,6 +260,24 @@ export function AskOmniPage() {
             notes: action.notes,
           };
         }
+        return undefined;
+      };
+
+      let aiPrefilled: PrefilledData | undefined = undefined;
+
+      // Multi-item receipt queue (proposedActions array takes priority)
+      if (response.proposedActions && response.proposedActions.length > 0) {
+        const mapped = response.proposedActions.map(mapAction).filter((x): x is PrefilledData => !!x);
+        if (mapped.length > 0) {
+          const [first, ...rest] = mapped;
+          setReceiptQueue(rest);
+          setReceiptTotal(response.receiptTotal ?? null);
+          setReceiptSavedAmounts([]);
+          aiPrefilled = first;
+        }
+      } else if (response.proposedAction) {
+        // Single proposedAction — existing behaviour preserved
+        aiPrefilled = mapAction(response.proposedAction);
       }
 
       // Only popup if AI returned a complete proposal
@@ -362,13 +384,52 @@ export function AskOmniPage() {
         ));
       }
 
+      // Receipt queue: drain sequentially
+      if (receiptQueue.length > 0) {
+        const savedAmount = data.type === 'expense' ? (Number(data.amount) || 0) : 0;
+        const newSavedAmounts = [...receiptSavedAmounts, savedAmount];
+        const [next, ...remaining] = receiptQueue;
+        setReceiptQueue(remaining);
+        setReceiptSavedAmounts(newSavedAmounts);
+        setPrefilledModal({ data: { ...next } });
+        setPrefilledError('');
+        // Don't add per-item confirmation message mid-queue — only add on last item below
+        if (messageId) {
+          setMessages((prev) => prev.map((item) =>
+            item.id === messageId || item.prefilledData?.title === data.title
+              ? { ...item, actionStatus: 'saved' as const }
+              : item
+          ));
+        }
+        setIsSavingPrefilled(false);
+        return;
+      }
+
+      // Last item (or single item): finalize
+      const finalSavedAmounts = [...receiptSavedAmounts, data.type === 'expense' ? (Number(data.amount) || 0) : 0];
+      const isReceiptFlow = receiptSavedAmounts.length > 0; // more than one item was processed
+
+      let summaryMessage = `✓ ${confirmationText}`;
+      if (isReceiptFlow) {
+        const n = finalSavedAmounts.length;
+        const savedTotal = finalSavedAmounts.reduce((a, b) => a + b, 0);
+        const currency = ds.getSettings()?.currency || 'IDR';
+        summaryMessage = `✓ ${n} item tercatat, total ${formatCurrency(savedTotal, currency)}`;
+        if (receiptTotal !== null && Math.abs(savedTotal - receiptTotal) > 1) {
+          summaryMessage += `\n\n⚠️ Peringatan: total item (${formatCurrency(savedTotal, currency)}) berbeda dengan total struk (${formatCurrency(receiptTotal, currency)}). Periksa kembali.`;
+        }
+        // Reset receipt state
+        setReceiptTotal(null);
+        setReceiptSavedAmounts([]);
+      }
+
       // Add cheerful confirmation assistant message
       setMessages((prev) => [
         ...prev,
         {
           id: (Date.now() + 2).toString(),
           role: 'assistant',
-          content: `✓ ${confirmationText}`,
+          content: summaryMessage,
         },
       ]);
 
@@ -791,14 +852,20 @@ export function AskOmniPage() {
       {prefilledModal && (
         <Modal
           isOpen={!!prefilledModal}
-          onClose={() => setPrefilledModal(null)}
-          title={
-            prefilledModal.data.type === 'expense'
+          onClose={() => { setPrefilledModal(null); setReceiptQueue([]); setReceiptTotal(null); setReceiptSavedAmounts([]); }}
+          title={(() => {
+            const base = prefilledModal.data.type === 'expense'
               ? 'Catat pengeluaran kampus'
               : prefilledModal.data.type === 'task'
               ? 'Tambah tugas kuliah'
-              : 'Tambah acara ke jadwal'
-          }
+              : 'Tambah acara ke jadwal';
+            const total = receiptSavedAmounts.length + receiptQueue.length + 1;
+            if (total > 1) {
+              const current = receiptSavedAmounts.length + 1;
+              return `${base} (${current}/${total})`;
+            }
+            return base;
+          })()}
           maxWidth="520px"
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -1073,7 +1140,7 @@ export function AskOmniPage() {
               <button
                 type="button"
                 className="btn-outline"
-                onClick={() => setPrefilledModal(null)}
+                onClick={() => { setPrefilledModal(null); setReceiptQueue([]); setReceiptTotal(null); setReceiptSavedAmounts([]); }}
                 disabled={isSavingPrefilled}
                 style={{ padding: '0.5rem 1rem', minHeight: 40 }}
               >

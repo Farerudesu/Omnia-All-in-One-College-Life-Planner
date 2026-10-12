@@ -7,17 +7,20 @@ import { CATEGORY_SHAPES, CATEGORY_COLORS } from '../types';
 import type { CalendarEvent, EventType } from '../types';
 import { formatTime12, formatDateShort } from '../lib/dateUtils';
 import { useLanguage } from '../lib/useLanguage';
+import { Pin } from 'lucide-react';
 
 interface EventDetailsModalProps {
   event: CalendarEvent | null;
   isOpen: boolean;
   onClose: () => void;
+  openInEditMode?: boolean;
 }
 
-export function EventDetailsModal({ event, isOpen, onClose }: EventDetailsModalProps) {
+export function EventDetailsModal({ event, isOpen, onClose, openInEditMode }: EventDetailsModalProps) {
   const lang = useLanguage();
   const isId = lang === 'id';
   const courses = useData(ds.getCourses);
+  const pinnedEventIds = useData(ds.getPinnedEventIds);
   const uniqueCourses = courses.filter((course, index, list) => list.findIndex((item) => `${item.code}|${item.name}` === `${course.code}|${course.name}`) === index);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -45,10 +48,10 @@ export function EventDetailsModal({ event, isOpen, onClose }: EventDetailsModalP
       setNotes(event.notes || '');
       const existingRem = ds.getUserReminders().find((r) => r.itemId === event.id);
       setReminderMinutes(existingRem ? existingRem.minutesBefore : 0);
-      setIsEditing(false);
+      setIsEditing(!!openInEditMode);
       setIsSubmitting(false);
     }
-  }, [event, isOpen]);
+  }, [event, isOpen, openInEditMode]);
 
   if (!event) return null;
 
@@ -382,6 +385,22 @@ export function EventDetailsModal({ event, isOpen, onClose }: EventDetailsModalP
               {isId ? 'Hapus' : 'Delete Event'}
             </button>
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="btn-outline"
+                onClick={() => ds.togglePinEvent(event.id)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.375rem',
+                  color: pinnedEventIds.includes(event.id) ? 'var(--primary)' : 'inherit',
+                  borderColor: pinnedEventIds.includes(event.id) ? 'var(--primary)' : undefined,
+                  background: pinnedEventIds.includes(event.id) ? 'color-mix(in srgb, var(--primary) 10%, transparent)' : undefined,
+                }}
+              >
+                <Pin size={14} style={{ fill: pinnedEventIds.includes(event.id) ? 'currentColor' : 'none' }} />
+                {pinnedEventIds.includes(event.id) ? (isId ? 'Lepas Sematan' : 'Unpin') : (isId ? 'Sematkan ke Sidebar' : 'Pin to Sidebar')}
+              </button>
               <button type="button" className="btn-ghost" onClick={onClose}>
                 {isId ? 'Tutup' : 'Close'}
               </button>

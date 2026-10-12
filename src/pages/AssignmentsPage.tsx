@@ -4,6 +4,7 @@ import * as ds from '../lib/dataService';
 import { AddAssignmentModal } from '../components/AddAssignmentModal';
 import { AssignmentDetailsModal } from '../components/AssignmentDetailsModal';
 import { CategoryIndicator } from '../components/CategoryIndicator';
+import { Pin } from 'lucide-react';
 import type { Assignment, AssignmentStatus, CategoryShape } from '../types';
 import { useLanguage } from '../lib/useLanguage';
 import { formatDateShort, formatTime12 } from '../lib/dateUtils';
@@ -16,17 +17,19 @@ const CATEGORY_MAP: Record<string, { shape: CategoryShape; color: string; label:
   other: { shape: 'circle', color: 'var(--on-surface-variant)', label: 'Other' },
 };
 
-type FilterMode = 'all' | 'due-soon' | 'by-course' | 'done';
+type FilterMode = 'active' | 'all' | 'due-soon' | 'pinned' | 'by-course' | 'done';
 
 export function AssignmentsPage() {
   const lang = useLanguage();
   const assignments = useData(ds.getAssignments);
   const courses = useData(ds.getCourses);
+  const pinnedIds = useData(ds.getPinnedAssignmentIds);
 
-  const [filter, setFilter] = useState<FilterMode>('all');
+  const [filter, setFilter] = useState<FilterMode>('active');
   const [showAdd, setShowAdd] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
+  const [openInEditMode, setOpenInEditMode] = useState(false);
 
   const courseMap = useMemo(() => {
     const map = new Map<string, typeof courses[0]>();
@@ -53,6 +56,9 @@ export function AssignmentsPage() {
     }
 
     switch (filter) {
+      case 'active':
+        list = list.filter((a) => a.status !== 'done');
+        break;
       case 'due-soon':
         list = list.filter((a) => {
           if (a.status === 'done') return false;
@@ -64,20 +70,31 @@ export function AssignmentsPage() {
       case 'done':
         list = list.filter((a) => a.status === 'done');
         break;
+      case 'pinned':
+        list = list.filter((a) => pinnedIds.includes(a.id));
+        break;
       case 'by-course':
+        list = list.filter((a) => a.status !== 'done');
         list.sort((a, b) => (a.courseId || '').localeCompare(b.courseId || ''));
         break;
     }
 
     if (filter !== 'by-course') {
-      list.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+      const pinnedSet = new Set(pinnedIds);
+      list.sort((a, b) => {
+        const aPinned = pinnedSet.has(a.id) && a.status !== 'done' ? 1 : 0;
+        const bPinned = pinnedSet.has(b.id) && b.status !== 'done' ? 1 : 0;
+        if (aPinned !== bPinned) return bPinned - aPinned;
+        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+      });
     }
 
     return list;
-  }, [assignments, filter, searchQuery, courseMap, now]);
+  }, [assignments, filter, searchQuery, courseMap, now, pinnedIds]);
 
   const activeCount = assignments.filter((a) => a.status !== 'done').length;
   const doneCount = assignments.filter((a) => a.status === 'done').length;
+  const pinnedCount = assignments.filter((a) => pinnedIds.includes(a.id)).length;
   const overdueCount = assignments.filter((a) => {
     return a.status !== 'done' && new Date(a.dueDate) < now;
   }).length;
@@ -209,8 +226,9 @@ export function AssignmentsPage() {
         }}>
           <div className="assignment-filter-list horizontal-scroll-chips" style={{ display: 'flex', gap: '0.375rem', width: '100%', paddingBottom: '0.25rem', paddingRight: '1.5rem', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
             {([
-              { key: 'all', label: `${lang === 'id' ? 'Semua' : 'All'} (${assignments.length})` },
+              { key: 'active', label: `${lang === 'id' ? 'Belum Selesai' : 'Pending'} (${activeCount})` },
               { key: 'due-soon', label: `${lang === 'id' ? 'Mendesak' : 'Due soon'} (${dueSoonCount})` },
+              { key: 'pinned', label: `${lang === 'id' ? 'Disematkan' : 'Pinned'} (${pinnedCount})` },
               { key: 'by-course', label: lang === 'id' ? 'Per mata kuliah' : 'By course' },
               { key: 'done', label: `${lang === 'id' ? 'Selesai' : 'Completed'} (${doneCount})` },
             ] as { key: FilterMode; label: string }[]).map(({ key, label }) => (
@@ -268,8 +286,11 @@ export function AssignmentsPage() {
               assignment={a}
               course={a.courseId ? courseMap.get(a.courseId) : undefined}
               isOverdue={a.status !== 'done' && new Date(a.dueDate) < now}
+              isPinned={pinnedIds.includes(a.id)}
+              onTogglePin={() => ds.togglePinAssignment(a.id)}
               onToggle={() => toggleStatus(a.id, a.status)}
-              onOpenDetails={() => setSelectedAssignment(a)}
+              onOpenDetails={() => { setOpenInEditMode(false); setSelectedAssignment(a); }}
+              onEdit={() => { setOpenInEditMode(true); setSelectedAssignment(a); }}
             />
           ))}
           {filtered.length === 0 && (
@@ -308,7 +329,8 @@ export function AssignmentsPage() {
       <AssignmentDetailsModal
         assignment={selectedAssignment}
         isOpen={!!selectedAssignment}
-        onClose={() => setSelectedAssignment(null)}
+        openInEditMode={openInEditMode}
+        onClose={() => { setSelectedAssignment(null); setOpenInEditMode(false); }}
       />
     </div>
   );
@@ -319,29 +341,45 @@ function AssignmentRow({
   assignment,
   course,
   isOverdue,
+  isPinned,
+  onTogglePin,
   onToggle,
   onOpenDetails,
+  onEdit,
 }: {
   assignment: Assignment;
   course?: { code: string; name: string; color: string };
   isOverdue: boolean;
+  isPinned: boolean;
+  onTogglePin: () => void;
   onToggle: () => void;
   onOpenDetails: () => void;
+  onEdit: () => void;
 }) {
   const lang = useLanguage();
   const due = new Date(assignment.dueDate);
   const now = new Date();
   const diff = due.getTime() - now.getTime();
-  const daysUntil = Math.ceil(diff / (1000 * 60 * 60 * 24));
+  const diffMins = Math.floor(diff / (1000 * 60));
+  const diffHours = Math.floor(diff / (1000 * 60 * 60));
+  const diffDays = Math.floor(diff / (1000 * 60 * 60 * 24));
 
   const dateFormatted = formatDateShort(due);
   const timeFormatted = formatTime12(`${due.getHours().toString().padStart(2, '0')}:${due.getMinutes().toString().padStart(2, '0')}`);
 
-  const dueText = isOverdue
-    ? (lang === 'id' ? `${dateFormatted} – ${timeFormatted} (Terlambat)` : `${dateFormatted} – ${timeFormatted} (Overdue)`)
-    : daysUntil <= 0
-      ? (lang === 'id' ? 'Hari Ini' : 'Today')
-      : (lang === 'id' ? `${dateFormatted} – ${timeFormatted} (${daysUntil} hari lagi)` : `${dateFormatted} – ${timeFormatted} (In ${daysUntil} day${daysUntil !== 1 ? 's' : ''})`);
+  const countdownLabel = (() => {
+    if (isOverdue) {
+      const overdueDays = Math.floor(-diff / (1000 * 60 * 60 * 24));
+      return lang === 'id'
+        ? `Terlambat ${overdueDays > 0 ? `${overdueDays} hari` : 'hari ini'}`
+        : `Overdue ${overdueDays > 0 ? `${overdueDays}d` : 'today'}`;
+    }
+    if (diffMins < 60) return lang === 'id' ? `${Math.max(1, diffMins)} menit lagi` : `${Math.max(1, diffMins)}m left`;
+    if (diffHours < 24) return lang === 'id' ? `${diffHours} jam lagi` : `${diffHours}h left`;
+    return lang === 'id' ? `${diffDays} hari lagi` : `${diffDays}d left`;
+  })();
+
+  const dueText = `${dateFormatted} – ${timeFormatted} (${countdownLabel})`;
 
   return (
     <div
@@ -439,6 +477,24 @@ function AssignmentRow({
             </span>
           </div>
 
+          {/* Pinned badge */}
+          {isPinned && (
+            <>
+              <span style={{ opacity: 0.4 }}>·</span>
+              <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.2rem',
+                color: 'var(--primary)',
+                fontWeight: 600,
+                fontSize: '0.75rem',
+              }}>
+                <Pin size={11} style={{ fill: 'currentColor' }} />
+                {lang === 'id' ? 'Disematkan' : 'Pinned'}
+              </span>
+            </>
+          )}
+
           {/* Priority */}
           {assignment.priority === 'high' && (
             <>
@@ -462,15 +518,31 @@ function AssignmentRow({
         </div>
       </div>
 
-      {/* Edit button */}
-      <div style={{ display: 'flex', alignItems: 'center' }}>
+      {/* Action buttons: Pin & Edit */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
         <button
           type="button"
-          onClick={onOpenDetails}
+          onClick={onTogglePin}
+          className="btn-ghost min-touch-target"
+          style={{
+            padding: '0.3rem',
+            color: isPinned ? 'var(--primary)' : 'var(--on-surface-variant)',
+            background: isPinned ? 'color-mix(in srgb, var(--primary) 12%, transparent)' : 'transparent',
+            borderRadius: 6,
+          }}
+          aria-label={isPinned ? (lang === 'id' ? 'Lepas sematan' : 'Unpin from sidebar') : (lang === 'id' ? 'Sematkan ke sidebar' : 'Pin to sidebar')}
+          title={isPinned ? (lang === 'id' ? 'Lepas sematan dari sidebar' : 'Unpin from sidebar') : (lang === 'id' ? 'Sematkan ke sidebar' : 'Pin to sidebar')}
+        >
+          <Pin size={15} style={{ fill: isPinned ? 'currentColor' : 'none' }} />
+        </button>
+
+        <button
+          type="button"
+          onClick={onEdit}
           className="btn-ghost min-touch-target"
           style={{ padding: '0.3rem', color: 'var(--on-surface-variant)' }}
           aria-label={`Edit ${assignment.title}`}
-          title="Edit deliverable"
+          title={lang === 'id' ? 'Ubah rincian' : 'Edit deliverable'}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />

@@ -1,13 +1,13 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { CategoryIndicator } from './CategoryIndicator';
 import { OmniaLogo } from './OmniaLogo';
-import { PanelLeft, Plus, Calendar, CheckSquare, Clock, DollarSign, Settings, Eye, EyeOff, Search, LogOut, Sparkles } from 'lucide-react';
+import { PanelLeft, Plus, Calendar, CheckSquare, Clock, DollarSign, Settings, Eye, EyeOff, Search, LogOut, Sparkles, Pin, PinOff } from 'lucide-react';
 import { useData } from '../lib/useData';
 import * as ds from '../lib/dataService';
 import type { CategoryKey } from '../lib/dataService';
 import { Modal } from './Modal';
-import type { EventType } from '../types';
+import type { EventType, Assignment } from '../types';
 import { useAuth } from '../lib/AuthContext';
 import { useLanguage } from '../lib/useLanguage';
 import { translations } from '../lib/i18n';
@@ -35,6 +35,9 @@ export function Sidebar({ isCollapsed, onToggle }: { isCollapsed?: boolean; onTo
 
   const events = useData(ds.getEvents);
   const assignments = useData(ds.getAssignments);
+  const pinnedAssignmentIds = useData(ds.getPinnedAssignmentIds);
+  const pinnedEventIds = useData(ds.getPinnedEventIds);
+  const dismissedAutoPins = useData(ds.getDismissedAutoPins);
   const categoryVisibility = useData(ds.getCategoryVisibility);
   const profile = useData(ds.getProfile);
   const settings = useData(ds.getSettings);
@@ -58,15 +61,35 @@ export function Sidebar({ isCollapsed, onToggle }: { isCollapsed?: boolean; onTo
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showProfile]);
 
-  const upcomingEvents = events
-    .filter(e => new Date(e.date + 'T' + (e.startTime || '00:00')) >= new Date())
-    .sort((a, b) => new Date(a.date + 'T' + (a.startTime || '00:00')).getTime() - new Date(b.date + 'T' + (b.startTime || '00:00')).getTime())
-    .slice(0, 2);
+  const upcomingEvents = useMemo(() => {
+    return events
+      .filter(e => new Date(e.date + 'T' + (e.startTime || '00:00')) >= new Date())
+      .sort((a, b) => new Date(a.date + 'T' + (a.startTime || '00:00')).getTime() - new Date(b.date + 'T' + (b.startTime || '00:00')).getTime())
+      .slice(0, 2);
+  }, [events]);
 
-  const pinnedAssignments = assignments
-    .filter(a => a.status !== 'done')
-    .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
-    .slice(0, 1);
+  const pinnedAssignmentsData = useMemo(() => {
+    const activeAssignments = assignments.filter((a) => a.status !== 'done');
+    if (pinnedAssignmentIds.length > 0) {
+      const manualList = pinnedAssignmentIds
+        .map((id) => activeAssignments.find((a) => a.id === id))
+        .filter((a): a is Assignment => !!a)
+        .map((a) => ({ assignment: a, isManual: true }));
+      if (manualList.length > 0) return manualList;
+    }
+
+    const sorted = [...activeAssignments].sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+    const autoCandidate = sorted.find((a) => !dismissedAutoPins.includes(a.id));
+    if (autoCandidate) {
+      return [{ assignment: autoCandidate, isManual: false }];
+    }
+    return [];
+  }, [assignments, pinnedAssignmentIds, dismissedAutoPins]);
+
+  const pinnedEvents = useMemo(() => {
+    if (pinnedEventIds.length === 0) return [];
+    return events.filter((ev) => pinnedEventIds.includes(ev.id));
+  }, [events, pinnedEventIds]);
 
   return (
     <>
@@ -322,7 +345,60 @@ export function Sidebar({ isCollapsed, onToggle }: { isCollapsed?: boolean; onTo
                 </div>
               )}
 
-              {pinnedAssignments.length > 0 && pinnedAssignments.map(a => (
+              {pinnedEvents.length > 0 && pinnedEvents.map(ev => (
+                <div
+                  key={ev.id}
+                  onClick={() => navigate('/calendar')}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === 'Enter') navigate('/calendar'); }}
+                  style={{
+                    padding: '0.5rem 0.625rem',
+                    background: 'var(--surface-container-lowest)',
+                    border: '1px solid var(--outline-variant)',
+                    borderRadius: 8,
+                    marginBottom: '0.5rem',
+                    cursor: 'pointer',
+                    transition: 'border-color 0.15s ease',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.375rem', marginBottom: '0.125rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <Pin size={11} color="var(--primary)" />
+                      <span style={{
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        color: 'var(--primary)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.6px',
+                      }}>
+                        {lang === 'id' ? 'Acara disematkan' : 'Pinned event'}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        ds.unpinEvent(ev.id);
+                      }}
+                      title={lang === 'id' ? 'Lepas sematan' : 'Unpin'}
+                      aria-label={lang === 'id' ? 'Lepas sematan' : 'Unpin'}
+                      className="btn-ghost"
+                      style={{ padding: '2px 4px', borderRadius: 4, color: 'var(--on-surface-variant)', display: 'inline-flex' }}
+                    >
+                      <PinOff size={12} />
+                    </button>
+                  </div>
+                  <div style={{ fontWeight: 600, fontSize: '0.8125rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {ev.title}
+                  </div>
+                  <div className="tabular-nums" style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>
+                    {formatDateShort(new Date(ev.date))}{ev.startTime ? ` · ${formatTime12(ev.startTime)}` : ''}
+                  </div>
+                </div>
+              ))}
+
+              {pinnedAssignmentsData.length > 0 && pinnedAssignmentsData.map(({ assignment: a, isManual }) => (
                 <div
                   key={a.id}
                   onClick={() => navigate('/assignments')}
@@ -334,20 +410,37 @@ export function Sidebar({ isCollapsed, onToggle }: { isCollapsed?: boolean; onTo
                     background: 'var(--surface-container-lowest)',
                     border: '1px solid var(--outline-variant)',
                     borderRadius: 8,
+                    marginBottom: '0.5rem',
                     cursor: 'pointer',
                     transition: 'border-color 0.15s ease',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.125rem' }}>
-                    <span style={{
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      color: 'var(--exams)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.6px',
-                    }}>
-                      {lang === 'id' ? 'Tugas disematkan' : 'Pinned task'}
-                    </span>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.375rem', marginBottom: '0.125rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <Pin size={11} color={isManual ? 'var(--exams)' : 'var(--on-surface-variant)'} />
+                      <span style={{
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        color: isManual ? 'var(--exams)' : 'var(--on-surface-variant)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.6px',
+                      }}>
+                        {isManual ? (lang === 'id' ? 'Tugas disematkan' : 'Pinned task') : (lang === 'id' ? 'Disematkan otomatis' : 'Auto-pinned')}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        ds.unpinAssignment(a.id);
+                      }}
+                      title={lang === 'id' ? 'Lepas sematan' : 'Unpin'}
+                      aria-label={lang === 'id' ? 'Lepas sematan' : 'Unpin'}
+                      className="btn-ghost"
+                      style={{ padding: '2px 4px', borderRadius: 4, color: 'var(--on-surface-variant)', display: 'inline-flex' }}
+                    >
+                      <PinOff size={12} />
+                    </button>
                   </div>
                   <div style={{ fontWeight: 600, fontSize: '0.8125rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {a.title}

@@ -1,11 +1,14 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import { useData } from '../lib/useData';
 import * as ds from '../lib/dataService';
 import { Modal } from '../components/Modal';
 import { CategoryIndicator } from '../components/CategoryIndicator';
 import { EventDetailsModal } from '../components/EventDetailsModal';
+import { AssignmentDetailsModal } from '../components/AssignmentDetailsModal';
 import { useLanguage } from '../lib/useLanguage';
+import { Pin, PinOff } from 'lucide-react';
 import {
   getMonthGrid,
   getMonthName,
@@ -17,7 +20,7 @@ import {
   getISODay,
   getWeekDates,
 } from '../lib/dateUtils';
-import type { EventType, CategoryShape, CalendarEvent } from '../types';
+import type { EventType, CategoryShape, CalendarEvent, Assignment, Course, ClassSession } from '../types';
 
 const VIEW_MODES = ['Day', 'Week', 'Month', 'Agenda'] as const;
 type ViewMode = (typeof VIEW_MODES)[number];
@@ -42,6 +45,7 @@ const CATEGORY_MAP: Record<string, { shape: CategoryShape; color: string }> = {
 
 export function CalendarPage() {
   const lang = useLanguage();
+  const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(() => new Date());
   const [viewMode, setViewMode] = useState<ViewMode>(() =>
@@ -49,6 +53,11 @@ export function CalendarPage() {
   );
   const [showAddEvent, setShowAddEvent] = useState(false);
   const [selectedEventForModal, setSelectedEventForModal] = useState<CalendarEvent | null>(null);
+  const [openEventInEditMode, setOpenEventInEditMode] = useState(false);
+  const [selectedAssignmentForModal, setSelectedAssignmentForModal] = useState<Assignment | null>(null);
+  const [openAssignmentInEditMode, setOpenAssignmentInEditMode] = useState(false);
+  const [selectedClassSessionForModal, setSelectedClassSessionForModal] = useState<{ course: Course; session: ClassSession; date: Date } | null>(null);
+  const [rescheduleItem, setRescheduleItem] = useState<{ id: string; title: string; type: 'event' | 'assignment'; date: string; time?: string; rawEvent?: CalendarEvent; rawAssignment?: Assignment } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [quickActionMenu, setQuickActionMenu] = useState<{ id: string, originX: number, originY: number, item: any, date: Date, isExiting: boolean } | null>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
@@ -124,6 +133,9 @@ export function CalendarPage() {
       room?: string;
       notes?: string;
       rawEvent?: CalendarEvent;
+      rawAssignment?: Assignment;
+      rawSession?: ClassSession;
+      rawCourse?: Course;
     }> = [];
 
     const hasPassed = (item: { time?: string; endTime?: string }) => {
@@ -149,6 +161,8 @@ export function CalendarPage() {
             room: exc?.newRoom || s.room || course.room,
             color: course.color,
             shape: 'square',
+            rawCourse: course,
+            rawSession: s,
           });
         }
       });
@@ -187,6 +201,7 @@ export function CalendarPage() {
             color: 'var(--deadlines)',
             shape: 'outline-square',
             notes: a.notes,
+            rawAssignment: a,
           });
         }
       });
@@ -198,6 +213,24 @@ export function CalendarPage() {
   }
 
   const selectedItems = selectedDate ? getItemsForDate(selectedDate) : [];
+
+  const handleItemClick = (item: any) => {
+    if (item.rawEvent) {
+      setOpenEventInEditMode(false);
+      setSelectedEventForModal(item.rawEvent);
+    } else if (item.rawAssignment) {
+      setOpenAssignmentInEditMode(false);
+      setSelectedAssignmentForModal(item.rawAssignment);
+    } else if (item.rawSession && item.rawCourse) {
+      setSelectedClassSessionForModal({
+        course: item.rawCourse,
+        session: item.rawSession,
+        date: selectedDate || currentDate,
+      });
+    } else if (item.id && item.id.startsWith('course-')) {
+      navigate('/schedule');
+    }
+  };
 
   // Universal Calendar Search Results
   const searchResults = useMemo(() => {
@@ -214,6 +247,8 @@ export function CalendarPage() {
       color: string;
       shape: CategoryShape;
       rawEvent?: CalendarEvent;
+      rawAssignment?: Assignment;
+      rawCourse?: Course;
     }> = [];
 
     // Search events
@@ -246,6 +281,7 @@ export function CalendarPage() {
           type: 'deadline',
           color: 'var(--deadlines)',
           shape: 'outline-square',
+          rawAssignment: a,
         });
       }
     });
@@ -266,12 +302,13 @@ export function CalendarPage() {
           type: 'classes',
           color: c.color,
           shape: 'square',
+          rawCourse: c,
         });
       }
     });
 
     return results;
-  }, [searchQuery, events, courses, currentDate]);
+  }, [searchQuery, events, assignments, courses, currentDate]);
 
   // Navigation handlers
   const prevPeriod = () => {
@@ -502,9 +539,7 @@ export function CalendarPage() {
                       setCurrentDate(targetDate);
                       setSelectedDate(targetDate);
                       setSearchQuery('');
-                      if (item.rawEvent) {
-                        setSelectedEventForModal(item.rawEvent);
-                      }
+                      handleItemClick(item);
                     }}
                     style={{
                       padding: '0.5rem 0.625rem',
@@ -685,10 +720,8 @@ export function CalendarPage() {
                           key={item.id}
                           className="group relative"
                           onClick={(e) => {
-                            if (item.rawEvent) {
-                              e.stopPropagation();
-                              setSelectedEventForModal(item.rawEvent);
-                            }
+                            e.stopPropagation();
+                            handleItemClick(item);
                           }}
                           onContextMenu={(e) => {
                             e.preventDefault();
@@ -781,7 +814,11 @@ export function CalendarPage() {
                         color: 'var(--on-surface-variant)',
                       }}
                     >
-                      {quickActionMenu.item.type}
+                      {quickActionMenu.item.type === 'classes' ? (lang === 'id' ? 'Kelas' : 'Class')
+                        : quickActionMenu.item.type === 'exam' ? (lang === 'id' ? 'Ujian' : 'Exam')
+                        : quickActionMenu.item.type === 'deadline' ? (lang === 'id' ? 'Tugas' : 'Task')
+                        : quickActionMenu.item.type === 'personal' ? (lang === 'id' ? 'Pribadi' : 'Personal')
+                        : quickActionMenu.item.type}
                     </span>
                   </div>
                   <div style={{ fontSize: '0.6875rem', color: 'var(--on-surface-variant)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -790,51 +827,108 @@ export function CalendarPage() {
                 </div>
                 <div style={{ padding: '0.3125rem', display: 'flex', flexDirection: 'column', gap: '0.125rem' }}>
                   
-                  <button 
-                    className="apple-context-item context-item" 
-                    onClick={(e) => { e.stopPropagation(); closeQuickActionMenu(); alert('Item pinned to sidebar!'); }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--on-surface-variant)' }}>
-                        <path d="M12 2L12 22M2 12L22 12" />
-                      </svg>
-                      Pin to Sidebar
-                    </div>
-                  </button>
+                  {/* Pin to Sidebar Toggle */}
+                  {(() => {
+                    const isAssign = !!quickActionMenu.item.rawAssignment || quickActionMenu.item.id.startsWith('assign-');
+                    const assignId = quickActionMenu.item.rawAssignment?.id || quickActionMenu.item.id.replace('assign-', '');
+                    const eventId = quickActionMenu.item.rawEvent?.id;
+                    const isPinned = isAssign ? ds.isAssignmentPinned(assignId) : (eventId ? ds.isEventPinned(eventId) : false);
 
+                    return (
+                      <button 
+                        className="apple-context-item context-item" 
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          if (isAssign) {
+                            ds.togglePinAssignment(assignId);
+                          } else if (eventId) {
+                            ds.togglePinEvent(eventId);
+                          }
+                          closeQuickActionMenu(); 
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          {isPinned ? <PinOff size={14} color="var(--primary)" /> : <Pin size={14} />}
+                          <span>
+                            {isPinned
+                              ? (lang === 'id' ? 'Lepas Sematan Sidebar' : 'Unpin from Sidebar')
+                              : (lang === 'id' ? 'Sematkan ke Sidebar' : 'Pin to Sidebar')}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })()}
+
+                  {/* Edit Details */}
                   <button 
                     className="apple-context-item context-item" 
-                    onClick={(e) => { e.stopPropagation(); closeQuickActionMenu(); if(quickActionMenu.item.rawEvent) setSelectedEventForModal(quickActionMenu.item.rawEvent); }}
+                    onClick={(e) => { 
+                      e.stopPropagation(); 
+                      closeQuickActionMenu();
+                      if (quickActionMenu.item.rawEvent) {
+                        setOpenEventInEditMode(true);
+                        setSelectedEventForModal(quickActionMenu.item.rawEvent);
+                      } else if (quickActionMenu.item.rawAssignment) {
+                        setOpenAssignmentInEditMode(true);
+                        setSelectedAssignmentForModal(quickActionMenu.item.rawAssignment);
+                      } else if (quickActionMenu.item.rawSession && quickActionMenu.item.rawCourse) {
+                        setSelectedClassSessionForModal({
+                          course: quickActionMenu.item.rawCourse,
+                          session: quickActionMenu.item.rawSession,
+                          date: quickActionMenu.date,
+                        });
+                      }
+                    }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--on-surface-variant)' }}>
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                       </svg>
-                      Edit Details
+                      <span>{lang === 'id' ? 'Ubah Rincian' : 'Edit Details'}</span>
                     </div>
                   </button>
 
+                  {/* Reschedule / Move */}
                   <button 
                     className="apple-context-item context-item" 
-                    onClick={(e) => { e.stopPropagation(); closeQuickActionMenu(); if(quickActionMenu.item.rawEvent) setSelectedEventForModal(quickActionMenu.item.rawEvent); }}
+                    onClick={(e) => { 
+                      e.stopPropagation(); 
+                      const item = quickActionMenu.item;
+                      const dStr = toDateString(quickActionMenu.date);
+                      setRescheduleItem({
+                        id: item.id,
+                        title: item.title,
+                        type: item.rawAssignment ? 'assignment' : 'event',
+                        date: dStr,
+                        time: item.time || '10:00',
+                        rawEvent: item.rawEvent,
+                        rawAssignment: item.rawAssignment,
+                      });
+                      closeQuickActionMenu(); 
+                    }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--on-surface-variant)' }}>
                         <circle cx="12" cy="12" r="10" />
                         <polyline points="12 6 12 12 16 14" />
                       </svg>
-                      Reschedule / Move
+                      <span>{lang === 'id' ? 'Pindahkan Jadwal' : 'Reschedule / Move'}</span>
                     </div>
                   </button>
 
+                  {/* Duplicate */}
                   <button 
                     className="apple-context-item context-item" 
                     onClick={(e) => { 
                       e.stopPropagation(); 
-                      if (quickActionMenu.item.rawEvent) {
-                        const copy = { ...quickActionMenu.item.rawEvent, title: `${quickActionMenu.item.rawEvent.title} (Copy)` };
+                      const item = quickActionMenu.item;
+                      if (item.rawEvent) {
+                        const copy = { ...item.rawEvent, title: `${item.rawEvent.title} (${lang === 'id' ? 'Salinan' : 'Copy'})` };
                         ds.addEvent(copy);
+                      } else if (item.rawAssignment) {
+                        const { id, ...rest } = item.rawAssignment;
+                        ds.addAssignment({ ...rest, title: `${item.rawAssignment.title} (${lang === 'id' ? 'Salinan' : 'Copy'})` });
                       }
                       closeQuickActionMenu(); 
                     }}
@@ -844,12 +938,13 @@ export function CalendarPage() {
                         <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
                         <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
                       </svg>
-                      Duplicate Event
+                      <span>{lang === 'id' ? 'Duplikat Kegiatan' : 'Duplicate Item'}</span>
                     </div>
                   </button>
 
                   <div className="apple-context-divider" />
 
+                  {/* Category Selection */}
                   <div className="context-item" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.375rem 0.625rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem', fontWeight: 500, color: 'var(--on-surface)' }}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--on-surface-variant)' }}>
@@ -857,19 +952,47 @@ export function CalendarPage() {
                         <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
                         <path d="M2 12h20" />
                       </svg>
-                      Category
+                      {lang === 'id' ? 'Kategori' : 'Category'}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-                      <button type="button" onClick={(e) => { e.stopPropagation(); if(quickActionMenu.item.rawEvent) ds.updateEvent(quickActionMenu.item.rawEvent.id, { type: 'other' }); closeQuickActionMenu(); }} style={{ padding: '0.25rem', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '50%' }} className="hover-highlight"><CategoryIndicator shape="square" color="var(--classes)" size={9} /></button>
-                      <button type="button" onClick={(e) => { e.stopPropagation(); if(quickActionMenu.item.rawEvent) ds.updateEvent(quickActionMenu.item.rawEvent.id, { type: 'exam' }); closeQuickActionMenu(); }} style={{ padding: '0.25rem', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '50%' }} className="hover-highlight"><CategoryIndicator shape="diamond" color="var(--exams)" size={9} /></button>
-                      <button type="button" onClick={(e) => { e.stopPropagation(); if(quickActionMenu.item.rawEvent) ds.updateEvent(quickActionMenu.item.rawEvent.id, { type: 'deadline' }); closeQuickActionMenu(); }} style={{ padding: '0.25rem', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '50%' }} className="hover-highlight"><CategoryIndicator shape="outline-square" color="var(--deadlines)" size={9} /></button>
-                      <button type="button" onClick={(e) => { e.stopPropagation(); if(quickActionMenu.item.rawEvent) ds.updateEvent(quickActionMenu.item.rawEvent.id, { type: 'personal' }); closeQuickActionMenu(); }} style={{ padding: '0.25rem', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '50%' }} className="hover-highlight"><CategoryIndicator shape="circle" color="var(--personal)" size={9} /></button>
+                      <button type="button" title={lang === 'id' ? 'Kelas' : 'Classes'} onClick={(e) => { 
+                        e.stopPropagation(); 
+                        if (quickActionMenu.item.rawEvent) ds.updateEvent(quickActionMenu.item.rawEvent.id, { type: 'class' });
+                        else if (quickActionMenu.item.rawAssignment) ds.updateAssignment(quickActionMenu.item.rawAssignment.id, { category: 'classes' });
+                        closeQuickActionMenu(); 
+                      }} style={{ padding: '0.25rem', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '50%' }} className="hover-highlight"><CategoryIndicator shape="square" color="var(--classes)" size={9} /></button>
+                      
+                      <button type="button" title={lang === 'id' ? 'Ujian' : 'Exam'} onClick={(e) => { 
+                        e.stopPropagation(); 
+                        if (quickActionMenu.item.rawEvent) ds.updateEvent(quickActionMenu.item.rawEvent.id, { type: 'exam' });
+                        else if (quickActionMenu.item.rawAssignment) ds.updateAssignment(quickActionMenu.item.rawAssignment.id, { category: 'exam' });
+                        closeQuickActionMenu(); 
+                      }} style={{ padding: '0.25rem', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '50%' }} className="hover-highlight"><CategoryIndicator shape="diamond" color="var(--exams)" size={9} /></button>
+                      
+                      <button type="button" title={lang === 'id' ? 'Tenggat' : 'Deadline'} onClick={(e) => { 
+                        e.stopPropagation(); 
+                        if (quickActionMenu.item.rawEvent) ds.updateEvent(quickActionMenu.item.rawEvent.id, { type: 'deadline' });
+                        else if (quickActionMenu.item.rawAssignment) ds.updateAssignment(quickActionMenu.item.rawAssignment.id, { category: 'deadline' });
+                        closeQuickActionMenu(); 
+                      }} style={{ padding: '0.25rem', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '50%' }} className="hover-highlight"><CategoryIndicator shape="outline-square" color="var(--deadlines)" size={9} /></button>
+                      
+                      <button type="button" title={lang === 'id' ? 'Pribadi' : 'Personal'} onClick={(e) => { 
+                        e.stopPropagation(); 
+                        if (quickActionMenu.item.rawEvent) ds.updateEvent(quickActionMenu.item.rawEvent.id, { type: 'personal' });
+                        else if (quickActionMenu.item.rawAssignment) ds.updateAssignment(quickActionMenu.item.rawAssignment.id, { category: 'personal' });
+                        closeQuickActionMenu(); 
+                      }} style={{ padding: '0.25rem', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '50%' }} className="hover-highlight"><CategoryIndicator shape="circle" color="var(--personal)" size={9} /></button>
                     </div>
                   </div>
 
+                  {/* Export to .ics */}
                   <button 
                     className="apple-context-item context-item" 
-                    onClick={(e) => { e.stopPropagation(); closeQuickActionMenu(); alert('Event exported to .ics file'); }}
+                    onClick={(e) => { 
+                      e.stopPropagation(); 
+                      closeQuickActionMenu(); 
+                      exportItemToICS(quickActionMenu.item, quickActionMenu.date);
+                    }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--on-surface-variant)' }}>
@@ -879,20 +1002,36 @@ export function CalendarPage() {
                         <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
                         <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
                       </svg>
-                      Share / Export .ics
+                      <span>{lang === 'id' ? 'Ekspor Kalender (.ics)' : 'Share / Export .ics'}</span>
                     </div>
                   </button>
 
                   <div className="apple-context-divider" />
 
+                  {/* Delete Item / Cancel Class */}
                   <button 
                     className="apple-context-item apple-context-item--danger context-item" 
                     onClick={(e) => { 
                       e.stopPropagation(); 
-                      if(quickActionMenu.item.id.startsWith('assign-')) {
-                        ds.deleteAssignment(quickActionMenu.item.id.replace('assign-', ''));
-                      } else if(quickActionMenu.item.rawEvent) {
-                        ds.deleteEvent(quickActionMenu.item.rawEvent.id); 
+                      const item = quickActionMenu.item;
+                      if (item.id.startsWith('assign-') || item.rawAssignment) {
+                        const aId = item.rawAssignment?.id || item.id.replace('assign-', '');
+                        if (window.confirm(lang === 'id' ? `Hapus tugas "${item.title}"?` : `Delete task "${item.title}"?`)) {
+                          ds.deleteAssignment(aId);
+                        }
+                      } else if (item.rawEvent) {
+                        if (window.confirm(lang === 'id' ? `Hapus acara "${item.title}"?` : `Delete event "${item.title}"?`)) {
+                          ds.deleteEvent(item.rawEvent.id);
+                        }
+                      } else if (item.rawSession) {
+                        const dStr = toDateString(quickActionMenu.date);
+                        if (window.confirm(lang === 'id' ? `Batalkan sesi kuliah "${item.title}" pada ${dStr}?` : `Cancel class session "${item.title}" on ${dStr}?`)) {
+                          ds.addSessionException({
+                            classSessionId: item.rawSession.id,
+                            date: dStr,
+                            type: 'cancelled',
+                          });
+                        }
                       }
                       closeQuickActionMenu(); 
                     }}
@@ -901,7 +1040,7 @@ export function CalendarPage() {
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                       </svg>
-                      Delete Event
+                      <span>{quickActionMenu.item.rawSession ? (lang === 'id' ? 'Batalkan Hari Ini' : 'Cancel for Today') : (lang === 'id' ? 'Hapus' : 'Delete')}</span>
                     </div>
                   </button>
                 </div>
@@ -965,10 +1104,8 @@ export function CalendarPage() {
                         <div
                           key={item.id}
                           onClick={(e) => {
-                            if (item.rawEvent) {
-                              e.stopPropagation();
-                              setSelectedEventForModal(item.rawEvent);
-                            }
+                            e.stopPropagation();
+                            handleItemClick(item);
                           }}
                           style={{
                             padding: '0.5rem 0.625rem',
@@ -1044,9 +1181,7 @@ export function CalendarPage() {
                   {selectedItems.map((item) => (
                     <div
                       key={item.id}
-                      onClick={() => {
-                        if (item.rawEvent) setSelectedEventForModal(item.rawEvent);
-                      }}
+                      onClick={() => handleItemClick(item)}
                       style={{
                         padding: '1rem 1.25rem',
                         borderRadius: 8,
@@ -1152,9 +1287,7 @@ export function CalendarPage() {
                     {items.map((item) => (
                       <div
                         key={item.id}
-                        onClick={() => {
-                          if (item.rawEvent) setSelectedEventForModal(item.rawEvent);
-                        }}
+                        onClick={() => handleItemClick(item)}
                         style={{
                           padding: '0.875rem 1.125rem',
                           borderRadius: 8,
@@ -1265,9 +1398,7 @@ export function CalendarPage() {
                 {selectedItems.map((item) => (
                   <div
                     key={item.id}
-                    onClick={() => {
-                      if (item.rawEvent) setSelectedEventForModal(item.rawEvent);
-                    }}
+                    onClick={() => handleItemClick(item)}
                     style={{
                       padding: '0.875rem 1rem',
                       background: `color-mix(in srgb, ${item.color} 5%, var(--surface-container-lowest))`,
@@ -1333,9 +1464,288 @@ export function CalendarPage() {
       <EventDetailsModal
         event={selectedEventForModal}
         isOpen={!!selectedEventForModal}
-        onClose={() => setSelectedEventForModal(null)}
+        openInEditMode={openEventInEditMode}
+        onClose={() => {
+          setSelectedEventForModal(null);
+          setOpenEventInEditMode(false);
+        }}
+      />
+
+      {/* Assignment Details / Edit / Delete Modal */}
+      <AssignmentDetailsModal
+        assignment={selectedAssignmentForModal}
+        isOpen={!!selectedAssignmentForModal}
+        openInEditMode={openAssignmentInEditMode}
+        onClose={() => {
+          setSelectedAssignmentForModal(null);
+          setOpenAssignmentInEditMode(false);
+        }}
+      />
+
+      {/* Reschedule Modal */}
+      <RescheduleModal
+        item={rescheduleItem}
+        isOpen={!!rescheduleItem}
+        onClose={() => setRescheduleItem(null)}
+      />
+
+      {/* Class Session Details Modal */}
+      <ClassSessionModal
+        data={selectedClassSessionForModal}
+        isOpen={!!selectedClassSessionForModal}
+        onClose={() => setSelectedClassSessionForModal(null)}
       />
     </div>
+  );
+}
+
+// ─── Helper Functions & Additional Modals ───
+
+function exportItemToICS(item: any, date: Date) {
+  const dStr = toDateString(date);
+  const dateClean = dStr.replace(/-/g, '');
+  const startTimeClean = (item.time || '09:00').replace(/:/g, '') + '00';
+  const endTimeClean = (item.endTime || '10:00').replace(/:/g, '') + '00';
+  const uid = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}@omnia.app`;
+
+  const icsData = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Omnia//College Life Planner//EN',
+    'CALSCALE:GREGORIAN',
+    'BEGIN:VEVENT',
+    `UID:${uid}`,
+    `DTSTAMP:${dateClean}T000000Z`,
+    `DTSTART:${dateClean}T${startTimeClean}`,
+    `DTEND:${dateClean}T${endTimeClean}`,
+    `SUMMARY:${item.title.replace(/\n/g, ' ')}`,
+    item.room ? `LOCATION:${item.room.replace(/\n/g, ' ')}` : '',
+    item.notes ? `DESCRIPTION:${item.notes.replace(/\n/g, '\\n')}` : '',
+    'STATUS:CONFIRMED',
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].filter(Boolean).join('\r\n');
+
+  const blob = new Blob([icsData], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${item.title.replace(/[^a-zA-Z0-9_-]/g, '_')}.ics`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function RescheduleModal({
+  item,
+  isOpen,
+  onClose,
+}: {
+  item: {
+    id: string;
+    title: string;
+    type: 'event' | 'assignment';
+    date: string;
+    time?: string;
+    rawEvent?: CalendarEvent;
+    rawAssignment?: Assignment;
+  } | null;
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  const lang = useLanguage();
+  const [newDate, setNewDate] = useState(item?.date || toDateString(new Date()));
+  const [newTime, setNewTime] = useState(item?.time || '10:00');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (item) {
+      setNewDate(item.date);
+      setNewTime(item.time || '10:00');
+      setIsSubmitting(false);
+    }
+  }, [item, isOpen]);
+
+  if (!item) return null;
+
+  const handleSave = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      if (item.rawEvent) {
+        await ds.updateEvent(item.rawEvent.id, {
+          date: newDate,
+          startTime: newTime || undefined,
+        });
+      } else if (item.rawAssignment) {
+        await ds.updateAssignment(item.rawAssignment.id, {
+          dueDate: `${newDate}T${newTime || '23:59'}`,
+        });
+      }
+      onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={lang === 'id' ? 'Pindahkan Jadwal' : 'Reschedule Item'}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ padding: '0.75rem 1rem', background: 'var(--surface-container-low)', borderRadius: 8, border: '1px solid var(--outline-variant)' }}>
+          <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', marginBottom: '0.25rem', textTransform: 'uppercase', fontWeight: 600 }}>
+            {item.type === 'assignment' ? (lang === 'id' ? 'Tugas' : 'Assignment') : (lang === 'id' ? 'Acara Kalender' : 'Calendar Event')}
+          </div>
+          <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--on-surface)' }}>
+            {item.title}
+          </div>
+        </div>
+
+        <div className="modal-form-grid-2col">
+          <div>
+            <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+              {lang === 'id' ? 'Tanggal Baru *' : 'New Date *'}
+            </label>
+            <input
+              type="date"
+              value={newDate}
+              onChange={(e) => setNewDate(e.target.value)}
+              style={{ width: '100%' }}
+              required
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+              {lang === 'id' ? 'Waktu Baru' : 'New Time'}
+            </label>
+            <input
+              type="time"
+              value={newTime}
+              onChange={(e) => setNewTime(e.target.value)}
+              style={{ width: '100%' }}
+            />
+          </div>
+        </div>
+
+        <div className="modal-actions-sticky">
+          <button type="button" className="btn-outline" onClick={onClose} disabled={isSubmitting}>
+            {lang === 'id' ? 'Batal' : 'Cancel'}
+          </button>
+          <button type="button" className="btn-primary" onClick={handleSave} disabled={isSubmitting}>
+            {isSubmitting ? (lang === 'id' ? 'Memindahkan…' : 'Moving…') : (lang === 'id' ? 'Simpan Jadwal Baru' : 'Save New Schedule')}
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+function ClassSessionModal({
+  data,
+  isOpen,
+  onClose,
+}: {
+  data: { course: any; session: any; date: Date } | null;
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  const lang = useLanguage();
+  const navigate = useNavigate();
+
+  if (!data) return null;
+  const { course, session, date } = data;
+  const dateStr = toDateString(date);
+
+  const handleCancelToday = () => {
+    if (window.confirm(lang === 'id' ? `Batalkan sesi perkuliahan ${course.code} untuk tanggal ${dateStr}?` : `Cancel lecture session for ${course.code} on ${dateStr}?`)) {
+      ds.addSessionException({
+        classSessionId: session.id,
+        date: dateStr,
+        type: 'cancelled',
+      });
+      onClose();
+    }
+  };
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={lang === 'id' ? 'Detail Kelas Perkuliahan' : 'Course Session Details'}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{
+            width: 14,
+            height: 14,
+            borderRadius: 3,
+            background: course.color || 'var(--primary)',
+            flexShrink: 0
+          }} />
+          <div>
+            <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: course.color || 'var(--primary)' }}>
+              {course.code}
+            </div>
+            <h2 style={{ fontSize: '1.125rem', fontWeight: 700, margin: 0, color: 'var(--on-surface)' }}>
+              {course.name}
+            </h2>
+          </div>
+        </div>
+
+        <div style={{ padding: '0.875rem 1rem', borderRadius: 8, background: 'var(--surface-container-low)', border: '1px solid var(--outline-variant)', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.875rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ color: 'var(--on-surface-variant)' }}>{lang === 'id' ? 'Tanggal:' : 'Date:'}</span>
+            <span style={{ fontWeight: 600 }}>{formatDateLong(date)}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ color: 'var(--on-surface-variant)' }}>{lang === 'id' ? 'Waktu Kuliah:' : 'Time:'}</span>
+            <span className="tabular-nums" style={{ fontWeight: 600 }}>{formatTime12(session.startTime)} – {formatTime12(session.endTime)}</span>
+          </div>
+          {(session.room || course.room) && (
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: 'var(--on-surface-variant)' }}>{lang === 'id' ? 'Ruangan:' : 'Room:'}</span>
+              <span style={{ fontWeight: 600 }}>{session.room || course.room}</span>
+            </div>
+          )}
+          {course.professor && (
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: 'var(--on-surface-variant)' }}>{lang === 'id' ? 'Dosen:' : 'Instructor:'}</span>
+              <span style={{ fontWeight: 600 }}>{course.professor}</span>
+            </div>
+          )}
+        </div>
+
+        <div className="modal-actions-sticky" style={{ justifyContent: 'space-between' }}>
+          <button
+            type="button"
+            className="btn-outline"
+            onClick={handleCancelToday}
+            style={{ color: 'var(--error)', borderColor: 'var(--error-container)' }}
+          >
+            {lang === 'id' ? 'Batalkan Hari Ini' : 'Cancel for Today'}
+          </button>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button type="button" className="btn-ghost" onClick={onClose}>
+              {lang === 'id' ? 'Tutup' : 'Close'}
+            </button>
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => {
+                onClose();
+                navigate('/schedule');
+              }}
+            >
+              {lang === 'id' ? 'Lihat di Jadwal' : 'View in Schedule'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Modal>
   );
 }
 

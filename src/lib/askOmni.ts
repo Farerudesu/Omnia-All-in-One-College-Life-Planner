@@ -61,6 +61,8 @@ export interface ProposedAction {
 export interface AskOmniResponse {
   reply: string;
   proposedAction?: ProposedAction;
+  proposedActions?: ProposedAction[];  // receipt queue: array of items from a single receipt
+  receiptTotal?: number;               // declared total from receipt for validation
   proposedEvent?: ProposedCalendarEvent;
 }
 

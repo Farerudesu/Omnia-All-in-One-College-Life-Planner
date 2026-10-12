@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Modal } from './Modal';
 import * as ds from '../lib/dataService';
 import { useData } from '../lib/useData';
-import { CheckCircle, Clock } from 'lucide-react';
+import { CheckCircle, Clock, Pin } from 'lucide-react';
 import type { Assignment, Priority, AssignmentStatus } from '../types';
 import { useLanguage } from '../lib/useLanguage';
 import { formatDateShort, formatTime12 } from '../lib/dateUtils';
@@ -11,11 +11,13 @@ interface AssignmentDetailsModalProps {
   assignment: Assignment | null;
   isOpen: boolean;
   onClose: () => void;
+  openInEditMode?: boolean;
 }
 
-export function AssignmentDetailsModal({ assignment, isOpen, onClose }: AssignmentDetailsModalProps) {
+export function AssignmentDetailsModal({ assignment, isOpen, onClose, openInEditMode }: AssignmentDetailsModalProps) {
   const lang = useLanguage();
   const courses = useData(ds.getCourses);
+  const pinnedIds = useData(ds.getPinnedAssignmentIds);
   const [isEditing, setIsEditing] = useState(false);
 
   // Form state
@@ -33,7 +35,8 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose }: Assignme
   useEffect(() => {
     if (assignment) {
       setTitle(assignment.title);
-      setDueDate(assignment.dueDate);
+      // Strip seconds so datetime-local input populates correctly ("HH:mm:ss" → "HH:mm")
+      setDueDate(assignment.dueDate.replace(/(\d{2}:\d{2}):\d{2}$/, '$1'));
       setPriority(assignment.priority);
       setStatus(assignment.status);
       setCategory(assignment.category || 'classes');
@@ -41,11 +44,11 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose }: Assignme
       setNotes(assignment.notes || '');
       const existingRem = ds.getUserReminders().find((r) => r.itemId === assignment.id);
       setReminderMinutes(existingRem ? existingRem.minutesBefore : 0);
-      setIsEditing(false);
+      setIsEditing(!!openInEditMode);
       setTitleError('');
       setIsSubmitting(false);
     }
-  }, [assignment, isOpen]);
+  }, [assignment, isOpen, openInEditMode]);
 
   if (!assignment) return null;
 
@@ -257,59 +260,28 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose }: Assignme
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          {/* Header pill & Course badge */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-            {course && (
-              <div>
+          {/* Status + high-priority badge row — course shown only in metadata block below */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              {assignment.priority === 'high' && (
                 <span
+                  className="badge"
                   style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.375rem',
-                    fontSize: '0.8125rem',
+                    background: 'var(--error-container)',
+                    color: 'var(--on-error-container)',
                     fontWeight: 600,
-                    background: `${course.color}15`,
-                    color: course.color,
-                    padding: '0.25rem 0.625rem',
-                    borderRadius: 6,
+                    fontSize: '0.75rem',
                   }}
                 >
-                  <span style={{ fontWeight: 700 }}>{course.code}</span>
-                  <span>{course.name}</span>
+                  {lang === 'id' ? 'Prioritas Tinggi' : 'High Priority'}
                 </span>
-              </div>
-            )}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <span
-                className="badge"
-                style={{
-                  background:
-                    assignment.priority === 'high'
-                      ? 'var(--error-container)'
-                      : assignment.priority === 'medium'
-                        ? 'var(--tertiary-container)'
-                        : 'var(--surface-container-high)',
-                  color:
-                    assignment.priority === 'high'
-                      ? 'var(--on-error-container)'
-                      : assignment.priority === 'medium'
-                        ? 'var(--on-tertiary-container)'
-                        : 'var(--on-surface-variant)',
-                  fontWeight: 600,
-                  fontSize: '0.75rem',
-                  textTransform: 'capitalize',
-                }}
-              >
-                {assignment.priority === 'high' ? (lang === 'id' ? 'Prioritas Tinggi' : 'High Priority')
-                  : assignment.priority === 'medium' ? (lang === 'id' ? 'Prioritas Sedang' : 'Medium Priority')
-                  : (lang === 'id' ? 'Prioritas Rendah' : 'Low Priority')}
-              </span>
+              )}
               <button
                 onClick={handleToggleStatus}
                 className="badge min-touch-target"
+                aria-label={lang === 'id' ? 'Ubah status tugas' : 'Toggle task status'}
                 style={{
                   cursor: 'pointer',
-                  border: 'none',
+                  border: '1px solid var(--outline-variant)',
                   background:
                     assignment.status === 'done'
                       ? 'var(--primary-container)'
@@ -337,7 +309,6 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose }: Assignme
                   )}
                 </div>
               </button>
-            </div>
           </div>
 
           {/* Title */}
@@ -359,6 +330,12 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose }: Assignme
               gap: '0.5rem',
             }}
           >
+            {course && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
+                <span style={{ color: 'var(--on-surface-variant)', width: 100, flexShrink: 0 }}>{lang === 'id' ? 'Mata Kuliah:' : 'Course:'}</span>
+                <span style={{ fontWeight: 600, color: course.color }}>{course.code ? `${course.code} ${course.name}` : course.name}</span>
+              </div>
+            )}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
               <span style={{ color: 'var(--on-surface-variant)', width: 100 }}>{lang === 'id' ? 'Tenggat Waktu:' : 'Due Date:'}</span>
               <span className="tabular-nums" style={{ fontWeight: 600, color: 'var(--on-surface)' }}>
@@ -408,6 +385,22 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose }: Assignme
               {lang === 'id' ? 'Hapus' : 'Delete'}
             </button>
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="btn-outline"
+                onClick={() => ds.togglePinAssignment(assignment.id)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.375rem',
+                  color: pinnedIds.includes(assignment.id) ? 'var(--primary)' : 'inherit',
+                  borderColor: pinnedIds.includes(assignment.id) ? 'var(--primary)' : undefined,
+                  background: pinnedIds.includes(assignment.id) ? 'color-mix(in srgb, var(--primary) 10%, transparent)' : undefined,
+                }}
+              >
+                <Pin size={14} style={{ fill: pinnedIds.includes(assignment.id) ? 'currentColor' : 'none' }} />
+                {pinnedIds.includes(assignment.id) ? (lang === 'id' ? 'Lepas Sematan' : 'Unpin') : (lang === 'id' ? 'Sematkan ke Sidebar' : 'Pin to Sidebar')}
+              </button>
               <button type="button" className="btn-ghost" onClick={onClose}>
                 {lang === 'id' ? 'Tutup' : 'Close'}
               </button>

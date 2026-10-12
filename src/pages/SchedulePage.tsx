@@ -1490,10 +1490,11 @@ export function SchedulePage() {
                   }}>
                     {/* Day headers */}
                     {(() => {
+                      const detectedTz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Makassar';
                       const tzOffsetMinutes = -new Date().getTimezoneOffset();
                       const tzOffsetHours = Math.floor(Math.abs(tzOffsetMinutes) / 60);
                       const tzSign = tzOffsetMinutes >= 0 ? '+' : '-';
-                      const tzLabel = `GMT${tzSign}${tzOffsetHours}`;
+                      const tzLabel = detectedTz.split('/').pop()?.replace(/_/g, ' ') ?? `GMT${tzSign}${tzOffsetHours}`;
                       return (
                         <div
                           style={{

@@ -332,14 +332,12 @@ export function SettingsPage() {
             </p>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            {hasChanges && (
             <button
               type="button"
               className="btn-outline min-touch-target"
               onClick={handleReset}
-              disabled={!hasChanges}
               style={{
-                opacity: hasChanges ? 1 : 0.45,
-                cursor: hasChanges ? 'pointer' : 'not-allowed',
                 gap: '0.375rem',
               }}
             >
@@ -349,6 +347,7 @@ export function SettingsPage() {
               </svg>
               {language === 'id' ? 'Batal perubahan' : 'Reset changes'}
             </button>
+            )}
             <button type="button" className="btn-primary min-touch-target" onClick={handleSave} style={{ minWidth: 140, justifyContent: 'center' }}>
               {saved ? (
                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>

@@ -523,6 +523,142 @@ export function deleteAssignment(id: string): void {
   void mutateTable('assignments', () => getClient().from('assignments').delete().eq('id', id).eq('user_id', activeUserId));
 }
 
+// ─── Pinned Items Management ───
+let pinnedAssignmentIds: string[] = (() => {
+  try {
+    const raw = localStorage.getItem('omnia_pinned_assignments');
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+})();
+
+let pinnedEventIds: string[] = (() => {
+  try {
+    const raw = localStorage.getItem('omnia_pinned_events');
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+})();
+
+let dismissedAutoPins: string[] = (() => {
+  try {
+    const raw = localStorage.getItem('omnia_dismissed_auto_pins');
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+})();
+
+export function getPinnedAssignmentIds(): string[] {
+  return pinnedAssignmentIds;
+}
+
+export function isAssignmentPinned(id: string): boolean {
+  return pinnedAssignmentIds.includes(id);
+}
+
+export function pinAssignment(id: string): void {
+  if (!pinnedAssignmentIds.includes(id)) {
+    pinnedAssignmentIds = [...pinnedAssignmentIds, id];
+    localStorage.setItem('omnia_pinned_assignments', JSON.stringify(pinnedAssignmentIds));
+    dismissedAutoPins = dismissedAutoPins.filter((dId) => dId !== id);
+    localStorage.setItem('omnia_dismissed_auto_pins', JSON.stringify(dismissedAutoPins));
+    notify();
+  }
+}
+
+export function unpinAssignment(id: string): void {
+  pinnedAssignmentIds = pinnedAssignmentIds.filter((item) => item !== id);
+  localStorage.setItem('omnia_pinned_assignments', JSON.stringify(pinnedAssignmentIds));
+  if (!dismissedAutoPins.includes(id)) {
+    dismissedAutoPins = [...dismissedAutoPins, id];
+    localStorage.setItem('omnia_dismissed_auto_pins', JSON.stringify(dismissedAutoPins));
+  }
+  notify();
+}
+
+export function togglePinAssignment(id: string): boolean {
+  if (isAssignmentPinned(id)) {
+    unpinAssignment(id);
+    return false;
+  } else {
+    pinAssignment(id);
+    return true;
+  }
+}
+
+export function getDismissedAutoPins(): string[] {
+  return dismissedAutoPins;
+}
+
+export function resetDismissedAutoPins(): void {
+  dismissedAutoPins = [];
+  localStorage.removeItem('omnia_dismissed_auto_pins');
+  notify();
+}
+
+export function getPinnedAssignments(): { assignment: Assignment; isManual: boolean }[] {
+  const manualIds = pinnedAssignmentIds;
+  const activeAssignments = assignments.filter((a) => a.status !== 'done');
+  
+  if (manualIds.length > 0) {
+    const manualList = manualIds
+      .map((id) => activeAssignments.find((a) => a.id === id))
+      .filter((a): a is Assignment => !!a)
+      .map((a) => ({ assignment: a, isManual: true }));
+    if (manualList.length > 0) return manualList;
+  }
+  
+  const dismissed = dismissedAutoPins;
+  const sorted = [...activeAssignments].sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+  const autoCandidate = sorted.find((a) => !dismissed.includes(a.id));
+  
+  if (autoCandidate) {
+    return [{ assignment: autoCandidate, isManual: false }];
+  }
+  return [];
+}
+
+// ─── Pinned Events Management ───
+export function getPinnedEventIds(): string[] {
+  return pinnedEventIds;
+}
+
+export function isEventPinned(id: string): boolean {
+  return pinnedEventIds.includes(id);
+}
+
+export function pinEvent(id: string): void {
+  if (!pinnedEventIds.includes(id)) {
+    pinnedEventIds = [...pinnedEventIds, id];
+    localStorage.setItem('omnia_pinned_events', JSON.stringify(pinnedEventIds));
+    notify();
+  }
+}
+
+export function unpinEvent(id: string): void {
+  pinnedEventIds = pinnedEventIds.filter((item) => item !== id);
+  localStorage.setItem('omnia_pinned_events', JSON.stringify(pinnedEventIds));
+  notify();
+}
+
+export function togglePinEvent(id: string): boolean {
+  if (isEventPinned(id)) {
+    unpinEvent(id);
+    return false;
+  } else {
+    pinEvent(id);
+    return true;
+  }
+}
+
+export function getPinnedEvents(): CalendarEvent[] {
+  if (pinnedEventIds.length === 0) return [];
+  return events.filter((ev) => pinnedEventIds.includes(ev.id));
+}
+
 // ─── Transactions ───
 export function getTransactions(): Transaction[] {
   return transactions;
