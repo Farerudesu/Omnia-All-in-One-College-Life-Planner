@@ -98,9 +98,15 @@ export function FinancePage() {
       budgetPercent > 80 ? 'var(--warning)' :
         'var(--primary)';
 
-  // Filtered transactions for the ledger table
+  // Sorting state for transactions table
+  type SortField = 'date' | 'merchant' | 'category' | 'paymentMethod' | 'amount';
+  type SortDirection = 'asc' | 'desc';
+  const [sortField, setSortField] = useState<SortField>('date');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  // Filtered and sorted transactions for the ledger table
   const filteredTransactions = useMemo(() => {
-    return transactions.filter((t) => {
+    const list = transactions.filter((t) => {
       if (typeFilter !== 'all' && t.type !== typeFilter) return false;
       if (categoryFilter !== 'all' && t.category !== categoryFilter) return false;
       if (searchQuery.trim()) {
@@ -112,7 +118,31 @@ export function FinancePage() {
       }
       return true;
     });
-  }, [transactions, typeFilter, categoryFilter, searchQuery]);
+
+    list.sort((a, b) => {
+      let comparison = 0;
+      switch (sortField) {
+        case 'date':
+          comparison = a.date.localeCompare(b.date);
+          break;
+        case 'merchant':
+          comparison = a.merchant.localeCompare(b.merchant, undefined, { sensitivity: 'base' });
+          break;
+        case 'category':
+          comparison = a.category.localeCompare(b.category, undefined, { sensitivity: 'base' });
+          break;
+        case 'paymentMethod':
+          comparison = (a.paymentMethod || '').localeCompare(b.paymentMethod || '', undefined, { sensitivity: 'base' });
+          break;
+        case 'amount':
+          comparison = a.amount - b.amount;
+          break;
+      }
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+
+    return list;
+  }, [transactions, typeFilter, categoryFilter, searchQuery, sortField, sortDirection]);
 
   // Real CSV export
   const handleExportCSV = () => {
@@ -147,23 +177,7 @@ export function FinancePage() {
           flexWrap: 'wrap', gap: '0.75rem',
         }}>
           <div>
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              marginBottom: '0.375rem',
-            }}>
-              <span className="badge" style={{ background: 'var(--surface-container-high)', color: 'var(--on-surface-variant)', fontWeight: 600 }}>
-                {lang === 'id' ? 'Semester Ganjil 2026' : 'Fall Semester 2026'}
-              </span>
-              <span style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)' }}>
-                {lang === 'id' ? 'Akun Mahasiswa Aktif' : 'Active Student Account'}
-              </span>
-            </div>
-            <h1>{t.finance.title}</h1>
-            <p className="subtitle">
-              {t.finance.subtitle}
-            </p>
+            <h1 style={{ margin: 0 }}>{t.finance.title}</h1>
           </div>
           <div className="finance-header-actions" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             <button className="btn-ghost min-touch-target" onClick={() => navigate('/ask-omni')} style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
@@ -500,24 +514,88 @@ export function FinancePage() {
               <table className="finance-transaction-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--outline-variant)' }}>
-                    {(lang === 'id'
-                      ? ['Tanggal', 'Tempat / Pengeluaran', 'Kategori', 'Metode Pembayaran', 'Nominal', 'Aksi']
-                                            : ['Date', 'Merchant / Description', 'Category', 'Payment Method', 'Amount', 'Actions']
-                    ).map((h, idx) => (
-                      <th
-                        key={h}
-                        style={{
-                          padding: '0.625rem 0.75rem',
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                          color: 'var(--on-surface-variant)',
-                          textAlign: idx === 4 ? 'right' : idx === 5 ? 'center' : 'left',
-                                                    width: idx === 5 ? 90 : undefined,
-                        }}
-                      >
-                        {h}
-                      </th>
-                    ))}
+                    {([
+                      { field: 'date' as SortField, label: lang === 'id' ? 'Tanggal' : 'Date', width: 110 },
+                      { field: 'merchant' as SortField, label: lang === 'id' ? 'Tempat / Pengeluaran' : 'Merchant / Description' },
+                      { field: 'category' as SortField, label: lang === 'id' ? 'Kategori' : 'Category', width: 140 },
+                      { field: 'paymentMethod' as SortField, label: lang === 'id' ? 'Metode Pembayaran' : 'Payment Method', width: 160 },
+                      { field: 'amount' as SortField, label: lang === 'id' ? 'Nominal' : 'Amount', width: 180 },
+                    ]).map((col) => {
+                      const isSortActive = sortField === col.field;
+                      const isAmount = col.field === 'amount';
+                      return (
+                        <th
+                          key={col.field}
+                          onClick={() => {
+                            if (sortField === col.field) {
+                              setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+                            } else {
+                              setSortField(col.field);
+                              setSortDirection(col.field === 'amount' ? 'desc' : col.field === 'date' ? 'desc' : 'asc');
+                            }
+                          }}
+                          style={{
+                            padding: isAmount ? '0.625rem 2.5rem 0.625rem 0.75rem' : '0.625rem 0.75rem',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            color: isSortActive ? 'var(--primary)' : 'var(--on-surface-variant)',
+                            textAlign: isAmount ? 'right' : 'left',
+                            width: col.width,
+                            cursor: 'pointer',
+                            userSelect: 'none',
+                            whiteSpace: 'nowrap',
+                            transition: 'color 0.15s ease',
+                          }}
+                          aria-sort={isSortActive ? (sortDirection === 'asc' ? 'ascending' : 'descending') : undefined}
+                          title={lang === 'id' ? `Urutkan berdasarkan ${col.label}` : `Sort by ${col.label}`}
+                        >
+                          <span style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: isAmount ? 'flex-end' : 'flex-start',
+                            gap: '0.25rem',
+                            width: isAmount ? '100%' : 'auto',
+                          }}>
+                            {col.label}
+                            <span style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              color: isSortActive ? 'var(--primary)' : 'var(--on-surface-variant)',
+                              opacity: isSortActive ? 1 : 0.35,
+                            }}>
+                              {isSortActive ? (
+                                sortDirection === 'asc' ? (
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                                    <polyline points="18 15 12 9 6 15" />
+                                  </svg>
+                                ) : (
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                                    <polyline points="6 9 12 15 18 9" />
+                                  </svg>
+                                )
+                              ) : (
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                                  <path d="M7 15l5 5 5-5M7 9l5-5 5 5" />
+                                </svg>
+                              )}
+                            </span>
+                          </span>
+                        </th>
+                      );
+                    })}
+                    <th
+                      style={{
+                        padding: '0.625rem 0.75rem',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        color: 'var(--on-surface-variant)',
+                        textAlign: 'center',
+                        width: 90,
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {lang === 'id' ? 'Aksi' : 'Actions'}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -577,12 +655,13 @@ export function FinancePage() {
                         </span>
                       </td>
                       <td data-label={lang === 'id' ? 'Metode Pembayaran' : 'Payment Method'} className="finance-transaction-payment" style={{ padding: '0.75rem', fontSize: '0.8125rem', color: 'var(--on-surface-variant)' }}>
-                        {t.type === 'expense' ? (t.paymentMethod || (lang === 'id' ? 'Tidak dicatat' : 'Not recorded')) : '—'}
+                        {t.paymentMethod || (lang === 'id' ? 'Tidak dicatat' : 'Not recorded')}
                       </td>
                       <td data-label={lang === 'id' ? 'Nominal' : 'Amount'} className="finance-transaction-amount tabular-nums" style={{
-                        padding: '0.75rem', fontSize: '0.875rem', fontWeight: 600,
+                        padding: '0.75rem 2.5rem 0.75rem 0.75rem', fontSize: '0.875rem', fontWeight: 600,
                         textAlign: 'right',
                         color: t.type === 'income' ? 'var(--primary)' : 'var(--on-surface)',
+                        whiteSpace: 'nowrap',
                       }}>
                         {t.type === 'income' ? '+' : '–'}{formatMoney(t.amount)}
                       </td>

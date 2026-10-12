@@ -43,10 +43,10 @@ function VersionPage() {
   return (
     <main style={{ padding: '2rem', fontFamily: 'monospace' }}>
       <h1>Omnia version</h1>
-      <p>Version: 1.3</p>
-      <p>Build: 2026-10-13 06:20:00 +08:00</p>
-      <p>Commit: a4f1854</p>
-      <p>Changelog: assignment course selection fix, optimistic state updates, calendar view overhaul, pin to sidebar, receipt scanning in Ask Omni</p>
+      <p>Version: 1.6</p>
+      <p>Build: 2026-10-13 07:38:00 +08:00</p>
+      <p>Commit: d8e41a9</p>
+      <p>Changelog: mobile full-width 7-day schedule strip without horizontal scroll, compact mobile page and card padding to reclaim screen space, wrapping calendar legend chips without overflow, expanded mobile finance merchant text width</p>
       <p style={{ marginTop: '1.5rem' }}>
         <a href="/schedule" style={{ color: 'var(--primary, #0284c7)', textDecoration: 'underline' }}>← Back to App</a>
       </p>

@@ -1365,16 +1365,22 @@ export function SchedulePage() {
                 <div
                   className="show-mobile schedule-week-nav-bar"
                   style={{
-                    padding: '0.625rem 0.875rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '0.75rem',
+                    padding: '0.45rem 0.5rem',
                     background: 'var(--surface-container-lowest)',
                     borderBottom: '1px solid var(--outline-variant)',
+                    width: '100%',
+                    boxSizing: 'border-box',
                   }}
                 >
-                  <div className="horizontal-scroll-chips" style={{ alignItems: 'center', overflowX: 'auto', flex: 1, padding: '2px 1rem 2px 0' }}>
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(7, 1fr)',
+                      gap: '4px',
+                      width: '100%',
+                      boxSizing: 'border-box',
+                    }}
+                  >
                     {stripDays.map((date, idx) => {
                       const dayNames = lang === 'id' ? ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'] : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
                       const dayIdx = getISODay(date) - 1;
@@ -1392,12 +1398,11 @@ export function SchedulePage() {
                               setCurrentDate(date);
                             }
                           }}
-                          className="min-touch-target"
                           style={{
-                            flex: '1 0 auto',
-                            minWidth: 50,
-                            padding: '0.45rem 0.4rem',
-                            borderRadius: 10,
+                            width: '100%',
+                            minWidth: 0,
+                            padding: '0.4rem 0.1rem',
+                            borderRadius: 8,
                             border: isSelected
                               ? '1.5px solid var(--primary)'
                               : '1px solid var(--outline-variant)',
@@ -1410,58 +1415,22 @@ export function SchedulePage() {
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'center',
+                            justifyContent: 'center',
                             cursor: 'pointer',
-                            boxShadow: isSelected ? '0 2px 6px rgba(0,0,0,0.12)' : 'none',
-                            transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
+                            boxShadow: isSelected ? '0 1px 4px rgba(0,0,0,0.12)' : 'none',
+                            transition: 'all 0.15s cubic-bezier(0.16, 1, 0.3, 1)',
+                            userSelect: 'none',
                           }}
                         >
-                          <span style={{ fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', opacity: isSelected ? 0.95 : 0.7 }}>
+                          <span style={{ fontSize: '0.625rem', fontWeight: 700, textTransform: 'uppercase', opacity: isSelected ? 0.95 : 0.7, letterSpacing: '-0.01em', lineHeight: 1 }}>
                             {dayNames[dayIdx] || 'DAY'}
                           </span>
-                          <span className="tabular-nums" style={{ fontSize: '0.875rem', fontWeight: 700, lineHeight: 1.1 }}>
+                          <span className="tabular-nums" style={{ fontSize: '0.875rem', fontWeight: 700, lineHeight: 1.1, marginTop: '2px' }}>
                             {date.getDate()}
                           </span>
                         </button>
                       );
                     })}
-                  </div>
-                  <div style={{ display: 'flex', gap: '0.375rem', flexShrink: 0 }}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (viewMode === 'today') {
-                          prevPeriod();
-                        } else {
-                          scrollGridBy(-160);
-                        }
-                      }}
-                      className="btn-ghost min-touch-target"
-                      aria-label="Previous"
-                      title="Previous"
-                      style={{ width: 36, height: 36, padding: 0, borderRadius: 10, background: 'var(--surface-container-low)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
-                        <polyline points="15 18 9 12 15 6" />
-                      </svg>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (viewMode === 'today') {
-                          nextPeriod();
-                        } else {
-                          scrollGridBy(160);
-                        }
-                      }}
-                      className="btn-ghost min-touch-target"
-                      aria-label="Next"
-                      title="Next"
-                      style={{ width: 36, height: 36, padding: 0, borderRadius: 10, background: 'var(--surface-container-low)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
-                        <polyline points="9 18 15 12 9 6" />
-                      </svg>
-                    </button>
                   </div>
                 </div>
                 <div

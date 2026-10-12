@@ -105,7 +105,7 @@ export function TransactionModal({ transaction, isOpen, onClose }: TransactionMo
           type,
           date,
           notes: notes.trim() || undefined,
-          paymentMethod: type === 'expense' ? (resolvedPaymentMethod || undefined) : undefined,
+          paymentMethod: resolvedPaymentMethod || undefined,
         });
       } else {
         ds.addTransaction({
@@ -115,7 +115,7 @@ export function TransactionModal({ transaction, isOpen, onClose }: TransactionMo
           type,
           date,
           notes: notes.trim() || undefined,
-          paymentMethod: type === 'expense' ? (resolvedPaymentMethod || undefined) : undefined,
+          paymentMethod: resolvedPaymentMethod || undefined,
         });
       }
       setMerchantError('');
@@ -268,35 +268,33 @@ export function TransactionModal({ transaction, isOpen, onClose }: TransactionMo
           </div>
         </div>
 
-        {type === 'expense' && (
-          <div>
-            <label className="label">
-              {lang === 'id' ? 'Metode Pembayaran' : 'Payment Method'}
-            </label>
-            <select
-              value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value)}
-              style={{ width: '100%', marginBottom: paymentMethod === 'custom' ? '0.5rem' : 0 }}
-            >
-              {paymentMethods.map((pm) => (
-                <option key={pm} value={pm}>
-                  {pm}
-                </option>
-              ))}
-              <option value="custom">{lang === 'id' ? 'Lainnya (Kustom)...' : 'Custom...'}</option>
-            </select>
-            {paymentMethod === 'custom' && (
-              <input
-                type="text"
-                value={customPaymentMethod}
-                onChange={(e) => setCustomPaymentMethod(e.target.value)}
-                placeholder={lang === 'id' ? 'Masukkan nama metode pembayaran' : 'Enter payment method name'}
-                style={{ width: '100%' }}
-                autoFocus
-              />
-            )}
-          </div>
-        )}
+        <div>
+          <label className="label">
+            {lang === 'id' ? 'Metode Pembayaran' : 'Payment Method'}
+          </label>
+          <select
+            value={paymentMethod}
+            onChange={(e) => setPaymentMethod(e.target.value)}
+            style={{ width: '100%', marginBottom: paymentMethod === 'custom' ? '0.5rem' : 0 }}
+          >
+            {paymentMethods.map((pm) => (
+              <option key={pm} value={pm}>
+                {pm}
+              </option>
+            ))}
+            <option value="custom">{lang === 'id' ? 'Lainnya (Kustom)...' : 'Custom...'}</option>
+          </select>
+          {paymentMethod === 'custom' && (
+            <input
+              type="text"
+              value={customPaymentMethod}
+              onChange={(e) => setCustomPaymentMethod(e.target.value)}
+              placeholder={lang === 'id' ? 'Masukkan nama metode pembayaran' : 'Enter payment method name'}
+              style={{ width: '100%' }}
+              autoFocus
+            />
+          )}
+        </div>
 
         <div>
           <label className="label">

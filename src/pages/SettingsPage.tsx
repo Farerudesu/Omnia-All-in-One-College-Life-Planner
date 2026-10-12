@@ -313,23 +313,7 @@ export function SettingsPage() {
           flexWrap: 'wrap', gap: '0.75rem',
         }}>
           <div>
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              marginBottom: '0.375rem',
-            }}>
-              <span className="badge" style={{ background: 'var(--surface-container-high)', color: 'var(--on-surface-variant)', fontWeight: 600 }}>
-                {language === 'id' ? 'Konfigurasi Sistem' : 'System Configuration'}
-              </span>
-              <span style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)' }}>
-                {language === 'id' ? 'Ruang Kerja & Sinkronisasi Pribadi' : 'Personal Workspace & Sync'}
-              </span>
-            </div>
-            <h1>{t.settings.title}</h1>
-            <p className="subtitle">
-              {t.settings.subtitle}
-            </p>
+            <h1 style={{ margin: 0 }}>{t.settings.title}</h1>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             {hasChanges && (

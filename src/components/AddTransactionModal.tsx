@@ -124,7 +124,7 @@ export function AddTransactionModal({
         date: finalDate,
         type,
         notes: notes.trim() || undefined,
-        paymentMethod: type === 'expense' ? (resolvedPaymentMethod || undefined) : undefined,
+        paymentMethod: resolvedPaymentMethod || undefined,
       });
       setMerchant('');
       setAmount('');
@@ -250,34 +250,32 @@ export function AddTransactionModal({
           </div>
         )}
 
-        {type === 'expense' && (
-          <div>
-            <label htmlFor="tx-payment-method" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-              {lang === 'id' ? 'Metode Pembayaran' : 'Payment Method'}
-            </label>
-            <select
-              id="tx-payment-method"
-              value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value)}
-              style={{ width: '100%', marginBottom: paymentMethod === 'custom' ? '0.5rem' : 0 }}
-            >
-              {paymentMethods.map((pm) => (
-                <option key={pm} value={pm}>{pm}</option>
-              ))}
-              <option value="custom">{lang === 'id' ? 'Lainnya (Kustom)...' : 'Custom...'}</option>
-            </select>
-            {paymentMethod === 'custom' && (
-              <input
-                type="text"
-                value={customPaymentMethod}
-                onChange={(e) => setCustomPaymentMethod(e.target.value)}
-                placeholder={lang === 'id' ? 'Masukkan nama metode pembayaran' : 'Enter payment method name'}
-                style={{ width: '100%' }}
-                autoFocus
-              />
-            )}
-          </div>
-        )}
+        <div>
+          <label htmlFor="tx-payment-method" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            {lang === 'id' ? 'Metode Pembayaran' : 'Payment Method'}
+          </label>
+          <select
+            id="tx-payment-method"
+            value={paymentMethod}
+            onChange={(e) => setPaymentMethod(e.target.value)}
+            style={{ width: '100%', marginBottom: paymentMethod === 'custom' ? '0.5rem' : 0 }}
+          >
+            {paymentMethods.map((pm) => (
+              <option key={pm} value={pm}>{pm}</option>
+            ))}
+            <option value="custom">{lang === 'id' ? 'Lainnya (Kustom)...' : 'Custom...'}</option>
+          </select>
+          {paymentMethod === 'custom' && (
+            <input
+              type="text"
+              value={customPaymentMethod}
+              onChange={(e) => setCustomPaymentMethod(e.target.value)}
+              placeholder={lang === 'id' ? 'Masukkan nama metode pembayaran' : 'Enter payment method name'}
+              style={{ width: '100%' }}
+              autoFocus
+            />
+          )}
+        </div>
 
         <div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.375rem' }}>

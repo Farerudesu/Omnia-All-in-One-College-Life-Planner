@@ -113,20 +113,7 @@ export function AssignmentsPage() {
   return (
     <div>
       <div className="page-header">
-        <div style={{
-          fontSize: '0.8125rem', fontWeight: 500, color: 'var(--on-surface-variant)',
-          marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.375rem'
-        }}>
-          <span>{lang === 'id' ? 'Akademik' : 'Academics'}</span>
-          <span style={{ opacity: 0.4 }}>/</span>
-          <span>{lang === 'id' ? 'Daftar Tugas' : 'Deliverables'}</span>
-        </div>
-        <h1>{lang === 'id' ? 'Tugas & Pekerjaan Rumah' : 'Assignments & Tasks'}</h1>
-        <p className="subtitle">
-          {lang === 'id'
-            ? 'Pantau tugas kuliah, bahan bacaan, laporan, dan jadwal evaluasi.'
-            : 'Track problem sets, readings, deliverables, and exam milestones.'}
-        </p>
+        <h1 style={{ margin: 0 }}>{lang === 'id' ? 'Tugas & Pekerjaan Rumah' : 'Assignments & Tasks'}</h1>
       </div>
 
       <div className="page-content">

@@ -592,7 +592,7 @@ export function CalendarPage() {
               </h1>
             </div>
 
-            <div className="horizontal-scroll-chips" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', paddingBottom: '0.25rem' }}>
+            <div className="calendar-legend-chips" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.375rem 0.625rem', paddingBottom: '0.25rem' }}>
               {LEGEND_ITEMS.map((item) => (
                 <button
                   key={item.key}
@@ -600,8 +600,8 @@ export function CalendarPage() {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.375rem',
-                    fontSize: '0.8125rem',
+                    gap: '0.3rem',
+                    fontSize: '0.75rem',
                     fontWeight: 600,
                     color: filters[item.key as keyof typeof filters] ? 'var(--on-surface)' : 'var(--outline)',
                     opacity: filters[item.key as keyof typeof filters] ? 1 : 0.5,
@@ -609,6 +609,8 @@ export function CalendarPage() {
                     border: 'none',
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
+                    padding: '0.2rem 0.35rem',
+                    borderRadius: 4,
                   }}
                 >
                   <CategoryIndicator shape={item.shape} color={item.color} />
@@ -1245,11 +1247,11 @@ export function CalendarPage() {
               {agendaDates.map(({ date, dateStr, items }) => (
                 <div
                   key={dateStr}
+                  className="card calendar-agenda-card"
                   style={{
                     background: 'var(--surface-container-lowest)',
                     borderRadius: 14,
                     border: '1px solid var(--outline-variant)',
-                    padding: '1.25rem 1.125rem',
                   }}
                 >
                   <div
@@ -1258,8 +1260,8 @@ export function CalendarPage() {
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       borderBottom: '1px solid var(--outline-variant)',
-                      paddingBottom: '0.875rem',
-                      marginBottom: '1rem',
+                      paddingBottom: '0.625rem',
+                      marginBottom: '0.75rem',
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -1283,13 +1285,13 @@ export function CalendarPage() {
                     </span>
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
                     {items.map((item) => (
                       <div
                         key={item.id}
+                        className="calendar-agenda-item"
                         onClick={() => handleItemClick(item)}
                         style={{
-                          padding: '0.875rem 1.125rem',
                           borderRadius: 8,
                           background: `color-mix(in srgb, ${item.color} 5%, var(--surface-container-low))`,
                           borderLeft: `4px solid ${item.color}`,
