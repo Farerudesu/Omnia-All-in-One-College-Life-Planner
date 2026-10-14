@@ -207,6 +207,7 @@ export function formatDateCompact(date: Date): string {
 
 export interface DetailedCountdown {
   label: string;
+  text: string;
   isUrgent: boolean;
   isOverdue: boolean;
   diffMinutes: number;
@@ -220,7 +221,7 @@ export interface DetailedCountdown {
  */
 export function formatDetailedCountdown(dueDateStr: string, from = new Date(), lang = 'id'): DetailedCountdown {
   if (!dueDateStr) {
-    return { label: '', isUrgent: false, isOverdue: false, diffMinutes: 0, diffHours: 0, diffDays: 0 };
+    return { label: '', text: '', isUrgent: false, isOverdue: false, diffMinutes: 0, diffHours: 0, diffDays: 0 };
   }
 
   let due: Date;
@@ -248,85 +249,46 @@ export function formatDetailedCountdown(dueDateStr: string, from = new Date(), l
 
   const isId = lang === 'id';
 
+  const makeResult = (label: string, isUrgent: boolean, isOverdue: boolean): DetailedCountdown => ({
+    label,
+    text: label,
+    isUrgent,
+    isOverdue,
+    diffMinutes: totalMinutes,
+    diffHours: totalHours,
+    diffDays: totalDays,
+  });
+
   if (isOverdue) {
     if (totalMinutes < 60) {
-      return {
-        label: isId ? `Terlambat ${Math.max(1, totalMinutes)} mnt` : `Overdue ${Math.max(1, totalMinutes)}m`,
-        isUrgent: true,
-        isOverdue: true,
-        diffMinutes: totalMinutes,
-        diffHours: totalHours,
-        diffDays: totalDays,
-      };
+      return makeResult(isId ? `Terlambat ${Math.max(1, totalMinutes)} mnt` : `Overdue ${Math.max(1, totalMinutes)}m`, true, true);
     }
     if (totalHours < 24) {
       const minText = remMinutes > 0 ? (isId ? ` ${remMinutes} mnt` : ` ${remMinutes}m`) : '';
-      return {
-        label: isId ? `Terlambat ${totalHours} jam${minText}` : `Overdue ${totalHours}h${minText}`,
-        isUrgent: true,
-        isOverdue: true,
-        diffMinutes: totalMinutes,
-        diffHours: totalHours,
-        diffDays: totalDays,
-      };
+      return makeResult(isId ? `Terlambat ${totalHours} jam${minText}` : `Overdue ${totalHours}h${minText}`, true, true);
     }
-    return {
-      label: isId ? `Terlambat ${totalDays} hari` : `Overdue ${totalDays}d`,
-      isUrgent: true,
-      isOverdue: true,
-      diffMinutes: totalMinutes,
-      diffHours: totalHours,
-      diffDays: totalDays,
-    };
+    return makeResult(isId ? `Terlambat ${totalDays} hari` : `Overdue ${totalDays}d`, true, true);
   }
 
   // Active future deadline
   if (totalMinutes < 60) {
-    return {
-      label: isId ? `${Math.max(1, totalMinutes)} menit lagi` : `${Math.max(1, totalMinutes)}m left`,
-      isUrgent: true,
-      isOverdue: false,
-      diffMinutes: totalMinutes,
-      diffHours: totalHours,
-      diffDays: totalDays,
-    };
+    return makeResult(isId ? `${Math.max(1, totalMinutes)} menit lagi` : `${Math.max(1, totalMinutes)}m left`, true, false);
   }
 
   if (totalHours < 24) {
     // High-precision <24h: "3 jam 20 mnt lagi" or "10 jam lagi"
     const minText = remMinutes > 0 ? (isId ? ` ${remMinutes} mnt` : ` ${remMinutes}m`) : '';
-    return {
-      label: isId ? `${totalHours} jam${minText} lagi` : `${totalHours}h${minText} left`,
-      isUrgent: totalHours < 6,
-      isOverdue: false,
-      diffMinutes: totalMinutes,
-      diffHours: totalHours,
-      diffDays: totalDays,
-    };
+    return makeResult(isId ? `${totalHours} jam${minText} lagi` : `${totalHours}h${minText} left`, totalHours < 6, false);
   }
 
   if (totalHours < 48) {
     // Tomorrow window (24-48h): Explicitly display "1 hari X jam lagi" so it's not confused with multiple days
     const hourText = remHours > 0 ? (isId ? ` ${remHours} jam` : ` ${remHours}h`) : '';
-    return {
-      label: isId ? `1 hari${hourText} lagi` : `1d${hourText} left`,
-      isUrgent: false,
-      isOverdue: false,
-      diffMinutes: totalMinutes,
-      diffHours: totalHours,
-      diffDays: totalDays,
-    };
+    return makeResult(isId ? `1 hari${hourText} lagi` : `1d${hourText} left`, false, false);
   }
 
   // 48h+ (2+ days)
-  return {
-    label: isId ? `${totalDays} hari lagi` : `${totalDays}d left`,
-    isUrgent: false,
-    isOverdue: false,
-    diffMinutes: totalMinutes,
-    diffHours: totalHours,
-    diffDays: totalDays,
-  };
+  return makeResult(isId ? `${totalDays} hari lagi` : `${totalDays}d left`, false, false);
 }
 
 /** Relative time: "dalam 45 mnt", "2 hari lalu", "in 45 min", "2 days ago", etc. */

@@ -265,11 +265,6 @@ export function SchedulePage() {
     }
   };
 
-  const scrollGridBy = (delta: number) => {
-    const container = gridScrollRef.current;
-    if (!container) return;
-    container.scrollBy({ left: delta, behavior: 'smooth' });
-  };
 
   useEffect(() => {
     (currentTimeRef.current || dayHeaderRef.current)?.scrollIntoView({ block: 'center', inline: 'nearest' });
