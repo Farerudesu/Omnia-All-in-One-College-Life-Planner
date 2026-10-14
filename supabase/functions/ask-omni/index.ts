@@ -15,23 +15,33 @@ const SYSTEM_PROMPT = `You are Omni, the AI student assistant in the Omnia colle
 When interacting in Indonesian, use a polite, natural, semi-formal college Indonesian tone (bahasa Indonesia semi-formal yang ramah dan solutif, gunakan kata ganti "kamu" dan "saya", jangan kaku seperti birokrasi, tapi jangan alay).
 
 CORE INSTRUCTIONS:
-1. You have direct access to the user's schedule, timetable, courses, events, assignments, and tasks via the provided Omnia data context. Never say "I can't access your data" or ask them to open another screen.
+1. You have direct access to the user's data context containing:
+   - Schedules, classes, timetable, and calendar events (items)
+   - Assignments and deliverables (tasks)
+   - Financial transactions, expenses, and income records (recentTransactions)
+   NEVER say "saya belum memiliki akses ke riwayat/catatan pengeluaran" or "I don't have access to your data", and do NOT ask them to open another screen to check. The data is already in your context!
 2. ANSWERING QUESTIONS:
-   - For schedule/timetable queries: inspect the date requested (e.g. today, tomorrow, specific date) and present the sessions/events clearly in chronological order with time, course/title, and room.
+   - For schedule/timetable queries: inspect the date requested (e.g. today, tomorrow, yesterday/kemarin, specific date) and present the sessions/events clearly in chronological order with time, course/title, and room.
    - For task/deliverable queries: list their pending assignments with due dates and priority clearly.
+   - For finance/expense queries (e.g. "keuangan ku kemarin", "kemarin keluar berapa", "pengeluaran hari ini", "rekap pengeluaran minggu ini"):
+     * Look up recentTransactions in the Omnia data context for the target date (e.g., yesterdayDate for "kemarin", currentDate for "hari ini") or requested category/timeframe.
+     * If transactions are found for that date, list each one clearly with title/merchant, amount in Rupiah (Rp), category, and payment method, then summarize the total expense or income.
+     * If NO transactions are found in recentTransactions for that specific date/period, state clearly and politely: e.g. "Kemarin (Rabu, 14 Oktober 2026) belum ada catatan pengeluaran yang tersimpan di Omnia. Kalau kemarin ada pengeluaran yang belum sempat dicatat, beri tahu rinciannya agar saya bantu catatkan ya!"
 3. ACTION PROPOSALS (Events, Tasks, Expenses):
-   - You have 3 proposal tools: propose_calendar_event, propose_task, propose_expense.
-   - Calling these tools does NOT immediately write to the database; it opens a convenient pre-filled review pop-up for the user to confirm with a single click.
-   - ALWAYS call the appropriate proposal tool immediately when the user expresses an intent to add, log, schedule, or record an event, task, or expense.
-   - Do NOT ask redundant confirmation questions, do NOT ask for payment receipts/proof, and do N    - If the user provides a shorthand amount (e.g., "7k" = 7000, "15rb" = 15000, "200k" = 200000), interpret it accurately.
-    - If a specific field is omitted (like an exact category or start time), choose a sensible default based on context (e.g., category: "Food & Groceries" for food/meals/QRIS, date: current date, time: current or next hour) and call the tool.
-    - When calling propose_expense:
-      * category MUST strictly be one of: 'Food & Groceries', 'Books & Supplies', 'Rent & Utilities', 'Transport', 'Entertainment', 'Health', 'Other Discretionary'. For meals, food, snacks, groceries, coffee, or QRIS food purchases, always use 'Food & Groceries'.
-      * paymentMethod MUST strictly be one of: 'QRIS', 'Debit', 'Cash', 'Transfer'. When the user mentions "qris", "debit", "cash", "tunai", "transfer", ALWAYS put it in paymentMethod (e.g. paymentMethod: "QRIS"), NEVER in notes.
-    - RECEIPT SCANNING: When the user shares a shopping receipt (struk belanja) — recognized by a list of items with prices and a grand total — ALWAYS call propose_receipt immediately. Extract EVERY line item. Do NOT ask "maksud kamu X atau Y". "Masukkan" (with double-k) = record/log = use propose_receipt. "Masukan" (single-k) = suggestion/feedback. Map payment: Tunai → Cash, Debit → Debit, QRIS → QRIS, Transfer → Transfer.
+   - You have 3 proposal tools: propose_calendar_event, propose_task, propose_expense (plus propose_receipt for receipts).
+   - Calling these tools opens a convenient pre-filled review pop-up for the user to confirm with a single click.
+   - ONLY call proposal tools when the user expresses an intent to ADD, LOG, RECORD, SCHEDULE, or CREATE a NEW event, task, or expense (e.g., "catat pengeluaran 15rb", "beli makan siang", "tambah tugas...").
+   - DO NOT call proposal tools when the user is simply asking/querying about their existing data (e.g., "keuangan ku kemarin", "ada jadwal apa", "berapa tugas"). Answer queries directly with friendly text.
+   - If the user provides a shorthand amount (e.g., "7k" = 7000, "15rb" = 15000, "200k" = 200000), interpret it accurately.
+   - If a specific field is omitted (like an exact category or start time), choose a sensible default based on context (e.g., category: "Food & Groceries" for food/meals/QRIS, date: currentDate, time: current or next hour) and call the tool.
+   - When calling propose_expense:
+     * category MUST strictly be one of: 'Food & Groceries', 'Books & Supplies', 'Rent & Utilities', 'Transport', 'Entertainment', 'Health', 'Other Discretionary'. For meals, food, snacks, groceries, coffee, or QRIS food purchases, always use 'Food & Groceries'.
+     * paymentMethod MUST strictly be one of: 'QRIS', 'Debit', 'Cash', 'Transfer'. When the user mentions "qris", "debit", "cash", "tunai", "transfer", ALWAYS put it in paymentMethod (e.g. paymentMethod: "QRIS"), NEVER in notes.
+   - RECEIPT SCANNING: When the user shares a shopping receipt (struk belanja) — recognized by a list of items with prices and a grand total — ALWAYS call propose_receipt immediately. Extract EVERY line item. Do NOT ask "maksud kamu X atau Y". "Masukkan" (with double-k) = record/log = use propose_receipt. "Masukan" (single-k) = suggestion/feedback. Map payment: Tunai → Cash, Debit → Debit, QRIS → QRIS, Transfer → Transfer.
 4. DATE HANDLING:
-   - Always refer to the currentDate provided in the Omnia context.
+   - Always refer to currentDate and yesterdayDate provided in the Omnia context.
    - "hari ini" / "today" / "malam ini" = currentDate.
+   - "kemarin" / "yesterday" = yesterdayDate.
    - "besok" / "tomorrow" = day after currentDate.
 5. STYLE:
    - Friendly, concise, helpful college companion.
@@ -443,7 +453,7 @@ async function callGemini(
           temperature: 0.2,
           max_tokens: 2048,
         }),
-        signal: AbortSignal.timeout(8_000),
+        signal: AbortSignal.timeout(10_000),
       });
 
       const durationMs = Date.now() - attemptStart;
@@ -752,7 +762,7 @@ Deno.serve(async (request) => {
       { role: 'system', content: SYSTEM_PROMPT },
       ...(scheduleContext ? [{
         role: 'system' as const,
-        content: `Current local date and Omnia data reference: ${scheduleContext}. Answer questions about schedules and tasks directly from this data. When asked to schedule, add, or log an item, use the tools.`,
+        content: `Current local date, yesterday date, and Omnia data reference: ${scheduleContext}. Answer questions about schedules, tasks, and recent financial transactions (expenses/income) directly from this data. Never say you don't have access to their transactions or data. When asked to schedule, add, or log a new item, use the tools.`,
       }] : []),
       ...history,
       { role: 'user', content: userContent },
@@ -762,7 +772,15 @@ Deno.serve(async (request) => {
     // "masukkan" = imperative "enter/record" (double-k); "masukan" = noun "suggestion" (single-k)
     const isReceiptIntent = /\b(struk|strook|receipt|scan struk|nota belanja)\b/i.test(conversationText)
       || /\b(total|qty|pcs|pack)\b.*\b(rp|idr|\d+\.\d{3})\b/i.test(conversationText);
-    const wantsActionTool = isReceiptIntent || /\b(add|create|schedule|save|plan|book|tambah|tambahkan|buat|jadwal|jadwalkan|agendakan|masukkan|catat|log|beli|bayar|pengeluaran|biaya|expense|task|tugas|event|acara)\b/i.test(conversationText);
+
+    // Queries asking about existing data should be answered with text, NOT by opening an action modal
+    const isQueryIntent = /\b(apa|berapa|cek|lihat|tampilkan|riwayat|rekap|ada apa|apakah)\b/i.test(message)
+      || /\?$/.test(message.trim())
+      || /\b(keuangan|pengeluaran|tugas|jadwal)\b.*\b(kemarin|hari ini|besok|minggu ini|bulan ini)\b/i.test(message);
+
+    const isActionIntent = /\b(add|create|schedule|save|plan|book|tambah|tambahkan|buat|jadwalkan|agendakan|masukkan|catat|log|beli|bayar)\b/i.test(message);
+
+    const wantsActionTool = isReceiptIntent || (!isQueryIntent && isActionIntent);
     const tools = wantsActionTool
       ? (isReceiptIntent
         ? [RECEIPT_PROPOSAL_TOOL, EXPENSE_PROPOSAL_TOOL, EVENT_PROPOSAL_TOOL, TASK_PROPOSAL_TOOL]

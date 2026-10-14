@@ -8,6 +8,7 @@ export interface AskOmniRequest {
   mimeType?: string;
   scheduleContext?: {
     currentDate: string;
+    yesterdayDate?: string;
     throughDate: string;
     timezone: string;
     dates: Array<{ date: string; weekday: string }>;
@@ -28,6 +29,15 @@ export interface AskOmniRequest {
       course?: string;
       priority: string;
       status: string;
+      notes?: string;
+    }>;
+    recentTransactions?: Array<{
+      date: string;
+      title: string;
+      amount: number;
+      category: string;
+      type: 'expense' | 'income';
+      paymentMethod?: string;
       notes?: string;
     }>;
   };

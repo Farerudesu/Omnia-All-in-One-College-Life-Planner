@@ -48,12 +48,17 @@ interface ImageAttachment {
 
 function getScheduleContext() {
   const today = new Date();
-  const dates = Array.from({ length: 8 }, (_, offset) => {
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+
+  // Cover past 3 days (including yesterday) through next 7 days (11 days total)
+  const dates = Array.from({ length: 11 }, (_, offset) => {
     const date = new Date(today);
-    date.setDate(today.getDate() + offset);
+    date.setDate(today.getDate() - 3 + offset);
     return date;
   });
-  const firstDate = toDateString(dates[0]);
+  const todayDateString = toDateString(today);
+  const yesterdayDateString = toDateString(yesterday);
   const lastDate = toDateString(dates[dates.length - 1]);
   const courses = new Map(ds.getCourses().map((course) => [course.id, course]));
   const sessions = ds.getClassSessions();
@@ -108,8 +113,24 @@ function getScheduleContext() {
     };
   });
 
+  // Include recent transactions (finances / expenses / income)
+  const transactions = ds.getTransactions();
+  const recentTransactions = [...transactions]
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 40)
+    .map((t) => ({
+      date: t.date,
+      title: t.merchant,
+      amount: t.amount,
+      category: t.category,
+      type: t.type,
+      paymentMethod: t.paymentMethod,
+      notes: t.notes,
+    }));
+
   return {
-    currentDate: firstDate,
+    currentDate: todayDateString,
+    yesterdayDate: yesterdayDateString,
     throughDate: lastDate,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     dates: dates.map((date) => ({
@@ -118,6 +139,7 @@ function getScheduleContext() {
     })),
     items,
     tasks: tasksContext,
+    recentTransactions,
   };
 }
 
