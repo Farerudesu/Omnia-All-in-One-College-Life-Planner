@@ -1558,44 +1558,17 @@ export function SchedulePage() {
                         style={{
                           height: 60,
                           borderBottom: hIdx === hours.length - 1 ? 'none' : '1px solid var(--outline-variant)',
-                          position: 'relative',
                           display: 'flex',
                           alignItems: 'flex-start',
                           justifyContent: 'center',
+                          paddingTop: '0.25rem',
                           fontSize: '0.75rem',
                           color: 'var(--on-surface-variant)',
                         }}
                       >
-                        <span style={{
-                          position: 'absolute',
-                          top: 0,
-                          transform: hIdx === 0 ? 'translateY(2px)' : 'translateY(-50%)',
-                          background: 'var(--surface-container-lowest)',
-                          padding: '0 4px',
-                          lineHeight: 1,
-                          fontSize: '0.75rem',
-                          zIndex: 2,
-                        }}>
-                          {lang === 'id'
-                            ? `${String(h).padStart(2, '0')}:00`
-                            : (h === 12 ? '12:00 PM' : h > 12 ? `${h - 12}:00 PM` : `${h}:00 AM`)}
-                        </span>
-                        {hIdx === hours.length - 1 && (
-                          <span style={{
-                            position: 'absolute',
-                            bottom: 0,
-                            transform: 'translateY(-2px)',
-                            background: 'var(--surface-container-lowest)',
-                            padding: '0 4px',
-                            lineHeight: 1,
-                            fontSize: '0.75rem',
-                            zIndex: 2,
-                          }}>
-                            {lang === 'id'
-                              ? `${String(h + 1).padStart(2, '0')}:00`
-                              : (h + 1 === 12 ? '12:00 PM' : h + 1 > 12 ? `${h + 1 - 12}:00 PM` : `${h + 1}:00 AM`)}
-                          </span>
-                        )}
+                        {lang === 'id'
+                          ? `${String(h).padStart(2, '0')}:00`
+                          : (h === 12 ? '12:00 PM' : h > 12 ? `${h - 12}:00 PM` : `${h}:00 AM`)}
                       </div>
                     ))}
                   </div>
