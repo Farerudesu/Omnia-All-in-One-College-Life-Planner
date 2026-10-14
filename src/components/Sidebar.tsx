@@ -571,6 +571,7 @@ function QuickAddModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
   const [title, setTitle] = useState('');
   const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [time, setTime] = useState('10:00');
+  const [endTime, setEndTime] = useState('11:00');
   const [type, setType] = useState<EventType>('personal');
 
   const handleSave = async () => {
@@ -580,6 +581,7 @@ function QuickAddModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
         title: title.trim(),
         date,
         startTime: time || undefined,
+        endTime: endTime || undefined,
         type,
       });
     } else {
@@ -658,7 +660,7 @@ function QuickAddModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: tab === 'event' ? '1fr 1fr 1fr' : '1fr 1fr', gap: '0.75rem' }}>
           <div>
             <label htmlFor="quick-date" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
               {lang === 'id' ? 'Tanggal' : 'Date'}
@@ -673,7 +675,7 @@ function QuickAddModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
           </div>
           <div>
             <label htmlFor="quick-time" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-              {lang === 'id' ? 'Waktu' : 'Time'}
+              {lang === 'id' ? (tab === 'event' ? 'Mulai' : 'Waktu') : (tab === 'event' ? 'Start' : 'Time')}
             </label>
             <input
               id="quick-time"
@@ -683,6 +685,20 @@ function QuickAddModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
               style={{ width: '100%' }}
             />
           </div>
+          {tab === 'event' && (
+            <div>
+              <label htmlFor="quick-end-time" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+                {lang === 'id' ? 'Selesai' : 'End'}
+              </label>
+              <input
+                id="quick-end-time"
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+                style={{ width: '100%' }}
+              />
+            </div>
+          )}
         </div>
 
         <div className="modal-actions-sticky">

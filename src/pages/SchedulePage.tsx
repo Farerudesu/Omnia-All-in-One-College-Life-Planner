@@ -17,7 +17,6 @@ import {
   formatTime12,
   durationMinutes,
   timeToGridPosition,
-  timeToGridHeight,
   getMonthName,
   getDayName,
   formatDateShort,
@@ -404,9 +403,11 @@ export function SchedulePage() {
       const { hours: sh, minutes: sm } = parseTime(startTime);
       const { hours: eh, minutes: em } = parseTime(endTime);
       const startMinutes = sh * 60 + sm;
-      const endMinutes = eh * 60 + em;
+      const endMinutes = Math.max(startMinutes + 15, eh * 60 + em);
+      const duration = Math.max(15, endMinutes - startMinutes);
+      const gridRangeMinutes = Math.max(60, (GRID_END + 1 - gridStart) * 60);
       const rawTop = timeToGridPosition(startTime, gridStart, GRID_END + 1);
-      const rawHeight = timeToGridHeight(startTime, endTime, gridStart, GRID_END + 1);
+      const rawHeight = (duration / gridRangeMinutes) * 100;
       const top = Math.min(Math.max(rawTop, 0), 96);
       const height = Math.min(Math.max(rawHeight, 4), Math.max(4, 100 - top));
 
@@ -441,8 +442,10 @@ export function SchedulePage() {
       const { hours: eh, minutes: em } = parseTime(endTime);
       const startMinutes = sh * 60 + sm;
       const endMinutes = Math.max(startMinutes + 15, eh * 60 + em);
+      const duration = Math.max(15, endMinutes - startMinutes);
+      const gridRangeMinutes = Math.max(60, (GRID_END + 1 - gridStart) * 60);
       const rawTop = timeToGridPosition(startTime, gridStart, GRID_END + 1);
-      const rawHeight = timeToGridHeight(startTime, endTime, gridStart, GRID_END + 1);
+      const rawHeight = (duration / gridRangeMinutes) * 100;
       const top = Math.min(Math.max(rawTop, 0), 96);
       const height = Math.min(Math.max(rawHeight, 4), Math.max(4, 100 - top));
 
@@ -1555,17 +1558,44 @@ export function SchedulePage() {
                         style={{
                           height: 60,
                           borderBottom: hIdx === hours.length - 1 ? 'none' : '1px solid var(--outline-variant)',
+                          position: 'relative',
                           display: 'flex',
                           alignItems: 'flex-start',
                           justifyContent: 'center',
-                          paddingTop: '0.25rem',
                           fontSize: '0.75rem',
                           color: 'var(--on-surface-variant)',
                         }}
                       >
-                        {lang === 'id'
-                          ? `${String(h).padStart(2, '0')}:00`
-                          : (h === 12 ? '12:00 PM' : h > 12 ? `${h - 12}:00 PM` : `${h}:00 AM`)}
+                        <span style={{
+                          position: 'absolute',
+                          top: 0,
+                          transform: hIdx === 0 ? 'translateY(2px)' : 'translateY(-50%)',
+                          background: 'var(--surface-container-lowest)',
+                          padding: '0 4px',
+                          lineHeight: 1,
+                          fontSize: '0.75rem',
+                          zIndex: 2,
+                        }}>
+                          {lang === 'id'
+                            ? `${String(h).padStart(2, '0')}:00`
+                            : (h === 12 ? '12:00 PM' : h > 12 ? `${h - 12}:00 PM` : `${h}:00 AM`)}
+                        </span>
+                        {hIdx === hours.length - 1 && (
+                          <span style={{
+                            position: 'absolute',
+                            bottom: 0,
+                            transform: 'translateY(-2px)',
+                            background: 'var(--surface-container-lowest)',
+                            padding: '0 4px',
+                            lineHeight: 1,
+                            fontSize: '0.75rem',
+                            zIndex: 2,
+                          }}>
+                            {lang === 'id'
+                              ? `${String(h + 1).padStart(2, '0')}:00`
+                              : (h + 1 === 12 ? '12:00 PM' : h + 1 > 12 ? `${h + 1 - 12}:00 PM` : `${h + 1}:00 AM`)}
+                          </span>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -1810,9 +1840,10 @@ export function SchedulePage() {
                                 <span style={{ fontWeight: 700, fontSize: '0.6875rem', color, letterSpacing: '-0.01em', textTransform: 'capitalize', whiteSpace: 'nowrap' }}>
                                   {ev.type}
                                 </span>
-                                {ev.startTime && (
+                                {block.startTime && (
                                   <span className="tabular-nums" style={{ fontSize: '0.5625rem', color: 'var(--on-surface-variant)', marginLeft: 'auto', whiteSpace: 'nowrap' }}>
-                                    {formatTime12(ev.startTime).replace(' AM', '').replace(' PM', '')}
+                                    {formatTime12(block.startTime).replace(' AM', '').replace(' PM', '')}
+                                    {block.endTime ? `–${formatTime12(block.endTime).replace(' AM', '').replace(' PM', '')}` : ''}
                                   </span>
                                 )}
                               </div>
@@ -2124,7 +2155,7 @@ export function SchedulePage() {
                     </div>
                     {ev.startTime && (
                       <span className="tabular-nums" style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--on-surface-variant)' }}>
-                        {formatTime12(ev.startTime)}
+                        {formatTime12(ev.startTime)}{ev.endTime ? ` – ${formatTime12(ev.endTime)}` : ''}
                       </span>
                     )}
                   </div>
