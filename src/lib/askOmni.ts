@@ -72,7 +72,7 @@ export async function askOmni(request: AskOmniRequest): Promise<AskOmniResponse>
   }
 
   const isId = localStorage.getItem('omnia_language') === 'id';
-  const timeoutMs = 25000;
+  const timeoutMs = 45000;
 
   const timeoutPromise = new Promise<never>((_, reject) => {
     setTimeout(() => {

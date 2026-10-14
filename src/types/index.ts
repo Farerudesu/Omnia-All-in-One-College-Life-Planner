@@ -117,6 +117,7 @@ export interface UserSettings {
   notifEnabled?: boolean;
   language?: 'en' | 'id';
   paymentMethods?: string[];
+  chatHistory?: any[];
 }
 
 // ─── Category Shape mapping (accessibility) ───

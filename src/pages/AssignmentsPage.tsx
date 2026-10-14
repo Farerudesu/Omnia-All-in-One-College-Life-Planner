@@ -7,7 +7,7 @@ import { CategoryIndicator } from '../components/CategoryIndicator';
 import { Pin } from 'lucide-react';
 import type { Assignment, AssignmentStatus, CategoryShape } from '../types';
 import { useLanguage } from '../lib/useLanguage';
-import { formatDateShort, formatTime12 } from '../lib/dateUtils';
+import { formatDateShort, formatTime12, formatDetailedCountdown } from '../lib/dateUtils';
 
 const CATEGORY_MAP: Record<string, { shape: CategoryShape; color: string; label: string }> = {
   classes: { shape: 'square', color: 'var(--classes)', label: 'Coursework' },
@@ -344,29 +344,20 @@ function AssignmentRow({
   onEdit: () => void;
 }) {
   const lang = useLanguage();
-  const due = new Date(assignment.dueDate);
   const now = new Date();
-  const diff = due.getTime() - now.getTime();
-  const diffMins = Math.floor(diff / (1000 * 60));
-  const diffHours = Math.floor(diff / (1000 * 60 * 60));
-  const diffDays = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const countdown = formatDetailedCountdown(assignment.dueDate, now, lang);
 
+  const due = assignment.dueDate.includes('T')
+    ? new Date(assignment.dueDate)
+    : new Date(`${assignment.dueDate}T23:59:59`);
   const dateFormatted = formatDateShort(due);
-  const timeFormatted = formatTime12(`${due.getHours().toString().padStart(2, '0')}:${due.getMinutes().toString().padStart(2, '0')}`);
+  const timeFormatted = formatTime12(
+    assignment.dueDate.includes('T')
+      ? assignment.dueDate.split('T')[1].slice(0, 5)
+      : '23:59'
+  );
 
-  const countdownLabel = (() => {
-    if (isOverdue) {
-      const overdueDays = Math.floor(-diff / (1000 * 60 * 60 * 24));
-      return lang === 'id'
-        ? `Terlambat ${overdueDays > 0 ? `${overdueDays} hari` : 'hari ini'}`
-        : `Overdue ${overdueDays > 0 ? `${overdueDays}d` : 'today'}`;
-    }
-    if (diffMins < 60) return lang === 'id' ? `${Math.max(1, diffMins)} menit lagi` : `${Math.max(1, diffMins)}m left`;
-    if (diffHours < 24) return lang === 'id' ? `${diffHours} jam lagi` : `${diffHours}h left`;
-    return lang === 'id' ? `${diffDays} hari lagi` : `${diffDays}d left`;
-  })();
-
-  const dueText = `${dateFormatted} – ${timeFormatted} (${countdownLabel})`;
+  const dueText = `${dateFormatted} – ${timeFormatted} (${countdown.label})`;
 
   return (
     <div
@@ -482,6 +473,24 @@ function AssignmentRow({
             </>
           )}
 
+          {/* Urgent / Due Soon Flag */}
+          {countdown.isUrgent && !isOverdue && assignment.status !== 'done' && (
+            <>
+              <span style={{ opacity: 0.4 }}>·</span>
+              <span style={{
+                background: 'var(--error-container)',
+                color: 'var(--on-error-container)',
+                fontWeight: 700,
+                fontSize: '0.6875rem',
+                padding: '0.125rem 0.45rem',
+                borderRadius: 4,
+                letterSpacing: '0.01em',
+              }}>
+                {lang === 'id' ? 'Mendesak' : 'Urgent'}
+              </span>
+            </>
+          )}
+
           {/* Priority */}
           {assignment.priority === 'high' && (
             <>
@@ -490,7 +499,7 @@ function AssignmentRow({
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                   <path d="M12 19V5M5 12l7-7 7 7"/>
                 </svg>
-                Prioritas tinggi
+                {lang === 'id' ? 'Prioritas tinggi' : 'High priority'}
               </div>
             </>
           )}
@@ -499,7 +508,9 @@ function AssignmentRow({
           {assignment.status === 'in-progress' && (
             <>
               <span style={{ opacity: 0.4 }}>·</span>
-              <span style={{ color: 'var(--primary)', fontWeight: 600 }}>Sedang dikerjakan</span>
+              <span style={{ color: 'var(--primary)', fontWeight: 600 }}>
+                {lang === 'id' ? 'Sedang dikerjakan' : 'In progress'}
+              </span>
             </>
           )}
         </div>

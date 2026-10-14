@@ -11,7 +11,7 @@ import type { EventType, Assignment } from '../types';
 import { useAuth } from '../lib/AuthContext';
 import { useLanguage } from '../lib/useLanguage';
 import { translations } from '../lib/i18n';
-import { formatDateShort, formatTime12 } from '../lib/dateUtils';
+import { formatDateShort, formatTime12, formatDetailedCountdown } from '../lib/dateUtils';
 
 const categories = [
   { key: 'classes' as CategoryKey, label: 'Classes', shape: 'square' as const, color: 'var(--classes)' },
@@ -446,7 +446,7 @@ export function Sidebar({ isCollapsed, onToggle }: { isCollapsed?: boolean; onTo
                     {a.title}
                   </div>
                   <div className="tabular-nums" style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>
-                    {lang === 'id' ? 'Tenggat ' : 'Due '}{formatDateShort(new Date(a.dueDate))}
+                    {formatDateShort(new Date(a.dueDate))} · {formatDetailedCountdown(a.dueDate, new Date(), lang).label}
                   </div>
                 </div>
               ))}

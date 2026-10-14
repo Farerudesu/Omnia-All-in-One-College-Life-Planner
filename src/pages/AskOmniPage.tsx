@@ -119,12 +119,9 @@ function getScheduleContext() {
   };
 }
 
-const SESSION_CHAT_KEY = 'omnia_omni_chat_session';
-
 function loadChatHistory(): Message[] {
   try {
-    const saved = localStorage.getItem(SESSION_CHAT_KEY) || sessionStorage.getItem(SESSION_CHAT_KEY);
-    const history = saved ? JSON.parse(saved) : [];
+    const history = ds.getSavedChatHistory();
     return history.filter((message: Message) => !(
       message.role === 'assistant' && /having trouble replying|unable to reach|failed to send request|try again in a moment/i.test(message.content)
     ));
@@ -136,6 +133,7 @@ function loadChatHistory(): Message[] {
 export function AskOmniPage() {
   const lang = useLanguage();
   const courses = useData(ds.getCourses);
+  const settings = useData(ds.getSettings);
   const [messages, setMessages] = useState<Message[]>(loadChatHistory);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -163,12 +161,15 @@ export function AskOmniPage() {
     endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Sync remote chat history on initial device load
   useEffect(() => {
-    try {
-      localStorage.setItem(SESSION_CHAT_KEY, JSON.stringify(messages));
-    } catch {
-      // ignore quota errors
+    if (messages.length === 0 && settings.chatHistory && settings.chatHistory.length > 0) {
+      setMessages(settings.chatHistory);
     }
+  }, [settings.chatHistory]);
+
+  useEffect(() => {
+    ds.saveChatHistory(messages);
   }, [messages]);
 
   useEffect(() => {
@@ -535,6 +536,30 @@ export function AskOmniPage() {
             </p>
           </div>
         </div>
+        {messages.length > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm(lang === 'id' ? 'Hapus semua riwayat percakapan Omni?' : 'Clear all Omni chat history?')) {
+                setMessages([]);
+                ds.saveChatHistory([]);
+              }
+            }}
+            style={{
+              padding: '0.4rem 0.75rem',
+              borderRadius: 8,
+              fontSize: '0.8125rem',
+              fontWeight: 500,
+              border: '1px solid var(--outline-variant)',
+              background: 'var(--surface-container)',
+              color: 'var(--on-surface-variant)',
+              cursor: 'pointer',
+              transition: 'background-color 0.15s ease, color 0.15s ease',
+            }}
+          >
+            {lang === 'id' ? 'Hapus Riwayat' : 'Clear History'}
+          </button>
+        )}
       </div>
 
       {/* Chat Area */}
@@ -584,6 +609,28 @@ export function AskOmniPage() {
             </div>
           ) : (
             <>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0.25rem 0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm(lang === 'id' ? 'Hapus semua riwayat percakapan Omni?' : 'Clear all Omni chat history?')) {
+                      setMessages([]);
+                      ds.saveChatHistory([]);
+                    }
+                  }}
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    fontSize: '0.75rem',
+                    color: 'var(--on-surface-variant)',
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                    padding: '0.25rem 0.5rem',
+                  }}
+                >
+                  {lang === 'id' ? 'Hapus Riwayat Chat' : 'Clear Chat History'}
+                </button>
+              </div>
               {messages.map((msg) => (
                 <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
                   {msg.role === 'assistant' && (

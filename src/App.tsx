@@ -43,10 +43,10 @@ function VersionPage() {
   return (
     <main style={{ padding: '2rem', fontFamily: 'monospace' }}>
       <h1>Omnia version</h1>
-      <p>Version: 1.6</p>
-      <p>Build: 2026-10-13 07:38:00 +08:00</p>
-      <p>Commit: d8e41a9</p>
-      <p>Changelog: mobile full-width 7-day schedule strip without horizontal scroll, compact mobile page and card padding to reclaim screen space, wrapping calendar legend chips without overflow, expanded mobile finance merchant text width</p>
+      <p>Version: 1.7</p>
+      <p>Build: 2026-10-14 20:05:00 +08:00</p>
+      <p>Commit: P0-market-research-fixes</p>
+      <p>Changelog: P0 #1 precise countdown (X jam Y mnt lagi for &lt;24h, urgent badges, date-only 23:59 handling across assignments/sidebar/modal/notifications), P0 #2 Ask Omni engine upgrade (fix Gemini 404, resilient model fallbacks, 2048 token limit, cross-device Supabase chat sync, and clear chat action)</p>
       <p style={{ marginTop: '1.5rem' }}>
         <a href="/schedule" style={{ color: 'var(--primary, #0284c7)', textDecoration: 'underline' }}>← Back to App</a>
       </p>

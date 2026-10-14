@@ -205,6 +205,130 @@ export function formatDateCompact(date: Date): string {
   return `${MONTH_NAMES_SHORT_EN[monthIndex]} ${date.getDate()}`;
 }
 
+export interface DetailedCountdown {
+  label: string;
+  isUrgent: boolean;
+  isOverdue: boolean;
+  diffMinutes: number;
+  diffHours: number;
+  diffDays: number;
+}
+
+/**
+ * High-precision countdown formatter for deadlines and tasks.
+ * Eliminates deceptive "1 hari lagi" readouts for deadlines < 24h or near-term.
+ */
+export function formatDetailedCountdown(dueDateStr: string, from = new Date(), lang = 'id'): DetailedCountdown {
+  if (!dueDateStr) {
+    return { label: '', isUrgent: false, isOverdue: false, diffMinutes: 0, diffHours: 0, diffDays: 0 };
+  }
+
+  let due: Date;
+  if (!dueDateStr.includes('T')) {
+    // If date-only string (e.g. "2026-10-15"), parse in local time at end of day 23:59:59
+    const parts = dueDateStr.split('-').map(Number);
+    if (parts.length === 3 && parts.every((n) => !isNaN(n))) {
+      due = new Date(parts[0], parts[1] - 1, parts[2], 23, 59, 59);
+    } else {
+      due = new Date(dueDateStr);
+    }
+  } else {
+    due = new Date(dueDateStr);
+  }
+
+  const diffMs = due.getTime() - from.getTime();
+  const isOverdue = diffMs < 0;
+  const absMs = Math.abs(diffMs);
+
+  const totalMinutes = Math.floor(absMs / (1000 * 60));
+  const totalHours = Math.floor(absMs / (1000 * 60 * 60));
+  const remMinutes = totalMinutes % 60;
+  const totalDays = Math.floor(absMs / (1000 * 60 * 60 * 24));
+  const remHours = totalHours % 24;
+
+  const isId = lang === 'id';
+
+  if (isOverdue) {
+    if (totalMinutes < 60) {
+      return {
+        label: isId ? `Terlambat ${Math.max(1, totalMinutes)} mnt` : `Overdue ${Math.max(1, totalMinutes)}m`,
+        isUrgent: true,
+        isOverdue: true,
+        diffMinutes: totalMinutes,
+        diffHours: totalHours,
+        diffDays: totalDays,
+      };
+    }
+    if (totalHours < 24) {
+      const minText = remMinutes > 0 ? (isId ? ` ${remMinutes} mnt` : ` ${remMinutes}m`) : '';
+      return {
+        label: isId ? `Terlambat ${totalHours} jam${minText}` : `Overdue ${totalHours}h${minText}`,
+        isUrgent: true,
+        isOverdue: true,
+        diffMinutes: totalMinutes,
+        diffHours: totalHours,
+        diffDays: totalDays,
+      };
+    }
+    return {
+      label: isId ? `Terlambat ${totalDays} hari` : `Overdue ${totalDays}d`,
+      isUrgent: true,
+      isOverdue: true,
+      diffMinutes: totalMinutes,
+      diffHours: totalHours,
+      diffDays: totalDays,
+    };
+  }
+
+  // Active future deadline
+  if (totalMinutes < 60) {
+    return {
+      label: isId ? `${Math.max(1, totalMinutes)} menit lagi` : `${Math.max(1, totalMinutes)}m left`,
+      isUrgent: true,
+      isOverdue: false,
+      diffMinutes: totalMinutes,
+      diffHours: totalHours,
+      diffDays: totalDays,
+    };
+  }
+
+  if (totalHours < 24) {
+    // High-precision <24h: "3 jam 20 mnt lagi" or "10 jam lagi"
+    const minText = remMinutes > 0 ? (isId ? ` ${remMinutes} mnt` : ` ${remMinutes}m`) : '';
+    return {
+      label: isId ? `${totalHours} jam${minText} lagi` : `${totalHours}h${minText} left`,
+      isUrgent: totalHours < 6,
+      isOverdue: false,
+      diffMinutes: totalMinutes,
+      diffHours: totalHours,
+      diffDays: totalDays,
+    };
+  }
+
+  if (totalHours < 48) {
+    // Tomorrow window (24-48h): Explicitly display "1 hari X jam lagi" so it's not confused with multiple days
+    const hourText = remHours > 0 ? (isId ? ` ${remHours} jam` : ` ${remHours}h`) : '';
+    return {
+      label: isId ? `1 hari${hourText} lagi` : `1d${hourText} left`,
+      isUrgent: false,
+      isOverdue: false,
+      diffMinutes: totalMinutes,
+      diffHours: totalHours,
+      diffDays: totalDays,
+    };
+  }
+
+  // 48h+ (2+ days)
+  return {
+    label: isId ? `${totalDays} hari lagi` : `${totalDays}d left`,
+    isUrgent: false,
+    isOverdue: false,
+    diffMinutes: totalMinutes,
+    diffHours: totalHours,
+    diffDays: totalDays,
+  };
+}
+
 /** Relative time: "dalam 45 mnt", "2 hari lalu", "in 45 min", "2 days ago", etc. */
 export function relativeTime(target: Date, from = new Date()): string {
   const diff = target.getTime() - from.getTime();

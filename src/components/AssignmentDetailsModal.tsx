@@ -5,7 +5,7 @@ import { useData } from '../lib/useData';
 import { CheckCircle, Clock, Pin } from 'lucide-react';
 import type { Assignment, Priority, AssignmentStatus } from '../types';
 import { useLanguage } from '../lib/useLanguage';
-import { formatDateShort, formatTime12 } from '../lib/dateUtils';
+import { formatDateShort, formatTime12, formatDetailedCountdown } from '../lib/dateUtils';
 
 interface AssignmentDetailsModalProps {
   assignment: Assignment | null;
@@ -361,8 +361,26 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose, openInEdit
             )}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
               <span style={{ color: 'var(--on-surface-variant)', width: 100 }}>{lang === 'id' ? 'Tenggat Waktu:' : 'Due Date:'}</span>
-              <span className="tabular-nums" style={{ fontWeight: 600, color: 'var(--on-surface)' }}>
-                {formatDateShort(new Date(assignment.dueDate))} {assignment.dueDate.includes('T') ? `· ${formatTime12(assignment.dueDate.split('T')[1])}` : ''}
+              <span className="tabular-nums" style={{ fontWeight: 600, color: 'var(--on-surface)', display: 'inline-flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.375rem' }}>
+                <span>{formatDateShort(new Date(assignment.dueDate))} {assignment.dueDate.includes('T') ? `· ${formatTime12(assignment.dueDate.split('T')[1])}` : ''}</span>
+                <span style={{
+                  fontSize: '0.75rem',
+                  padding: '0.125rem 0.45rem',
+                  borderRadius: 4,
+                  background: formatDetailedCountdown(assignment.dueDate, new Date(), lang).isOverdue
+                    ? 'var(--error-container)'
+                    : formatDetailedCountdown(assignment.dueDate, new Date(), lang).isUrgent
+                      ? 'var(--tertiary-container)'
+                      : 'var(--surface-container-high)',
+                  color: formatDetailedCountdown(assignment.dueDate, new Date(), lang).isOverdue
+                    ? 'var(--on-error-container)'
+                    : formatDetailedCountdown(assignment.dueDate, new Date(), lang).isUrgent
+                      ? 'var(--on-tertiary-container)'
+                      : 'var(--on-surface-variant)',
+                  fontWeight: 600,
+                }}>
+                  {formatDetailedCountdown(assignment.dueDate, new Date(), lang).label}
+                </span>
               </span>
             </div>
             {course?.professor && (

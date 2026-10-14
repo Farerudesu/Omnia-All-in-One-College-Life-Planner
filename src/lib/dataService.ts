@@ -11,7 +11,7 @@ import type {
 import { supabase } from './supabase.js';
 import { getCurrencyScale, normalizeCurrency } from './currency';
 import { normalizeTransactionCategory } from './categories';
-import { localDateString } from './dateUtils';
+import { localDateString, formatDetailedCountdown } from './dateUtils';
 
 // simple id generator
 let _counter = Date.now();
@@ -216,7 +216,19 @@ async function refreshTable(table: DataTable, attempt = 0) {
         theme: rowText(row || {}, 'theme', 'light') === 'dark' ? 'dark' : 'light',
         language: (localStorage.getItem('omnia_language') as 'en' | 'id') || 'id',
         paymentMethods: row && Array.isArray(row.payment_methods) && row.payment_methods.length > 0 ? (row.payment_methods as string[]) : getPaymentMethods(),
+        chatHistory: row && Array.isArray(row.chat_history) ? (row.chat_history as any[]) : undefined,
       };
+      if (settings.chatHistory && settings.chatHistory.length > 0) {
+        try {
+          const localStr = localStorage.getItem('omnia_omni_chat_session');
+          const localArr = localStr ? JSON.parse(localStr) : [];
+          if (!Array.isArray(localArr) || localArr.length === 0) {
+            localStorage.setItem('omnia_omni_chat_session', JSON.stringify(settings.chatHistory));
+          }
+        } catch {
+          // ignore localStorage sync error
+        }
+      }
     }
     setTableStatus(table, { loading: false, error: null });
     notify();
@@ -824,6 +836,37 @@ export function updateSettings(data: Partial<UserSettings>): void {
   });
 }
 
+let chatSyncTimeout: ReturnType<typeof setTimeout> | null = null;
+
+export function getSavedChatHistory(): any[] {
+  if (settings.chatHistory && settings.chatHistory.length > 0) {
+    return settings.chatHistory;
+  }
+  try {
+    const saved = localStorage.getItem('omnia_omni_chat_session');
+    return saved ? JSON.parse(saved) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveChatHistory(history: any[]): void {
+  const trimmed = history.slice(-50);
+  settings.chatHistory = trimmed;
+  try {
+    localStorage.setItem('omnia_omni_chat_session', JSON.stringify(trimmed));
+  } catch {
+    // ignore quota error
+  }
+  if (!activeUserId) return;
+
+  if (chatSyncTimeout) clearTimeout(chatSyncTimeout);
+  chatSyncTimeout = setTimeout(() => {
+    const client = getClient();
+    client.from('user_settings').update({ chat_history: trimmed }).eq('user_id', activeUserId).then(() => {});
+  }, 1000);
+}
+
 // ─── Private schedule sharing RPCs ───
 
 export interface SharePreview {
@@ -1002,12 +1045,12 @@ export function getNotifications(): AppNotification[] {
       const due = new Date(a.dueDate);
       if (!isNaN(due.getTime()) && due >= new Date(now.getTime() - 24 * 60 * 60 * 1000) && due <= in48Hours) {
         const id = `assignment-${a.id}`;
-        const diffHours = Math.round((due.getTime() - now.getTime()) / (60 * 60 * 1000));
+        const cd = formatDetailedCountdown(a.dueDate, now, isId ? 'id' : 'en');
         result.push({
           id,
           title: isId ? `Tenggat tugas: ${a.title}` : `Deliverable due: ${a.title}`,
           message: isId ? `Batas waktu pengumpulan: ${a.dueDate.replace('T', ' ')}` : `Submission deadline: ${a.dueDate.replace('T', ' ')}`,
-          time: diffHours > 0 ? (isId ? `dalam ${diffHours} jam` : `in ${diffHours}h`) : (isId ? 'sudah lewat' : 'overdue'),
+          time: cd.text,
           read: readIds.has(id),
           type: 'deadline',
           link: '/assignments',
