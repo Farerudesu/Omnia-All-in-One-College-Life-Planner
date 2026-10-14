@@ -28,6 +28,7 @@ CORE INSTRUCTIONS:
     - When calling propose_expense:
       * category MUST strictly be one of: 'Food & Groceries', 'Books & Supplies', 'Rent & Utilities', 'Transport', 'Entertainment', 'Health', 'Other Discretionary'. For meals, food, snacks, groceries, coffee, or QRIS food purchases, always use 'Food & Groceries'.
       * paymentMethod MUST strictly be one of: 'QRIS', 'Debit', 'Cash', 'Transfer'. When the user mentions "qris", "debit", "cash", "tunai", "transfer", ALWAYS put it in paymentMethod (e.g. paymentMethod: "QRIS"), NEVER in notes.
+    - RECEIPT SCANNING: When the user shares a shopping receipt (struk belanja) — recognized by a list of items with prices and a grand total — ALWAYS call propose_receipt immediately. Extract EVERY line item. Do NOT ask "maksud kamu X atau Y". "Masukkan" (with double-k) = record/log = use propose_receipt. "Masukan" (single-k) = suggestion/feedback. Map payment: Tunai → Cash, Debit → Debit, QRIS → QRIS, Transfer → Transfer.
 4. DATE HANDLING:
    - Always refer to the currentDate provided in the Omnia context.
    - "hari ini" / "today" / "malam ini" = currentDate.
@@ -125,6 +126,49 @@ const EXPENSE_PROPOSAL_TOOL = {
   },
 } as const;
 
+const RECEIPT_PROPOSAL_TOOL = {
+  type: 'function',
+  function: {
+    name: 'propose_receipt',
+    description: 'Extract all line items from a shopping receipt and propose them as a batch of expenses. Use this when the user shares a receipt/struk with multiple items.',
+    parameters: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        items: {
+          type: 'array',
+          description: 'Each line item from the receipt as an expense proposal.',
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+              title: { type: 'string', description: 'Item name from the receipt.' },
+              amount: { type: 'number', description: 'Price of this item (qty × unit price).' },
+              date: { type: 'string', description: 'Receipt date in YYYY-MM-DD format.' },
+              category: {
+                type: 'string',
+                enum: [
+                  'Food & Groceries', 'Books & Supplies', 'Rent & Utilities',
+                  'Transport', 'Entertainment', 'Health', 'Other Discretionary',
+                ],
+              },
+              paymentMethod: {
+                type: 'string',
+                enum: ['QRIS', 'Debit', 'Cash', 'Transfer'],
+              },
+              notes: { type: 'string' },
+            },
+            required: ['title', 'amount', 'date', 'category'],
+          },
+        },
+        receiptTotal: { type: 'number', description: 'Grand total shown on the receipt.' },
+        storeName: { type: 'string', description: 'Store or merchant name if visible.' },
+      },
+      required: ['items'],
+    },
+  },
+} as const;
+
 interface ProposedEvent {
   type: 'event';
   title: string;
@@ -155,11 +199,19 @@ interface ProposedExpense {
   notes?: string;
 }
 
-type ProposedAction = ProposedEvent | ProposedTask | ProposedExpense;osedExpense;
+type ProposedAction = ProposedEvent | ProposedTask | ProposedExpense;
 
-function jsonResponse(body: { reply: string; proposedAction?: ProposedAction; proposedEvent?: ProposedEvent }, status = 200) {
+interface ReceiptResponse {
+  reply: string;
+  proposedAction?: ProposedAction;
+  proposedEvent?: ProposedEvent;
+  proposedActions?: ProposedExpense[];
+  receiptTotal?: number;
+}
+
+function jsonResponse(body: ReceiptResponse, status = 200) {
   if (body.proposedAction?.type === 'event' && !body.proposedEvent) {
-    body.proposedEvent = body.proposedAction;
+    body.proposedEvent = body.proposedAction as ProposedEvent;
   }
   return new Response(JSON.stringify(body), {
     status,
@@ -314,6 +366,18 @@ function normalizeProposedExpense(value: unknown): ProposedExpense | null {
   };
 }
 
+function normalizeProposedReceipt(args: Record<string, unknown>): { items: ProposedExpense[]; receiptTotal?: number } | null {
+  if (!Array.isArray(args.items) || args.items.length === 0) return null;
+  const items: ProposedExpense[] = [];
+  for (const raw of args.items) {
+    const normalized = normalizeProposedExpense(raw);
+    if (normalized) items.push(normalized);
+  }
+  if (items.length === 0) return null;
+  const receiptTotal = typeof args.receiptTotal === 'number' && args.receiptTotal > 0 ? args.receiptTotal : undefined;
+  return { items, receiptTotal };
+}
+
 // Model invocation helpers
 interface ModelMessage {
   role: 'system' | 'user' | 'assistant';
@@ -333,49 +397,68 @@ async function callGemini(
   chatMessages: ModelMessage[],
   tools?: any[]
 ): Promise<CompletionResult> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`;
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'gemini-3.5-flash',
-      messages: chatMessages,
-      ...(tools ? { tools, tool_choice: 'auto' } : {}),
-      temperature: 0.2,
-    }),
-    signal: AbortSignal.timeout(30_000),
-  });
+  const modelsToTry = [GEMINI_MODEL, 'gemini-2.5-flash', 'gemini-1.5-flash'].filter((v, i, a) => a.indexOf(v) === i);
+  let lastError: Error | null = null;
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Gemini API error (${response.status}): ${errorText}`);
-  }
-
-  const result = await response.json();
-  const choice = result.choices?.[0]?.message;
-  const toolCall = choice?.tool_calls?.[0];
-
-  let parsedArgs: Record<string, unknown> = {};
-  if (toolCall) {
+  for (const model of modelsToTry) {
     try {
-      parsedArgs = JSON.parse(toolCall.function?.arguments || '{}');
-    } catch {
-      parsedArgs = {};
+      const url = `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model,
+          messages: chatMessages,
+          ...(tools ? { tools, tool_choice: 'auto' } : {}),
+          temperature: 0.2,
+          max_tokens: 2048,
+        }),
+        signal: AbortSignal.timeout(15_000),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        if (response.status === 404 && modelsToTry.indexOf(model) < modelsToTry.length - 1) {
+          console.warn(`Gemini model ${model} returned 404, falling back to next candidate...`);
+          continue;
+        }
+        throw new Error(`Gemini API error (${response.status}): ${errorText}`);
+      }
+
+      const result = await response.json();
+      const choice = result.choices?.[0]?.message;
+      const toolCall = choice?.tool_calls?.[0];
+
+      let parsedArgs: Record<string, unknown> = {};
+      if (toolCall) {
+        try {
+          parsedArgs = JSON.parse(toolCall.function?.arguments || '{}');
+        } catch {
+          parsedArgs = {};
+        }
+      }
+
+      return {
+        content: choice?.content || '',
+        toolCall: toolCall
+          ? {
+            name: toolCall.function?.name,
+            arguments: parsedArgs,
+          }
+          : undefined,
+      };
+    } catch (err: any) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      if (err?.name === 'TimeoutError' || err?.message?.includes('timeout')) {
+        break;
+      }
     }
   }
 
-  return {
-    content: choice?.content || '',
-    toolCall: toolCall
-      ? {
-          name: toolCall.function?.name,
-          arguments: parsedArgs,
-        }
-      : undefined,
-  };
+  throw lastError || new Error('All Gemini model candidates failed');
 }
 
 async function callGroq(
@@ -390,12 +473,13 @@ async function callGroq(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
+      model: GROQ_MODEL,
       messages: chatMessages,
       ...(tools ? { tools, tool_choice: 'auto' } : {}),
       temperature: 0.2,
+      max_tokens: 2048,
     }),
-    signal: AbortSignal.timeout(30_000),
+    signal: AbortSignal.timeout(15_000),
   });
 
   if (!response.ok) {
@@ -420,9 +504,9 @@ async function callGroq(
     content: choice?.content || '',
     toolCall: toolCall
       ? {
-          name: toolCall.function?.name,
-          arguments: parsedArgs,
-        }
+        name: toolCall.function?.name,
+        arguments: parsedArgs,
+      }
       : undefined,
   };
 }
@@ -460,12 +544,12 @@ Deno.serve(async (request) => {
 
   const history = Array.isArray(payload.history)
     ? payload.history.slice(-12).flatMap((entry) => {
-        if (!entry || typeof entry !== 'object') return [];
-        const item = entry as { role?: unknown; content?: unknown };
-        if (item.role !== 'user' && item.role !== 'assistant') return [];
-        if (typeof item.content !== 'string' || !item.content.trim()) return [];
-        return [{ role: item.role, content: item.content.trim().slice(0, 4000) }];
-      })
+      if (!entry || typeof entry !== 'object') return [];
+      const item = entry as { role?: unknown; content?: unknown };
+      if (item.role !== 'user' && item.role !== 'assistant') return [];
+      if (typeof item.content !== 'string' || !item.content.trim()) return [];
+      return [{ role: item.role, content: item.content.trim().slice(0, 4000) }];
+    })
     : [];
   if (history.reduce((total, item) => total + item.content.length, 0) > 16_000) {
     return jsonResponse({ reply: 'This conversation is too long to continue. Start a new chat to keep going.' }, 413);
@@ -488,9 +572,9 @@ Deno.serve(async (request) => {
   try {
     const userContent = imageBase64
       ? [
-          { type: 'text', text: message || 'Describe the visible contents of this image.' },
-          { type: 'image_url', image_url: { url: `data:${mimeType};base64,${imageBase64}` } },
-        ]
+        { type: 'text', text: message || 'Describe the visible contents of this image.' },
+        { type: 'image_url', image_url: { url: `data:${mimeType};base64,${imageBase64}` } },
+      ]
       : message;
 
     const chatMessages: ModelMessage[] = [
@@ -504,8 +588,15 @@ Deno.serve(async (request) => {
     ];
 
     const conversationText = [...history.filter((item) => item.role === 'user').map((item) => item.content), message].join('\n');
-    const wantsActionTool = /\b(add|create|schedule|save|plan|book|tambah|tambahkan|buat|jadwal|jadwalkan|agendakan|masukkan|catat|log|beli|bayar|pengeluaran|biaya|expense|task|tugas|event|acara)\b/i.test(conversationText);
-    const tools = wantsActionTool ? [EVENT_PROPOSAL_TOOL, TASK_PROPOSAL_TOOL, EXPENSE_PROPOSAL_TOOL] : undefined;
+    // "masukkan" = imperative "enter/record" (double-k); "masukan" = noun "suggestion" (single-k)
+    const isReceiptIntent = /\b(struk|strook|receipt|scan struk|nota belanja)\b/i.test(conversationText)
+      || /\b(total|qty|pcs|pack)\b.*\b(rp|idr|\d+\.\d{3})\b/i.test(conversationText);
+    const wantsActionTool = isReceiptIntent || /\b(add|create|schedule|save|plan|book|tambah|tambahkan|buat|jadwal|jadwalkan|agendakan|masukkan|catat|log|beli|bayar|pengeluaran|biaya|expense|task|tugas|event|acara)\b/i.test(conversationText);
+    const tools = wantsActionTool
+      ? (isReceiptIntent
+        ? [RECEIPT_PROPOSAL_TOOL, EXPENSE_PROPOSAL_TOOL, EVENT_PROPOSAL_TOOL, TASK_PROPOSAL_TOOL]
+        : [EVENT_PROPOSAL_TOOL, TASK_PROPOSAL_TOOL, EXPENSE_PROPOSAL_TOOL])
+      : undefined;
 
     let completion: CompletionResult | null = null;
     let providerUsed = '';
@@ -539,7 +630,18 @@ Deno.serve(async (request) => {
       const fnName = completion.toolCall.name;
       const args = completion.toolCall.arguments;
 
-      if (fnName === 'propose_calendar_event') {
+      if (fnName === 'propose_receipt') {
+        const receipt = normalizeProposedReceipt(args);
+        if (receipt) {
+          const n = receipt.items.length;
+          const totalStr = receipt.receiptTotal ? ` (total Rp${receipt.receiptTotal.toLocaleString('id-ID')})` : '';
+          return jsonResponse({
+            reply: completion.content.trim() || `Saya temukan ${n} item dari struk${totalStr}. Silakan konfirmasi satu per satu:`,
+            proposedActions: receipt.items,
+            receiptTotal: receipt.receiptTotal,
+          });
+        }
+      } else if (fnName === 'propose_calendar_event') {
         const proposedEvent = normalizeProposedEvent(args);
         if (proposedEvent) {
           return jsonResponse({
