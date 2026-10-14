@@ -184,8 +184,13 @@ export function MobileHeader() {
               className="app-mobile-header__avatar min-touch-target"
               onClick={() => setShowProfileDrawer(true)}
               aria-label={`Open profile menu for ${displayName}`}
+              style={{ overflow: 'hidden' }}
             >
-              <span>{initials}</span>
+              {profile?.avatarUrl ? (
+                <img src={profile.avatarUrl} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+              ) : (
+                <span>{initials}</span>
+              )}
             </button>
           </div>
         </div>
@@ -518,8 +523,12 @@ export function MobileHeader() {
         <div className="mobile-profile-modal-body">
           {/* User ID card */}
           <div className="mobile-profile-badge">
-            <div className="mobile-profile-badge__avatar">
-              {initials}
+            <div className="mobile-profile-badge__avatar" style={{ overflow: 'hidden' }}>
+              {profile?.avatarUrl ? (
+                <img src={profile.avatarUrl} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+              ) : (
+                initials
+              )}
             </div>
             <div className="mobile-profile-badge__info">
               <h4 className="mobile-profile-badge__name">{displayName}</h4>

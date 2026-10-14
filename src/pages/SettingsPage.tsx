@@ -110,8 +110,8 @@ export function SettingsPage() {
       setProfileAvatarFile(null);
       setIsEditingProfile(false);
       setProfileSaved(true);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to save your profile.';
+    } catch (error: any) {
+      const message = error?.message || (typeof error === 'string' ? error : 'Unable to save your profile.');
       setProfileError(/bucket.*not found/i.test(message)
         ? 'Profile image storage is not set up yet. Apply the profile avatar migration with `supabase db push`, then try again.'
         : message);
@@ -870,7 +870,7 @@ export function SettingsPage() {
                     <input
                       id="profile-avatar-file"
                       type="file"
-                      accept="image/png,image/jpeg,image/webp,image/gif,image/avif"
+                      accept="image/*,.png,.jpg,.jpeg,.webp,.gif,.avif"
                       onChange={(event) => {
                         const file = event.target.files?.[0] || null;
                         if (!file) return;
@@ -884,8 +884,29 @@ export function SettingsPage() {
                       }}
                       style={{ width: '100%' }}
                     />
-                    <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', marginTop: '0.25rem' }}>
-                      PNG, JPG, WebP, GIF, {language === 'id' ? 'atau' : 'or'} AVIF · {language === 'id' ? 'hingga' : 'up to'} 5 MB{profileAvatarFile ? ` · ${profileAvatarFile.name}` : ''}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--on-surface-variant)', marginTop: '0.25rem' }}>
+                      <span>PNG, JPG, WebP, GIF, {language === 'id' ? 'atau' : 'or'} AVIF · {language === 'id' ? 'hingga' : 'up to'} 5 MB{profileAvatarFile ? ` · ${profileAvatarFile.name}` : ''}</span>
+                      {profileAvatarFile && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProfileAvatarFile(null);
+                            const fileInput = document.getElementById('profile-avatar-file') as HTMLInputElement | null;
+                            if (fileInput) fileInput.value = '';
+                          }}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--error, #ba1a1a)',
+                            fontSize: '0.75rem',
+                            cursor: 'pointer',
+                            textDecoration: 'underline',
+                            padding: 0,
+                          }}
+                        >
+                          {language === 'id' ? 'Batal pilih' : 'Clear'}
+                        </button>
+                      )}
                     </div>
                   </div>
                   {profileError && <div role="alert" style={{ color: 'var(--error)', fontSize: '0.8125rem' }}>{profileError}</div>}

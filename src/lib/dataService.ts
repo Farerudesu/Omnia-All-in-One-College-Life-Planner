@@ -192,7 +192,10 @@ async function refreshTable(table: DataTable, attempt = 0) {
         notes: rowText(row, 'catatan') || undefined,
       }));
     } else if (table === 'profiles') {
-      const { data, error } = await client.from('profiles').select('full_name, university_email, avatar_url').maybeSingle();
+      const query = activeUserId
+        ? client.from('profiles').select('full_name, university_email, avatar_url').eq('id', activeUserId)
+        : client.from('profiles').select('full_name, university_email, avatar_url');
+      const { data, error } = await query.maybeSingle();
       if (error) throw error;
       const row = data as DbRow | null;
       profile = row ? {
@@ -770,13 +773,15 @@ export function getProfile(): UserProfile | null {
 }
 
 export async function updateProfile(data: UserProfile) {
+  if (!activeUserId) throw new Error('Sign in before saving profile.');
   setTableStatus('profiles', { loading: true, error: null });
   try {
-    const { error } = await getClient().from('profiles').upsert(ownedRow({
+    const { error } = await getClient().from('profiles').upsert({
+      id: activeUserId,
       full_name: data.fullName,
       university_email: data.universityEmail,
       avatar_url: data.avatarUrl || null,
-    }), { onConflict: 'user_id' });
+    }, { onConflict: 'id' });
     if (error) throw error;
     await refreshTable('profiles');
   } catch (error) {
@@ -785,26 +790,50 @@ export async function updateProfile(data: UserProfile) {
   }
 }
 
-const avatarExtensions: Record<string, string> = {
-  'image/png': 'png',
-  'image/jpeg': 'jpg',
-  'image/webp': 'webp',
-  'image/gif': 'gif',
-  'image/avif': 'avif',
-};
+function resolveAvatarMimeAndExt(file: File): { extension: string; contentType: string } {
+  const mimeMap: Record<string, { ext: string; mime: string }> = {
+    'image/png': { ext: 'png', mime: 'image/png' },
+    'image/jpeg': { ext: 'jpg', mime: 'image/jpeg' },
+    'image/jpg': { ext: 'jpg', mime: 'image/jpeg' },
+    'image/pjpeg': { ext: 'jpg', mime: 'image/jpeg' },
+    'image/webp': { ext: 'webp', mime: 'image/webp' },
+    'image/gif': { ext: 'gif', mime: 'image/gif' },
+    'image/avif': { ext: 'avif', mime: 'image/avif' },
+  };
+  const extMap: Record<string, { ext: string; mime: string }> = {
+    png: { ext: 'png', mime: 'image/png' },
+    jpg: { ext: 'jpg', mime: 'image/jpeg' },
+    jpeg: { ext: 'jpg', mime: 'image/jpeg' },
+    webp: { ext: 'webp', mime: 'image/webp' },
+    gif: { ext: 'gif', mime: 'image/gif' },
+    avif: { ext: 'avif', mime: 'image/avif' },
+  };
+
+  const rawMime = (file.type || '').toLowerCase().trim();
+  if (rawMime && mimeMap[rawMime]) {
+    return { extension: mimeMap[rawMime].ext, contentType: mimeMap[rawMime].mime };
+  }
+
+  const nameParts = file.name.split('.');
+  const rawExt = nameParts.length > 1 ? nameParts.pop()?.toLowerCase().trim() : '';
+  if (rawExt && extMap[rawExt]) {
+    return { extension: extMap[rawExt].ext, contentType: extMap[rawExt].mime };
+  }
+
+  throw new Error('Choose a PNG, JPG, WebP, GIF, or AVIF image.');
+}
 
 export async function uploadProfileAvatar(file: File): Promise<string> {
   if (!activeUserId) throw new Error('Sign in before uploading a profile image.');
-  const extension = avatarExtensions[file.type];
-  if (!extension) throw new Error('Choose a PNG, JPG, WebP, GIF, or AVIF image.');
+  const { extension, contentType } = resolveAvatarMimeAndExt(file);
   if (file.size > 5 * 1024 * 1024) throw new Error('Choose an image smaller than 5 MB.');
 
   const path = `${activeUserId}/${crypto.randomUUID()}.${extension}`;
   const storage = getClient().storage.from('profile-avatars');
   const { data, error } = await storage.upload(path, file, {
     cacheControl: '3600',
-    contentType: file.type,
-    upsert: false,
+    contentType,
+    upsert: true,
   });
   if (error) throw error;
   return storage.getPublicUrl(data.path).data.publicUrl;

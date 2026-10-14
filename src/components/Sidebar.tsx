@@ -474,7 +474,7 @@ export function Sidebar({ isCollapsed, onToggle }: { isCollapsed?: boolean; onTo
             title="Account menu"
           >
             <div style={{
-              width: 32, height: 32, borderRadius: '50%',
+              width: 32, height: 32, borderRadius: '50%', overflow: 'hidden',
               background: 'var(--primary)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: 'var(--on-primary)',
