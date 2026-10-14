@@ -410,11 +410,15 @@ async function callGemini(
   tools?: any[]
 ): Promise<CompletionResult> {
   const modelsToTry = [
-    'gemini-flash-latest',
     'gemini-3.8-flash',
+    'gemini-flash-latest',
+    'gemini-3.7-flash',
+    'gemini-3.6-flash',
     'gemini-flash-lite-latest',
-    GEMINI_MODEL,
     'gemini-3.5-flash',
+    'gemini-3.5-flash-lite',
+    'gemini-2.5-flash-lite',
+    GEMINI_MODEL,
     'gemini-pro-latest',
     'gemini-2.5-pro',
   ].filter((v, i, a) => !!v && a.indexOf(v) === i);
@@ -439,7 +443,7 @@ async function callGemini(
           temperature: 0.2,
           max_tokens: 2048,
         }),
-        signal: AbortSignal.timeout(15_000),
+        signal: AbortSignal.timeout(8_000),
       });
 
       const durationMs = Date.now() - attemptStart;
@@ -500,9 +504,8 @@ async function callGemini(
         error: lastError.message,
         withTools: !!tools,
       });
-      if (err?.name === 'TimeoutError' || err?.message?.includes('timeout')) {
-        break;
-      }
+      // Do not abort loop on timeout, fail over to the next available backup model
+      continue;
     }
   }
 
@@ -522,6 +525,7 @@ async function callGroq(
     'openai/gpt-oss-120b',
     'openai/gpt-oss-20b',
     'qwen/qwen3.8-27b',
+    'allam-2-7b',
   ].filter((v, i, a) => !!v && a.indexOf(v) === i);
   const modes = tools ? [true, false] : [false];
 
@@ -547,7 +551,7 @@ async function callGroq(
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(payload),
-          signal: AbortSignal.timeout(15_000),
+          signal: AbortSignal.timeout(8_000),
         });
 
         const durationMs = Date.now() - attemptStart;
@@ -607,9 +611,8 @@ async function callGroq(
           error: err instanceof Error ? err.message : String(err),
           withTools,
         });
-        if (err?.name === 'TimeoutError' || err?.message?.includes('timeout')) {
-          break;
-        }
+        // Do not abort on timeout, continue to next backup model
+        continue;
       }
     }
   }

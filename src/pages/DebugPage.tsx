@@ -454,7 +454,7 @@ export function DebugPage() {
               )}
 
               {/* Execution Action */}
-              <div className="pt-3 border-t border-[#1d2b23] flex items-center justify-between gap-3">
+              <div className="pt-2 flex items-center justify-between gap-3">
                 <div className="text-xs font-mono text-[#7e9487] tabular-nums">
                   {loading ? (
                     <span className="flex items-center gap-1.5 text-[#4ade80]">
@@ -462,7 +462,7 @@ export function DebugPage() {
                       Berjalan: {elapsedMs}ms
                     </span>
                   ) : (
-                    <span className="text-[#a3b8ad]">Status: Siap diuji</span>
+                    <span>Siap kirim</span>
                   )}
                 </div>
 
