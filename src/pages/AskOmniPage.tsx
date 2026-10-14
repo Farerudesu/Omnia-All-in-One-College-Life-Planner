@@ -10,7 +10,9 @@ import {
   DollarSign,
   CheckSquare,
   AlertCircle,
+  Bug,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import { askOmni } from '../lib/askOmni';
 import * as ds from '../lib/dataService';
@@ -536,15 +538,9 @@ export function AskOmniPage() {
             </p>
           </div>
         </div>
-        {messages.length > 0 && (
-          <button
-            type="button"
-            onClick={() => {
-              if (window.confirm(lang === 'id' ? 'Hapus semua riwayat percakapan Omni?' : 'Clear all Omni chat history?')) {
-                setMessages([]);
-                ds.saveChatHistory([]);
-              }
-            }}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Link
+            to="/debug"
             style={{
               padding: '0.4rem 0.75rem',
               borderRadius: 8,
@@ -554,12 +550,42 @@ export function AskOmniPage() {
               background: 'var(--surface-container)',
               color: 'var(--on-surface-variant)',
               cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              textDecoration: 'none',
               transition: 'background-color 0.15s ease, color 0.15s ease',
             }}
+            title="Buka Omnia API Debug Console"
           >
-            {lang === 'id' ? 'Hapus Riwayat' : 'Clear History'}
-          </button>
-        )}
+            <Bug size={14} />
+            Debug API
+          </Link>
+          {messages.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm(lang === 'id' ? 'Hapus semua riwayat percakapan Omni?' : 'Clear all Omni chat history?')) {
+                  setMessages([]);
+                  ds.saveChatHistory([]);
+                }
+              }}
+              style={{
+                padding: '0.4rem 0.75rem',
+                borderRadius: 8,
+                fontSize: '0.8125rem',
+                fontWeight: 500,
+                border: '1px solid var(--outline-variant)',
+                background: 'var(--surface-container)',
+                color: 'var(--on-surface-variant)',
+                cursor: 'pointer',
+                transition: 'background-color 0.15s ease, color 0.15s ease',
+              }}
+            >
+              {lang === 'id' ? 'Hapus Riwayat' : 'Clear History'}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Chat Area */}
@@ -888,10 +914,36 @@ export function AskOmniPage() {
               <Send size={18} style={{ transform: 'translateX(-1px) translateY(1px)' }} />
             </button>
           </div>
-          {requestError && <div role="alert" style={{ color: 'var(--error)', fontSize: '0.8125rem', paddingLeft: '0.75rem' }}>
-            {requestError}
-            {retryText && <button type="button" className="btn-ghost" onClick={() => { setInput(retryText); setRequestError(''); setRetryText(''); }} style={{ marginLeft: '0.5rem', color: 'inherit' }}>Coba lagi</button>}
-          </div>}
+          {requestError && (
+            <div role="alert" style={{ color: 'var(--error)', fontSize: '0.8125rem', paddingLeft: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <span>{requestError}</span>
+              {retryText && (
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  onClick={() => { setInput(retryText); setRequestError(''); setRetryText(''); }}
+                  style={{ color: 'inherit', textDecoration: 'underline', cursor: 'pointer' }}
+                >
+                  Coba lagi
+                </button>
+              )}
+              <Link
+                to="/debug"
+                style={{
+                  color: 'var(--primary)',
+                  textDecoration: 'underline',
+                  marginLeft: 'auto',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.25rem',
+                  fontWeight: 500,
+                }}
+              >
+                <Bug size={13} />
+                Buka Debug Console
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 

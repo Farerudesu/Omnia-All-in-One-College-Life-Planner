@@ -58,12 +58,50 @@ export interface ProposedAction {
   paymentMethod?: string;
 }
 
+export interface ModelAttempt {
+  provider: string;
+  model: string;
+  status?: number;
+  durationMs?: number;
+  error?: string;
+  withTools?: boolean;
+}
+
+export interface AskOmniDiagnostics {
+  success?: boolean;
+  providerUsed?: string;
+  modelUsed?: string;
+  durationMs?: number;
+  hasGeminiKey?: boolean;
+  hasGroqKey?: boolean;
+  attempts?: ModelAttempt[];
+  toolCount?: number;
+  fatalError?: string;
+  stack?: string;
+}
+
 export interface AskOmniResponse {
   reply: string;
   proposedAction?: ProposedAction;
   proposedActions?: ProposedAction[];  // receipt queue: array of items from a single receipt
   receiptTotal?: number;               // declared total from receipt for validation
   proposedEvent?: ProposedCalendarEvent;
+  error?: string;
+  diagnostics?: AskOmniDiagnostics;
+  debug?: Record<string, unknown>;
+}
+
+export interface RawApiResult {
+  endpoint: string;
+  status: number;
+  statusText: string;
+  durationMs: number;
+  requestHeaders: Record<string, string>;
+  requestBody: unknown;
+  responseHeaders: Record<string, string>;
+  rawResponseText: string;
+  parsedJson: AskOmniResponse | null;
+  error: string | null;
 }
 
 export async function askOmni(request: AskOmniRequest): Promise<AskOmniResponse> {
@@ -100,8 +138,12 @@ export async function askOmni(request: AskOmniRequest): Promise<AskOmniResponse>
       throw new Error(`${isId ? 'Omni tidak bisa dihubungi. Tekan Coba lagi.' : 'Omni could not be reached. Press Try again.'} [${debug}]`);
     }
     if (!data || typeof data.reply !== 'string') throw new Error(isId ? 'Omni memberikan respons yang tidak terduga.' : 'Omni returned an unexpected response.');
-    if (/having trouble replying|unable to reach|failed to send request|try again in a moment/i.test(data.reply)) {
-      throw new Error(`${isId ? 'Omni sedang bermasalah. Tekan Coba lagi.' : 'Omni is having trouble. Press Try again.'} [Edge Function returned fallback response]`);
+    
+    if (data.error || /having trouble replying|unable to reach|failed to send request|try again in a moment/i.test(data.reply)) {
+      const detail = data.error
+        || (data.diagnostics?.attempts?.map((a) => `${a.provider}:${a.model}(${a.status || a.error})`).join('; '))
+        || 'Edge Function returned fallback response';
+      throw new Error(`${isId ? 'Omni sedang bermasalah. Tekan Coba lagi.' : 'Omni is having trouble. Press Try again.'} [${detail}]`);
     }
     return data;
   } catch (err: any) {
@@ -111,3 +153,76 @@ export async function askOmni(request: AskOmniRequest): Promise<AskOmniResponse>
     throw new Error(err?.message || (isId ? 'Omni lagi lambat, coba lagi ya' : 'Unable to reach Omni. Try again.'));
   }
 }
+
+export async function testAskOmniRaw(payload: Record<string, unknown>): Promise<RawApiResult> {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://idrraytmjdbcgerdahkj.supabase.co';
+  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+  const endpoint = `${supabaseUrl}/functions/v1/ask-omni`;
+
+  let token = anonKey;
+  try {
+    const session = await supabase?.auth?.getSession();
+    if (session?.data?.session?.access_token) {
+      token = session.data.session.access_token;
+    }
+  } catch {
+    // fallback to anon key
+  }
+
+  const requestHeaders: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'apikey': anonKey,
+    'Authorization': `Bearer ${token}`,
+  };
+
+  const startTime = Date.now();
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: requestHeaders,
+      body: JSON.stringify(payload),
+    });
+
+    const durationMs = Date.now() - startTime;
+    const responseHeaders: Record<string, string> = {};
+    res.headers.forEach((val, key) => {
+      responseHeaders[key] = val;
+    });
+
+    const rawResponseText = await res.text();
+    let parsedJson: AskOmniResponse | null = null;
+    try {
+      parsedJson = JSON.parse(rawResponseText);
+    } catch {
+      parsedJson = null;
+    }
+
+    return {
+      endpoint,
+      status: res.status,
+      statusText: res.statusText,
+      durationMs,
+      requestHeaders,
+      requestBody: payload,
+      responseHeaders,
+      rawResponseText,
+      parsedJson,
+      error: res.ok ? null : `HTTP ${res.status}: ${res.statusText}`,
+    };
+  } catch (err: any) {
+    const durationMs = Date.now() - startTime;
+    return {
+      endpoint,
+      status: 0,
+      statusText: 'Network / Client Error',
+      durationMs,
+      requestHeaders,
+      requestBody: payload,
+      responseHeaders: {},
+      rawResponseText: '',
+      parsedJson: null,
+      error: err?.message || String(err),
+    };
+  }
+}
+

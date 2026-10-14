@@ -384,12 +384,24 @@ interface ModelMessage {
   content: any;
 }
 
+interface ModelAttempt {
+  provider: 'gemini' | 'groq';
+  model: string;
+  status?: number;
+  durationMs: number;
+  error?: string;
+  withTools?: boolean;
+}
+
 interface CompletionResult {
   content: string;
   toolCall?: {
     name: string;
     arguments: Record<string, unknown>;
   };
+  modelUsed?: string;
+  providerUsed?: string;
+  attempts?: ModelAttempt[];
 }
 
 async function callGemini(
@@ -397,10 +409,21 @@ async function callGemini(
   chatMessages: ModelMessage[],
   tools?: any[]
 ): Promise<CompletionResult> {
-  const modelsToTry = [GEMINI_MODEL, 'gemini-2.5-flash', 'gemini-1.5-flash'].filter((v, i, a) => a.indexOf(v) === i);
+  const modelsToTry = [
+    'gemini-flash-latest',
+    'gemini-3.8-flash',
+    'gemini-flash-lite-latest',
+    GEMINI_MODEL,
+    'gemini-3.5-flash',
+    'gemini-pro-latest',
+    'gemini-2.5-pro',
+  ].filter((v, i, a) => !!v && a.indexOf(v) === i);
+
+  const attempts: ModelAttempt[] = [];
   let lastError: Error | null = null;
 
   for (const model of modelsToTry) {
+    const attemptStart = Date.now();
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`;
       const response = await fetch(url, {
@@ -419,13 +442,19 @@ async function callGemini(
         signal: AbortSignal.timeout(15_000),
       });
 
+      const durationMs = Date.now() - attemptStart;
       if (!response.ok) {
         const errorText = await response.text();
-        if (response.status === 404 && modelsToTry.indexOf(model) < modelsToTry.length - 1) {
-          console.warn(`Gemini model ${model} returned 404, falling back to next candidate...`);
-          continue;
-        }
-        throw new Error(`Gemini API error (${response.status}): ${errorText}`);
+        attempts.push({
+          provider: 'gemini',
+          model,
+          status: response.status,
+          durationMs,
+          error: errorText.slice(0, 500),
+          withTools: !!tools,
+        });
+        console.warn(`Gemini model ${model} failed (${response.status}): ${errorText.slice(0, 150)}`);
+        continue;
       }
 
       const result = await response.json();
@@ -441,6 +470,14 @@ async function callGemini(
         }
       }
 
+      attempts.push({
+        provider: 'gemini',
+        model,
+        status: 200,
+        durationMs,
+        withTools: !!tools,
+      });
+
       return {
         content: choice?.content || '',
         toolCall: toolCall
@@ -449,16 +486,29 @@ async function callGemini(
             arguments: parsedArgs,
           }
           : undefined,
+        modelUsed: model,
+        providerUsed: 'gemini',
+        attempts,
       };
     } catch (err: any) {
+      const durationMs = Date.now() - attemptStart;
       lastError = err instanceof Error ? err : new Error(String(err));
+      attempts.push({
+        provider: 'gemini',
+        model,
+        durationMs,
+        error: lastError.message,
+        withTools: !!tools,
+      });
       if (err?.name === 'TimeoutError' || err?.message?.includes('timeout')) {
         break;
       }
     }
   }
 
-  throw lastError || new Error('All Gemini model candidates failed');
+  const err = lastError || new Error('All Gemini model candidates failed');
+  (err as any).attempts = attempts;
+  throw err;
 }
 
 async function callGroq(
@@ -466,49 +516,107 @@ async function callGroq(
   chatMessages: ModelMessage[],
   tools?: any[]
 ): Promise<CompletionResult> {
-  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: GROQ_MODEL,
-      messages: chatMessages,
-      ...(tools ? { tools, tool_choice: 'auto' } : {}),
-      temperature: 0.2,
-      max_tokens: 2048,
-    }),
-    signal: AbortSignal.timeout(15_000),
-  });
+  const attempts: ModelAttempt[] = [];
+  const modelsToTry = [
+    GROQ_MODEL,
+    'openai/gpt-oss-120b',
+    'openai/gpt-oss-20b',
+    'qwen/qwen3.8-27b',
+  ].filter((v, i, a) => !!v && a.indexOf(v) === i);
+  const modes = tools ? [true, false] : [false];
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Groq API error (${response.status}): ${errorText}`);
-  }
+  for (const withTools of modes) {
+    for (const model of modelsToTry) {
+      const attemptStart = Date.now();
+      try {
+        const payload: Record<string, unknown> = {
+          model,
+          messages: chatMessages,
+          temperature: 0.2,
+          max_tokens: 2048,
+        };
+        if (withTools && tools) {
+          payload.tools = tools;
+          payload.tool_choice = 'auto';
+        }
 
-  const result = await response.json();
-  const choice = result.choices?.[0]?.message;
-  const toolCall = choice?.tool_calls?.[0];
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+          signal: AbortSignal.timeout(15_000),
+        });
 
-  let parsedArgs: Record<string, unknown> = {};
-  if (toolCall) {
-    try {
-      parsedArgs = JSON.parse(toolCall.function?.arguments || '{}');
-    } catch {
-      parsedArgs = {};
+        const durationMs = Date.now() - attemptStart;
+        if (!response.ok) {
+          const errorText = await response.text();
+          attempts.push({
+            provider: 'groq',
+            model,
+            status: response.status,
+            durationMs,
+            error: errorText.slice(0, 500),
+            withTools,
+          });
+          if (response.status === 400 && withTools) break; // fallback to mode without tools
+          continue;
+        }
+
+        const result = await response.json();
+        const choice = result.choices?.[0]?.message;
+        const toolCall = choice?.tool_calls?.[0];
+
+        let parsedArgs: Record<string, unknown> = {};
+        if (toolCall) {
+          try {
+            parsedArgs = JSON.parse(toolCall.function?.arguments || '{}');
+          } catch {
+            parsedArgs = {};
+          }
+        }
+
+        attempts.push({
+          provider: 'groq',
+          model,
+          status: 200,
+          durationMs,
+          withTools,
+        });
+
+        return {
+          content: choice?.content || '',
+          toolCall: toolCall
+            ? {
+              name: toolCall.function?.name,
+              arguments: parsedArgs,
+            }
+            : undefined,
+          modelUsed: model,
+          providerUsed: 'groq',
+          attempts,
+        };
+      } catch (err: any) {
+        const durationMs = Date.now() - attemptStart;
+        attempts.push({
+          provider: 'groq',
+          model,
+          durationMs,
+          error: err instanceof Error ? err.message : String(err),
+          withTools,
+        });
+        if (err?.name === 'TimeoutError' || err?.message?.includes('timeout')) {
+          break;
+        }
+      }
     }
   }
 
-  return {
-    content: choice?.content || '',
-    toolCall: toolCall
-      ? {
-        name: toolCall.function?.name,
-        arguments: parsedArgs,
-      }
-      : undefined,
-  };
+  const err = new Error('All Groq model attempts failed');
+  (err as any).attempts = attempts;
+  throw err;
 }
 
 Deno.serve(async (request) => {
@@ -522,6 +630,7 @@ Deno.serve(async (request) => {
     return jsonResponse({ reply: 'Sign in before asking Omni a question.' }, 401);
   }
 
+  const startTime = Date.now();
   let payload: { message?: unknown; history?: unknown; imageBase64?: unknown; mimeType?: unknown; scheduleContext?: unknown };
   try {
     payload = await request.json();
@@ -565,8 +674,67 @@ Deno.serve(async (request) => {
   const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
   const groqApiKey = Deno.env.get('GROQ_API_KEY');
 
+  if (payload.debug === true) {
+    const debugInfo: any = {
+      timestamp: new Date().toISOString(),
+      hasGeminiKey: !!geminiApiKey,
+      hasGroqKey: !!groqApiKey,
+      geminiModelConfig: GEMINI_MODEL,
+      groqModelConfig: GROQ_MODEL,
+      geminiModels: [] as string[],
+      groqModels: [] as string[],
+      errors: [] as string[],
+    };
+
+    if (geminiApiKey) {
+      try {
+        const gemRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${geminiApiKey}`);
+        const gemData = await gemRes.json();
+        if (gemData.models && Array.isArray(gemData.models)) {
+          debugInfo.geminiModels = gemData.models
+            .map((m: any) => m.name.replace(/^models\//, ''))
+            .filter((name: string) => name.includes('flash') || name.includes('pro') || name.includes('gemini'));
+        } else {
+          debugInfo.errors.push(`Gemini list error: ${JSON.stringify(gemData)}`);
+        }
+      } catch (e: any) {
+        debugInfo.errors.push(`Gemini fetch error: ${e.message}`);
+      }
+    }
+
+    if (groqApiKey) {
+      try {
+        const groqRes = await fetch(`https://api.groq.com/openai/v1/models`, {
+          headers: { Authorization: `Bearer ${groqApiKey}` }
+        });
+        const groqData = await groqRes.json();
+        if (groqData.data && Array.isArray(groqData.data)) {
+          debugInfo.groqModels = groqData.data.map((m: any) => m.id);
+        } else {
+          debugInfo.errors.push(`Groq list error: ${JSON.stringify(groqData)}`);
+        }
+      } catch (e: any) {
+        debugInfo.errors.push(`Groq fetch error: ${e.message}`);
+      }
+    }
+
+    return jsonResponse({
+      reply: 'Debug query successful.',
+      debug: debugInfo,
+    } as any);
+  }
+
   if (!geminiApiKey && !groqApiKey) {
-    return jsonResponse({ reply: 'Omni is not configured yet. Please configure GEMINI_API_KEY or GROQ_API_KEY.' }, 503);
+    return jsonResponse({
+      reply: 'Omni is not configured yet. Please configure GEMINI_API_KEY or GROQ_API_KEY in Supabase secrets.',
+      error: 'Missing GEMINI_API_KEY and GROQ_API_KEY secrets.',
+      diagnostics: {
+        success: false,
+        hasGeminiKey: false,
+        hasGroqKey: false,
+        durationMs: Date.now() - startTime,
+      }
+    }, 503);
   }
 
   try {
@@ -600,14 +768,17 @@ Deno.serve(async (request) => {
 
     let completion: CompletionResult | null = null;
     let providerUsed = '';
+    const allAttempts: ModelAttempt[] = [];
 
     // Primary: Gemini
     if (geminiApiKey) {
       try {
         completion = await callGemini(geminiApiKey, chatMessages, tools);
         providerUsed = 'gemini';
-      } catch (geminiError) {
-        console.warn('Gemini request failed, trying fallback to Groq:', geminiError);
+        if (completion.attempts) allAttempts.push(...completion.attempts);
+      } catch (geminiError: any) {
+        if (geminiError?.attempts) allAttempts.push(...geminiError.attempts);
+        console.warn('Gemini request failed, trying fallback to Groq:', geminiError?.message || geminiError);
       }
     }
 
@@ -616,13 +787,32 @@ Deno.serve(async (request) => {
       try {
         completion = await callGroq(groqApiKey, chatMessages, tools);
         providerUsed = 'groq';
-      } catch (groqError) {
-        console.error('Groq fallback also failed:', groqError);
+        if (completion.attempts) allAttempts.push(...completion.attempts);
+      } catch (groqError: any) {
+        if (groqError?.attempts) allAttempts.push(...groqError.attempts);
+        console.error('Groq fallback also failed:', groqError?.message || groqError);
       }
     }
 
+    const durationMs = Date.now() - startTime;
+    const diagnostics = {
+      success: !!completion,
+      providerUsed: providerUsed || 'none',
+      modelUsed: completion?.modelUsed || 'none',
+      durationMs,
+      hasGeminiKey: !!geminiApiKey,
+      hasGroqKey: !!groqApiKey,
+      attempts: allAttempts,
+      toolCount: tools ? tools.length : 0,
+    };
+
     if (!completion) {
-      return jsonResponse({ reply: FRIENDLY_FALLBACK });
+      const summaryMsg = allAttempts.map((a) => `[${a.provider}:${a.model} ${a.status ? `HTTP ${a.status}` : a.error}]`).join('; ') || 'No providers completed';
+      return jsonResponse({
+        reply: FRIENDLY_FALLBACK,
+        error: `Omni LLM providers failed: ${summaryMsg}`,
+        diagnostics,
+      }, 200);
     }
 
     // Handle tool call result
@@ -639,6 +829,7 @@ Deno.serve(async (request) => {
             reply: completion.content.trim() || `Saya temukan ${n} item dari struk${totalStr}. Silakan konfirmasi satu per satu:`,
             proposedActions: receipt.items,
             receiptTotal: receipt.receiptTotal,
+            diagnostics,
           });
         }
       } else if (fnName === 'propose_calendar_event') {
@@ -647,6 +838,7 @@ Deno.serve(async (request) => {
           return jsonResponse({
             reply: completion.content.trim() || 'Saya siapkan jadwalnya. Silakan tinjau dan klik konfirmasi di bawah:',
             proposedAction: proposedEvent,
+            diagnostics,
           });
         }
       } else if (fnName === 'propose_task') {
@@ -655,6 +847,7 @@ Deno.serve(async (request) => {
           return jsonResponse({
             reply: completion.content.trim() || 'Saya siapkan tugasnya. Silakan tinjau dan klik konfirmasi di bawah:',
             proposedAction: proposedTask,
+            diagnostics,
           });
         }
       } else if (fnName === 'propose_expense') {
@@ -663,15 +856,25 @@ Deno.serve(async (request) => {
           return jsonResponse({
             reply: completion.content.trim() || 'Saya siapkan catatan pengeluarannya. Silakan tinjau dan klik konfirmasi di bawah:',
             proposedAction: proposedExpense,
+            diagnostics,
           });
         }
       }
     }
 
     const replyText = completion.content?.trim() || FRIENDLY_FALLBACK;
-    return jsonResponse({ reply: replyText });
+    return jsonResponse({ reply: replyText, diagnostics });
   } catch (error) {
-    console.error('Ask Omni execution failed:', error instanceof Error ? error.message : 'Unknown error');
-    return jsonResponse({ reply: FRIENDLY_FALLBACK });
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Ask Omni execution failed:', errorMsg);
+    return jsonResponse({
+      reply: FRIENDLY_FALLBACK,
+      error: errorMsg,
+      diagnostics: {
+        success: false,
+        fatalError: errorMsg,
+        stack: error instanceof Error ? error.stack : undefined,
+      }
+    }, 500);
   }
 });

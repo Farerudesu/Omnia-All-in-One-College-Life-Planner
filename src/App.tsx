@@ -10,6 +10,7 @@ import { FinancePage } from './pages/FinancePage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AskOmniPage } from './pages/AskOmniPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
+import { DebugPage } from './pages/DebugPage';
 
 export default function App() {
   return (
@@ -18,6 +19,8 @@ export default function App() {
         <BrowserRouter>
           <Routes>
           <Route path="/version" element={<VersionPage />} />
+          <Route path="/debug" element={<DebugPage />} />
+          <Route path="/debug-omni" element={<DebugPage />} />
           <Route path="/signin" element={<SignInRoute />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route element={<RequireAuth />}>
@@ -43,12 +46,13 @@ function VersionPage() {
   return (
     <main style={{ padding: '2rem', fontFamily: 'monospace' }}>
       <h1>Omnia version</h1>
-      <p>Version: 1.7.1</p>
-      <p>Build: 2026-10-14 20:55:00 +08:00</p>
-      <p>Commit: fix-profile-saving-and-avatar</p>
-      <p>Changelog: Fix student profile saving (schema conflict id vs user_id, storage bucket &amp; RLS policies, resilient avatar image/JPG MIME parsing, and avatar rendering in mobile &amp; desktop headers), P0 #1 precise countdown, P0 #2 Ask Omni engine upgrade</p>
-      <p style={{ marginTop: '1.5rem' }}>
+      <p>Version: 1.7.2</p>
+      <p>Build: 2026-10-15 05:45:00 +08:00</p>
+      <p>Commit: feat-omni-api-diagnostics-and-debug-page</p>
+      <p>Changelog: Add full-featured Omnia API &amp; Engine Debug Console (/debug), fix LLM model fallback chain with active Google Gemini (gemini-flash-latest, gemini-3.8-flash) &amp; Groq models, and surface deep Edge Function diagnostics</p>
+      <p style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem' }}>
         <a href="/schedule" style={{ color: 'var(--primary, #0284c7)', textDecoration: 'underline' }}>← Back to App</a>
+        <a href="/debug" style={{ color: 'var(--primary, #0284c7)', textDecoration: 'underline' }}>🔧 Open Debug Console</a>
       </p>
     </main>
   );
