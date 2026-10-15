@@ -1,17 +1,20 @@
 import { useEffect, useState } from 'react';
 import { Modal } from './Modal';
+import { ConfirmModal } from './ConfirmModal';
+import { useToast } from './Toast';
 import * as ds from '../lib/dataService';
 import { useData } from '../lib/useData';
 import type { TransactionType } from '../types';
 import { EXPENSE_CATEGORIES } from '../lib/categories';
 import { useLanguage } from '../lib/useLanguage';
 import { getCurrencySymbol, getCurrencyFractionDigits } from '../lib/currency';
-import { formatDateNumeric, localDateString } from '../lib/dateUtils';
+import { formatDateNumeric, getTodayDateString, getUserTimezone } from '../lib/dateUtils';
 
 const CATEGORIES = EXPENSE_CATEGORIES;
 
 export const CATEGORY_NAMES_ID: Record<string, string> = {
-  'Food & Groceries': 'Food & Groceries',
+  'Food & Groceries': 'Makanan & Minuman',
+  'Phone & Internet': 'Pulsa & Internet',
   'Transport': 'Transportasi',
   'Academic Supplies': 'Kebutuhan Kuliah',
   'Housing & Utilities': 'Tempat Tinggal & Tagihan',
@@ -36,12 +39,14 @@ export function AddTransactionModal({
   onScanReceipt,
 }: AddTransactionModalProps) {
   const lang = useLanguage();
+  const { showToast } = useToast();
+  const settings = useData(ds.getSettings);
   const paymentMethods = useData(ds.getPaymentMethods);
   const [merchant, setMerchant] = useState('');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState<string>(CATEGORIES[0]);
   const [isManualDate, setIsManualDate] = useState(false);
-  const [date, setDate] = useState(() => localDateString());
+  const [date, setDate] = useState(() => getTodayDateString(settings.timeZone || getUserTimezone()));
   const [time, setTime] = useState(() => {
     const d = new Date();
     return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
@@ -52,6 +57,7 @@ export function AddTransactionModal({
   const [merchantError, setMerchantError] = useState('');
   const [amountError, setAmountError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const draftKey = `omnia_transaction_draft_${type}`;
 
   useEffect(() => {
@@ -63,7 +69,7 @@ export function AddTransactionModal({
       setMerchant(saved.merchant || '');
       setAmount(saved.amount || '');
       setCategory(saved.category || CATEGORIES[0]);
-      setDate(saved.date || localDateString());
+      setDate(saved.date || getTodayDateString(settings.timeZone || getUserTimezone()));
       setTime(saved.time || time);
       setNotes(saved.notes || '');
       setPaymentMethod(saved.paymentMethod || paymentMethods[0] || 'QRIS');
@@ -81,7 +87,22 @@ export function AddTransactionModal({
     setCustomPaymentMethod('');
     setIsManualDate(false);
     setIsSubmitting(false);
+    setShowDiscardConfirm(false);
     onClose();
+  };
+
+  const handleRequestClose = () => {
+    if (merchant.trim() || amount.trim() || notes.trim()) {
+      setShowDiscardConfirm(true);
+    } else {
+      handleClose();
+    }
+  };
+
+  const handleConfirmDiscard = () => {
+    localStorage.removeItem(draftKey);
+    setShowDiscardConfirm(false);
+    handleClose();
   };
 
   const handleSave = () => {
@@ -115,7 +136,7 @@ export function AddTransactionModal({
         ds.addPaymentMethod(customPaymentMethod.trim());
       }
 
-      const finalDate = isManualDate && date ? date : localDateString();
+      const finalDate = isManualDate && date ? date : getTodayDateString(settings.timeZone || getUserTimezone());
 
       ds.addTransaction({
         merchant: merchant.trim(),
@@ -125,6 +146,11 @@ export function AddTransactionModal({
         type,
         notes: notes.trim() || undefined,
         paymentMethod: resolvedPaymentMethod || undefined,
+      });
+      showToast({
+        message: lang === 'id'
+          ? (type === 'expense' ? 'Pengeluaran dicatat' : 'Pemasukan dicatat')
+          : (type === 'expense' ? 'Expense recorded' : 'Income recorded'),
       });
       setMerchant('');
       setAmount('');
@@ -144,7 +170,7 @@ export function AddTransactionModal({
   return (
     <Modal
       isOpen={isOpen}
-      onClose={handleClose}
+      onClose={handleRequestClose}
       title={type === 'expense' ? (lang === 'id' ? 'Tambah pengeluaran' : 'Add expense') : (lang === 'id' ? 'Tambah pemasukan' : 'Add income')}
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -328,7 +354,7 @@ export function AddTransactionModal({
         </div>
 
         <div className="modal-actions-sticky">
-          <button type="button" className="btn-outline" onClick={handleClose} disabled={isSubmitting}>
+          <button type="button" className="btn-outline" onClick={handleRequestClose} disabled={isSubmitting}>
             {lang === 'id' ? 'Batal' : 'Cancel'}
           </button>
           <button type="button" className="btn-primary" onClick={handleSave} disabled={isSubmitting}>
@@ -339,6 +365,17 @@ export function AddTransactionModal({
           </button>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={showDiscardConfirm}
+        onClose={() => setShowDiscardConfirm(false)}
+        onConfirm={handleConfirmDiscard}
+        title={lang === 'id' ? 'Buang Perubahan?' : 'Discard Changes?'}
+        message={lang === 'id' ? 'Formulir transaksi ini belum disimpan. Yakin ingin membuang catatan ini?' : 'This transaction draft has not been saved. Are you sure you want to discard it?'}
+        confirmText={lang === 'id' ? 'Buang' : 'Discard'}
+        cancelText={lang === 'id' ? 'Lanjut Edit' : 'Keep Editing'}
+        danger
+      />
     </Modal>
   );
 }

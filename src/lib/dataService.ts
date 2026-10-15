@@ -12,6 +12,7 @@ import { supabase } from './supabase.js';
 import { getCurrencyScale, normalizeCurrency } from './currency';
 import { normalizeTransactionCategory } from './categories';
 import { localDateString, formatDetailedCountdown } from './dateUtils';
+import { toast } from '../components/Toast';
 
 // simple id generator
 let _counter = Date.now();
@@ -34,6 +35,8 @@ let settings: UserSettings = {
   currency: 'IDR',
   theme: 'light',
   language: (localStorage.getItem('omnia_language') as 'en' | 'id') || 'id',
+  timeZone: localStorage.getItem('omnia_timezone') || (typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'Asia/Jakarta'),
+  initialBalance: Number(localStorage.getItem('omnia_initial_balance') || 0),
 };
 
 export type DataTable = 'transactions' | 'classes' | 'events' | 'assignments' | 'profiles' | 'user_settings';
@@ -281,14 +284,38 @@ function ownedRow(values: Record<string, unknown>) {
   return { ...values, user_id: activeUserId };
 }
 
-async function mutateTable(table: DataTable, request: () => PromiseLike<{ error: { message: string } | null }>) {
+const MUTATION_TIMEOUT_MS = 15000;
+
+export async function mutateTable(
+  table: DataTable,
+  request: () => PromiseLike<{ error: { message: string } | null }>
+): Promise<{ success: boolean; error?: string }> {
   setTableStatus(table, { loading: true, error: null });
+  let timeoutHandle: ReturnType<typeof setTimeout>;
+  const timeoutPromise = new Promise<{ error: { message: string } }>((_, reject) => {
+    timeoutHandle = setTimeout(() => {
+      reject(new Error('Permintaan melebihi batas waktu (15 detik). Periksa koneksi internet Anda.'));
+    }, MUTATION_TIMEOUT_MS);
+  });
+
   try {
-    const { error } = await request();
-    if (error) throw error;
+    const result = await Promise.race([request(), timeoutPromise]);
+    clearTimeout(timeoutHandle!);
+    if (result && 'error' in result && result.error) {
+      throw result.error;
+    }
     await refreshTable(table);
-  } catch (error) {
-    setTableStatus(table, { loading: false, error: errorMessage(error) });
+    return { success: true };
+  } catch (error: any) {
+    clearTimeout(timeoutHandle!);
+    const msg = errorMessage(error);
+    setTableStatus(table, { loading: false, error: msg });
+    toast({
+      message: `Gagal menyimpan ${table}: ${msg}`,
+      type: 'error',
+      duration: 5000,
+    });
+    return { success: false, error: msg };
   }
 }
 
@@ -389,8 +416,33 @@ export function updateCourse(id: string, data: Partial<Course>): void {
   void mutateTable('classes', () => getClient().from('classes').update(row).eq('id', id).eq('user_id', activeUserId));
 }
 
-export function deleteCourse(id: string): void {
-  void mutateTable('classes', () => getClient().from('classes').delete().eq('id', id).eq('user_id', activeUserId));
+export async function deleteCourse(id: string): Promise<boolean> {
+  const existingCourse = courses.find((c) => c.id === id);
+  const existingSessions = classSessions.filter((s) => s.courseId === id || s.id === id);
+
+  courses = courses.filter((c) => c.id !== id);
+  classSessions = classSessions.filter((s) => s.courseId !== id && s.id !== id);
+  notify();
+
+  try {
+    const res = await mutateTable('classes', () =>
+      getClient().from('classes').delete().eq('id', id).eq('user_id', activeUserId)
+    );
+    if (!res.success) {
+      if (existingCourse) courses = [...courses, existingCourse];
+      classSessions = [...classSessions, ...existingSessions];
+      notify();
+      throw new Error(res.error || 'Gagal menghapus mata kuliah');
+    }
+    return true;
+  } catch (err) {
+    if (existingCourse && !courses.some((c) => c.id === id)) {
+      courses = [...courses, existingCourse];
+      classSessions = [...classSessions, ...existingSessions];
+      notify();
+    }
+    throw err;
+  }
 }
 
 // ─── Class Sessions ───
@@ -513,8 +565,47 @@ export function updateEvent(id: string, data: Partial<CalendarEvent>): void {
   void mutateTable('events', () => getClient().from('events').update(eventRow(data)).eq('id', id).eq('user_id', activeUserId));
 }
 
-export function deleteEvent(id: string): void {
-  void mutateTable('events', () => getClient().from('events').delete().eq('id', id).eq('user_id', activeUserId));
+export async function deleteEvent(id: string): Promise<CalendarEvent | null> {
+  const existing = events.find((e) => e.id === id);
+  if (!existing) return null;
+
+  events = events.filter((e) => e.id !== id);
+  unpinEvent(id);
+  deleteUserReminder(id);
+  notify();
+
+  try {
+    const res = await mutateTable('events', () =>
+      getClient().from('events').delete().eq('id', id).eq('user_id', activeUserId)
+    );
+    if (!res.success) {
+      events = [...events, existing];
+      notify();
+      throw new Error(res.error || 'Gagal menghapus kegiatan');
+    }
+    return existing;
+  } catch (err) {
+    if (!events.some((e) => e.id === id)) {
+      events = [...events, existing];
+      notify();
+    }
+    throw err;
+  }
+}
+
+export async function restoreEvent(event: CalendarEvent): Promise<CalendarEvent> {
+  if (!events.some((e) => e.id === event.id)) {
+    events = [...events, event];
+    notify();
+  }
+  const { error } = await getClient().from('events').insert(ownedRow(eventRow(event)));
+  if (error) {
+    events = events.filter((e) => e.id !== event.id);
+    notify();
+    throw error;
+  }
+  await refreshTable('events');
+  return event;
 }
 
 // ─── Assignments ───
@@ -551,8 +642,47 @@ export function updateAssignment(id: string, data: Partial<Assignment>): void {
   void mutateTable('assignments', () => getClient().from('assignments').update(assignmentRow(data)).eq('id', id).eq('user_id', activeUserId));
 }
 
-export function deleteAssignment(id: string): void {
-  void mutateTable('assignments', () => getClient().from('assignments').delete().eq('id', id).eq('user_id', activeUserId));
+export async function deleteAssignment(id: string): Promise<Assignment | null> {
+  const existing = assignments.find((a) => a.id === id);
+  if (!existing) return null;
+
+  assignments = assignments.filter((a) => a.id !== id);
+  unpinAssignment(id);
+  deleteUserReminder(id);
+  notify();
+
+  try {
+    const res = await mutateTable('assignments', () =>
+      getClient().from('assignments').delete().eq('id', id).eq('user_id', activeUserId)
+    );
+    if (!res.success) {
+      assignments = [...assignments, existing];
+      notify();
+      throw new Error(res.error || 'Gagal menghapus tugas');
+    }
+    return existing;
+  } catch (err) {
+    if (!assignments.some((a) => a.id === id)) {
+      assignments = [...assignments, existing];
+      notify();
+    }
+    throw err;
+  }
+}
+
+export async function restoreAssignment(assignment: Assignment): Promise<Assignment> {
+  if (!assignments.some((a) => a.id === assignment.id)) {
+    assignments = [...assignments, assignment];
+    notify();
+  }
+  const { error } = await getClient().from('assignments').insert(ownedRow(assignmentRow(assignment)));
+  if (error) {
+    assignments = assignments.filter((a) => a.id !== assignment.id);
+    notify();
+    throw error;
+  }
+  await refreshTable('assignments');
+  return assignment;
 }
 
 // ─── Pinned Items Management ───
@@ -706,8 +836,45 @@ export function updateTransaction(id: string, data: Partial<Transaction>): void 
   void mutateTable('transactions', () => getClient().from('transactions').update(transactionRow(data)).eq('id', id).eq('user_id', activeUserId));
 }
 
-export function deleteTransaction(id: string): void {
-  void mutateTable('transactions', () => getClient().from('transactions').delete().eq('id', id).eq('user_id', activeUserId));
+export async function deleteTransaction(id: string): Promise<Transaction | null> {
+  const existing = transactions.find((t) => t.id === id);
+  if (!existing) return null;
+
+  transactions = transactions.filter((t) => t.id !== id);
+  notify();
+
+  try {
+    const res = await mutateTable('transactions', () =>
+      getClient().from('transactions').delete().eq('id', id).eq('user_id', activeUserId)
+    );
+    if (!res.success) {
+      transactions = [existing, ...transactions];
+      notify();
+      throw new Error(res.error || 'Gagal menghapus transaksi');
+    }
+    return existing;
+  } catch (err) {
+    if (!transactions.some((t) => t.id === id)) {
+      transactions = [existing, ...transactions];
+      notify();
+    }
+    throw err;
+  }
+}
+
+export async function restoreTransaction(transaction: Transaction): Promise<Transaction> {
+  if (!transactions.some((t) => t.id === transaction.id)) {
+    transactions = [transaction, ...transactions];
+    notify();
+  }
+  const { error } = await getClient().from('transactions').insert(ownedRow(transactionRow(transaction)));
+  if (error) {
+    transactions = transactions.filter((t) => t.id !== transaction.id);
+    notify();
+    throw error;
+  }
+  await refreshTable('transactions');
+  return transaction;
 }
 
 // ─── Payment Methods ───
@@ -843,6 +1010,12 @@ export function updateSettings(data: Partial<UserSettings>): void {
   settings = { ...settings, ...data };
   if (settings.theme === 'dark' || settings.theme === 'light') {
     localStorage.setItem('omnia_theme', settings.theme);
+  }
+  if (settings.timeZone) {
+    localStorage.setItem('omnia_timezone', settings.timeZone);
+  }
+  if (settings.initialBalance !== undefined) {
+    localStorage.setItem('omnia_initial_balance', String(settings.initialBalance));
   }
   notify();
   const row = {

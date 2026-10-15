@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Modal } from './Modal';
+import { ConfirmModal } from './ConfirmModal';
+import { toast } from './Toast';
 import * as ds from '../lib/dataService';
 import { useData } from '../lib/useData';
 import { CategoryIndicator } from './CategoryIndicator';
@@ -23,6 +25,8 @@ export function EventDetailsModal({ event, isOpen, onClose, openInEditMode }: Ev
   const pinnedEventIds = useData(ds.getPinnedEventIds);
   const uniqueCourses = courses.filter((course, index, list) => list.findIndex((item) => `${item.code}|${item.name}` === `${course.code}|${course.name}`) === index);
   const [isEditing, setIsEditing] = useState(false);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Edit form state
   const [title, setTitle] = useState('');
@@ -104,11 +108,34 @@ export function EventDetailsModal({ event, isOpen, onClose, openInEditMode }: Ev
   };
 
   const handleDelete = () => {
-    const confirmMsg = isId ? `Yakin ingin menghapus "${event.title}"?` : `Are you sure you want to delete "${event.title}"?`;
-    if (window.confirm(confirmMsg)) {
-      ds.deleteEvent(event.id);
+    setShowConfirmDelete(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (isDeleting) return;
+    setIsDeleting(true);
+    try {
+      const deleted = await ds.deleteEvent(event.id);
       ds.deleteUserReminder(event.id);
+      setShowConfirmDelete(false);
       onClose();
+      toast({
+        message: isId ? `Kegiatan "${event.title}" berhasil dihapus` : `Event "${event.title}" deleted`,
+        type: 'info',
+        action: deleted
+          ? {
+              label: isId ? 'Urungkan' : 'Undo',
+              onClick: async () => {
+                await ds.restoreEvent(deleted);
+                toast({ message: isId ? 'Kegiatan berhasil dipulihkan' : 'Event restored', type: 'success' });
+              },
+            }
+          : undefined,
+      });
+    } catch {
+      // error toast handled by dataService
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -263,13 +290,34 @@ export function EventDetailsModal({ event, isOpen, onClose, openInEditMode }: Ev
             />
           </div>
 
-          <div className="modal-actions-sticky">
-            <button type="button" className="btn-ghost" onClick={() => setIsEditing(false)}>
-              {isId ? 'Batal' : 'Cancel'}
+          <div className="modal-actions-sticky" style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <button
+              type="button"
+              className="btn-outline"
+              onClick={() => setShowConfirmDelete(true)}
+              disabled={isSubmitting || isDeleting}
+              style={{
+                color: 'var(--error)',
+                borderColor: 'var(--error-container)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.375rem',
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              </svg>
+              {isId ? 'Hapus' : 'Delete'}
             </button>
-            <button type="button" className="btn-primary" onClick={handleSave} disabled={isSubmitting}>
-              {isSubmitting ? (isId ? 'Menyimpan…' : 'Saving…') : (isId ? 'Simpan Perubahan' : 'Save Changes')}
-            </button>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button type="button" className="btn-ghost" onClick={() => setIsEditing(false)} disabled={isSubmitting}>
+                {isId ? 'Batal' : 'Cancel'}
+              </button>
+              <button type="button" className="btn-primary" onClick={handleSave} disabled={isSubmitting}>
+                {isSubmitting ? (isId ? 'Menyimpan…' : 'Saving…') : (isId ? 'Simpan Perubahan' : 'Save Changes')}
+              </button>
+            </div>
           </div>
         </div>
       ) : (
@@ -420,6 +468,22 @@ export function EventDetailsModal({ event, isOpen, onClose, openInEditMode }: Ev
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={showConfirmDelete}
+        title={isId ? 'Hapus Kegiatan?' : 'Delete Event?'}
+        message={
+          isId
+            ? `Apakah Anda yakin ingin menghapus "${event.title}"? Tindakan ini dapat diurungkan beberapa detik setelah dihapus.`
+            : `Are you sure you want to delete "${event.title}"? You can undo this action right after deletion.`
+        }
+        confirmText={isId ? 'Hapus' : 'Delete'}
+        cancelText={isId ? 'Batal' : 'Cancel'}
+        danger
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setShowConfirmDelete(false)}
+      />
     </Modal>
   );
 }

@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { useData } from '../lib/useData';
 import * as ds from '../lib/dataService';
 import { Modal } from '../components/Modal';
+import { ConfirmModal } from '../components/ConfirmModal';
+import { useToast } from '../components/Toast';
 import { CategoryIndicator } from '../components/CategoryIndicator';
 import { EventDetailsModal } from '../components/EventDetailsModal';
 import { AssignmentDetailsModal } from '../components/AssignmentDetailsModal';
@@ -46,6 +48,14 @@ const CATEGORY_MAP: Record<string, { shape: CategoryShape; color: string }> = {
 export function CalendarPage() {
   const lang = useLanguage();
   const navigate = useNavigate();
+  const { showToast } = useToast();
+  const detailPanelRef = useRef<HTMLDivElement>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void | Promise<void>;
+  } | null>(null);
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(() => new Date());
   const [viewMode, setViewMode] = useState<ViewMode>(() =>
@@ -585,38 +595,56 @@ export function CalendarPage() {
           >
             <div>
               <h1 style={{ fontSize: 'clamp(1.25rem, 4vw, 1.75rem)', fontWeight: 700, margin: 0 }}>
-                {viewMode === 'Month' && `${getMonthName(month)} ${year}`}
-                {viewMode === 'Week' && (lang === 'id' ? `Minggu ${formatDateLong(weekDates[0])}` : `Week of ${formatDateLong(weekDates[0])}`)}
-                {viewMode === 'Day' && (selectedDate ? formatDateLong(selectedDate) : (lang === 'id' ? 'Hari Ini' : 'Today'))}
-                {viewMode === 'Agenda' && (lang === 'id' ? 'Agenda & Jadwal Mendatang' : 'Upcoming Agenda & Milestones')}
+                {viewMode === 'Month' && (lang === 'id' ? 'Kalender Akademik' : 'Academic Calendar')}
+                {viewMode === 'Week' && (lang === 'id' ? `Jadwal Mingguan (${formatDateLong(weekDates[0])})` : `Weekly Overview (${formatDateLong(weekDates[0])})`)}
+                {viewMode === 'Day' && (selectedDate ? formatDateLong(selectedDate) : (lang === 'id' ? 'Kegiatan Hari Ini' : 'Today’s Schedule'))}
+                {viewMode === 'Agenda' && (lang === 'id' ? 'Linimasa & Tenggat Mendatang' : 'Upcoming Timeline & Deadlines')}
               </h1>
             </div>
 
-            <div className="calendar-legend-chips" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.375rem 0.625rem', paddingBottom: '0.25rem' }}>
-              {LEGEND_ITEMS.map((item) => (
-                <button
-                  key={item.key}
-                  onClick={() => toggleFilter(item.key)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.3rem',
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    color: filters[item.key as keyof typeof filters] ? 'var(--on-surface)' : 'var(--outline)',
-                    opacity: filters[item.key as keyof typeof filters] ? 1 : 0.5,
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    padding: '0.2rem 0.35rem',
-                    borderRadius: 4,
-                  }}
-                >
-                  <CategoryIndicator shape={item.shape} color={item.color} />
-                  {lang === 'id' ? item.labelId : item.labelEn}
-                </button>
-              ))}
+            <div className="calendar-legend-chips" style={{
+              display: 'flex',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '0.5rem',
+              paddingBottom: '0.25rem',
+            }}>
+              {LEGEND_ITEMS.map((item) => {
+                const isActive = Boolean(filters[item.key as keyof typeof filters]);
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => toggleFilter(item.key)}
+                    className="min-touch-target"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.375rem',
+                      fontSize: '0.8125rem',
+                      fontWeight: 600,
+                      minHeight: 44,
+                      padding: '0.375rem 0.75rem',
+                      borderRadius: 20,
+                      border: isActive
+                        ? '1px solid var(--outline-variant)'
+                        : '1px solid transparent',
+                      background: isActive
+                        ? 'var(--surface-container-low)'
+                        : 'transparent',
+                      color: isActive ? 'var(--on-surface)' : 'var(--outline)',
+                      opacity: isActive ? 1 : 0.55,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      transition: 'all 0.15s ease',
+                    }}
+                    title={lang === 'id' ? `Filter: ${item.labelId}` : `Filter: ${item.labelEn}`}
+                  >
+                    <CategoryIndicator shape={item.shape} color={item.color} size={8} />
+                    <span>{lang === 'id' ? item.labelId : item.labelEn}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -668,11 +696,23 @@ export function CalendarPage() {
                     role="button"
                     tabIndex={0}
                     aria-label={`View ${formatDateLong(date)}`}
-                    onClick={() => setSelectedDate(date)}
+                    onClick={() => {
+                      setSelectedDate(date);
+                      if (typeof window !== 'undefined' && window.innerWidth <= 819) {
+                        setTimeout(() => {
+                          detailPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 60);
+                      }
+                    }}
                     onKeyDown={(event) => {
                       if (event.key === 'Enter' || event.key === ' ') {
                         event.preventDefault();
                         setSelectedDate(date);
+                        if (typeof window !== 'undefined' && window.innerWidth <= 819) {
+                          setTimeout(() => {
+                            detailPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                          }, 60);
+                        }
                       }
                     }}
                     style={{
@@ -681,14 +721,16 @@ export function CalendarPage() {
                       borderBottom: i < 35 ? '1px solid var(--outline-variant)' : undefined,
                       borderRight: (i + 1) % 7 !== 0 ? '1px solid var(--outline-variant)' : undefined,
                       background: selected
-                        ? 'var(--surface-container)'
+                        ? 'var(--surface-container-high)'
                         : isMatchingSearch
                         ? 'color-mix(in srgb, var(--primary) 12%, var(--surface-container-lowest))'
                         : today
                         ? 'color-mix(in srgb, var(--primary) 6%, var(--surface-container-lowest))'
                         : 'var(--surface-container-lowest)',
+                      outline: selected ? '2px solid var(--primary)' : undefined,
+                      outlineOffset: -2,
                       cursor: 'pointer',
-                      transition: 'background 0.15s',
+                      transition: 'background 0.15s, outline 0.15s',
                       opacity: isCurrentMonth ? 1 : 0.45,
                     }}
                   >
@@ -746,7 +788,7 @@ export function CalendarPage() {
                             cursor: 'pointer',
                           }}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', filter: item.isPast ? 'grayscale(1)' : undefined, opacity: item.isPast ? 0.58 : 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', filter: (!selected && item.isPast) ? 'grayscale(1)' : undefined, opacity: (!selected && item.isPast) ? 0.58 : 1 }}>
                             <CategoryIndicator shape={item.shape} color={item.color} size={7} />
                             <span className="calendar-month-event-label" style={{ overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--on-surface)' }}>
                               {item.title}
@@ -1016,26 +1058,67 @@ export function CalendarPage() {
                     onClick={(e) => { 
                       e.stopPropagation(); 
                       const item = quickActionMenu.item;
+                      const dateTarget = quickActionMenu.date;
+                      closeQuickActionMenu();
+
                       if (item.id.startsWith('assign-') || item.rawAssignment) {
                         const aId = item.rawAssignment?.id || item.id.replace('assign-', '');
-                        if (window.confirm(lang === 'id' ? `Hapus tugas "${item.title}"?` : `Delete task "${item.title}"?`)) {
-                          ds.deleteAssignment(aId);
-                        }
+                        setConfirmDialog({
+                          isOpen: true,
+                          title: lang === 'id' ? 'Hapus Tugas?' : 'Delete Task?',
+                          message: lang === 'id' ? `Apakah kamu yakin ingin menghapus tugas "${item.title}"?` : `Are you sure you want to delete task "${item.title}"?`,
+                          onConfirm: async () => {
+                            await ds.deleteAssignment(aId);
+                            showToast({
+                              message: lang === 'id' ? `Tugas "${item.title}" dihapus` : `Task "${item.title}" deleted`,
+                              type: 'success',
+                              action: {
+                                label: lang === 'id' ? 'Urungkan' : 'Undo',
+                                onClick: async () => {
+                                  await ds.restoreAssignment(aId);
+                                },
+                              },
+                            });
+                          },
+                        });
                       } else if (item.rawEvent) {
-                        if (window.confirm(lang === 'id' ? `Hapus acara "${item.title}"?` : `Delete event "${item.title}"?`)) {
-                          ds.deleteEvent(item.rawEvent.id);
-                        }
+                        setConfirmDialog({
+                          isOpen: true,
+                          title: lang === 'id' ? 'Hapus Acara?' : 'Delete Event?',
+                          message: lang === 'id' ? `Apakah kamu yakin ingin menghapus acara "${item.title}"?` : `Are you sure you want to delete event "${item.title}"?`,
+                          onConfirm: async () => {
+                            await ds.deleteEvent(item.rawEvent.id);
+                            showToast({
+                              message: lang === 'id' ? `Acara "${item.title}" dihapus` : `Event "${item.title}" deleted`,
+                              type: 'success',
+                              action: {
+                                label: lang === 'id' ? 'Urungkan' : 'Undo',
+                                onClick: async () => {
+                                  await ds.restoreEvent(item.rawEvent.id);
+                                },
+                              },
+                            });
+                          },
+                        });
                       } else if (item.rawSession) {
-                        const dStr = toDateString(quickActionMenu.date);
-                        if (window.confirm(lang === 'id' ? `Batalkan sesi kuliah "${item.title}" pada ${dStr}?` : `Cancel class session "${item.title}" on ${dStr}?`)) {
-                          ds.addSessionException({
-                            classSessionId: item.rawSession.id,
-                            date: dStr,
-                            type: 'cancelled',
-                          });
-                        }
+                        const dStr = toDateString(dateTarget);
+                        setConfirmDialog({
+                          isOpen: true,
+                          title: lang === 'id' ? 'Batalkan Pertemuan Kelas?' : 'Cancel Class Session?',
+                          message: lang === 'id' ? `Batalkan sesi kuliah "${item.title}" pada ${dStr}?` : `Cancel class session "${item.title}" on ${dStr}?`,
+                          onConfirm: async () => {
+                            await ds.addSessionException({
+                              classSessionId: item.rawSession.id,
+                              date: dStr,
+                              type: 'cancelled',
+                            });
+                            showToast({
+                              message: lang === 'id' ? `Sesi kelas dibatalkan untuk hari ini` : `Class session cancelled for today`,
+                              type: 'success',
+                            });
+                          },
+                        });
                       }
-                      closeQuickActionMenu(); 
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -1343,6 +1426,7 @@ export function CalendarPage() {
         {/* Selected date side panel (desktop only for Month mode) */}
         {viewMode === 'Month' && selectedDate && (
           <div
+            ref={detailPanelRef}
             className="calendar-side-panel"
             style={{
               width: 320,
@@ -1497,6 +1581,24 @@ export function CalendarPage() {
         isOpen={!!selectedClassSessionForModal}
         onClose={() => setSelectedClassSessionForModal(null)}
       />
+
+      {/* In-App Confirmation Modal */}
+      {confirmDialog && (
+        <ConfirmModal
+          isOpen={confirmDialog.isOpen}
+          onClose={() => setConfirmDialog(null)}
+          onConfirm={async () => {
+            const action = confirmDialog.onConfirm;
+            setConfirmDialog(null);
+            await action();
+          }}
+          title={confirmDialog.title}
+          message={confirmDialog.message}
+          confirmText={lang === 'id' ? 'Hapus' : 'Delete'}
+          cancelText={lang === 'id' ? 'Batal' : 'Cancel'}
+          danger
+        />
+      )}
     </div>
   );
 }

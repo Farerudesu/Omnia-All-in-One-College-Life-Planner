@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Modal } from './Modal';
+import { ConfirmModal } from './ConfirmModal';
+import { toast } from './Toast';
 import * as ds from '../lib/dataService';
 import { useData } from '../lib/useData';
 import { CheckCircle, Clock, Pin } from 'lucide-react';
@@ -19,6 +21,8 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose, openInEdit
   const courses = useData(ds.getCourses);
   const pinnedIds = useData(ds.getPinnedAssignmentIds);
   const [isEditing, setIsEditing] = useState(false);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Form state
   const [title, setTitle] = useState('');
@@ -114,9 +118,34 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose, openInEdit
   };
 
   const handleDelete = () => {
-    if (window.confirm(`Are you sure you want to delete "${assignment.title}"?`)) {
-      ds.deleteAssignment(assignment.id);
+    setShowConfirmDelete(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (isDeleting) return;
+    setIsDeleting(true);
+    try {
+      const deleted = await ds.deleteAssignment(assignment.id);
+      ds.deleteUserReminder(assignment.id);
+      setShowConfirmDelete(false);
       onClose();
+      toast({
+        message: lang === 'id' ? `Tugas "${assignment.title}" berhasil dihapus` : `Task "${assignment.title}" deleted`,
+        type: 'info',
+        action: deleted
+          ? {
+              label: lang === 'id' ? 'Urungkan' : 'Undo',
+              onClick: async () => {
+                await ds.restoreAssignment(deleted);
+                toast({ message: lang === 'id' ? 'Tugas berhasil dipulihkan' : 'Task restored', type: 'success' });
+              },
+            }
+          : undefined,
+      });
+    } catch {
+      // handled by dataService
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -272,13 +301,34 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose, openInEdit
             />
           </div>
 
-          <div className="modal-actions-sticky">
-            <button type="button" className="btn-ghost" onClick={() => setIsEditing(false)} disabled={isSubmitting}>
-              {lang === 'id' ? 'Batal' : 'Cancel'}
+          <div className="modal-actions-sticky" style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <button
+              type="button"
+              className="btn-outline"
+              onClick={() => setShowConfirmDelete(true)}
+              disabled={isSubmitting || isDeleting}
+              style={{
+                color: 'var(--error)',
+                borderColor: 'var(--error-container)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.375rem',
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              </svg>
+              {lang === 'id' ? 'Hapus' : 'Delete'}
             </button>
-            <button type="button" className="btn-primary" onClick={handleSave} disabled={isSubmitting}>
-              {isSubmitting ? (lang === 'id' ? 'Menyimpan…' : 'Saving…') : (lang === 'id' ? 'Simpan tugas' : 'Save Deliverable')}
-            </button>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button type="button" className="btn-ghost" onClick={() => setIsEditing(false)} disabled={isSubmitting}>
+                {lang === 'id' ? 'Batal' : 'Cancel'}
+              </button>
+              <button type="button" className="btn-primary" onClick={handleSave} disabled={isSubmitting}>
+                {isSubmitting ? (lang === 'id' ? 'Menyimpan…' : 'Saving…') : (lang === 'id' ? 'Simpan tugas' : 'Save Deliverable')}
+              </button>
+            </div>
           </div>
         </div>
       ) : (
@@ -363,24 +413,41 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose, openInEdit
               <span style={{ color: 'var(--on-surface-variant)', width: 100 }}>{lang === 'id' ? 'Tenggat Waktu:' : 'Due Date:'}</span>
               <span className="tabular-nums" style={{ fontWeight: 600, color: 'var(--on-surface)', display: 'inline-flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.375rem' }}>
                 <span>{formatDateShort(new Date(assignment.dueDate))} {assignment.dueDate.includes('T') ? `· ${formatTime12(assignment.dueDate.split('T')[1])}` : ''}</span>
-                <span style={{
-                  fontSize: '0.75rem',
-                  padding: '0.125rem 0.45rem',
-                  borderRadius: 4,
-                  background: formatDetailedCountdown(assignment.dueDate, new Date(), lang).isOverdue
-                    ? 'var(--error-container)'
-                    : formatDetailedCountdown(assignment.dueDate, new Date(), lang).isUrgent
-                      ? 'var(--tertiary-container)'
-                      : 'var(--surface-container-high)',
-                  color: formatDetailedCountdown(assignment.dueDate, new Date(), lang).isOverdue
-                    ? 'var(--on-error-container)'
-                    : formatDetailedCountdown(assignment.dueDate, new Date(), lang).isUrgent
-                      ? 'var(--on-tertiary-container)'
-                      : 'var(--on-surface-variant)',
-                  fontWeight: 600,
-                }}>
-                  {formatDetailedCountdown(assignment.dueDate, new Date(), lang).label}
-                </span>
+                {assignment.status === 'done' ? (
+                  <span
+                    style={{
+                      fontSize: '0.75rem',
+                      padding: '0.125rem 0.5rem',
+                      borderRadius: 4,
+                      background: 'var(--primary-container)',
+                      color: 'var(--on-primary-container)',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {lang === 'id' ? 'Selesai' : 'Completed'}
+                  </span>
+                ) : (
+                  <span
+                    style={{
+                      fontSize: '0.75rem',
+                      padding: '0.125rem 0.45rem',
+                      borderRadius: 4,
+                      background: formatDetailedCountdown(assignment.dueDate, new Date(), lang).isOverdue
+                        ? 'var(--error-container)'
+                        : formatDetailedCountdown(assignment.dueDate, new Date(), lang).isUrgent
+                          ? 'var(--tertiary-container)'
+                          : 'var(--surface-container-high)',
+                      color: formatDetailedCountdown(assignment.dueDate, new Date(), lang).isOverdue
+                        ? 'var(--on-error-container)'
+                        : formatDetailedCountdown(assignment.dueDate, new Date(), lang).isUrgent
+                          ? 'var(--on-tertiary-container)'
+                          : 'var(--on-surface-variant)',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {formatDetailedCountdown(assignment.dueDate, new Date(), lang).label}
+                  </span>
+                )}
               </span>
             </div>
             {course?.professor && (
@@ -461,6 +528,22 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose, openInEdit
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={showConfirmDelete}
+        title={lang === 'id' ? 'Hapus Tugas?' : 'Delete Assignment?'}
+        message={
+          lang === 'id'
+            ? `Apakah Anda yakin ingin menghapus "${assignment.title}"? Tindakan ini dapat diurungkan beberapa detik setelah dihapus.`
+            : `Are you sure you want to delete "${assignment.title}"? You can undo this action right after deletion.`
+        }
+        confirmText={lang === 'id' ? 'Hapus' : 'Delete'}
+        cancelText={lang === 'id' ? 'Batal' : 'Cancel'}
+        danger
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setShowConfirmDelete(false)}
+      />
     </Modal>
   );
 }

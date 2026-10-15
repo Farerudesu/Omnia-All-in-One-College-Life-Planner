@@ -8,6 +8,7 @@ import * as ds from '../lib/dataService';
 import type { UserSettings } from '../types';
 import type { SharePreview } from '../lib/dataService';
 import { getLanguage, setLanguage, translations, type Language } from '../lib/i18n';
+import { getUserTimezone } from '../lib/dateUtils';
 
 export function SettingsPage() {
   const { user, signOut, requestPasswordReset } = useAuth();
@@ -23,6 +24,8 @@ export function SettingsPage() {
   const [monthlyBudget, setMonthlyBudget] = useState(String(settings.monthlyBudget));
   const [currency, setCurrency] = useState(settings.currency);
   const [currencyError, setCurrencyError] = useState('');
+  const [timeZone, setTimeZone] = useState(settings.timeZone || getUserTimezone());
+  const [initialBalance, setInitialBalance] = useState(settings.initialBalance !== undefined ? String(settings.initialBalance) : '');
   const [theme, setTheme] = useState(settings.theme);
   const [termName, setTermName] = useState(settings.termName || '');
   const [termStartDate, setTermStartDate] = useState(settings.semesterStart);
@@ -70,8 +73,10 @@ export function SettingsPage() {
     setFirstDayOfWeek(settings.firstDayOfWeek || 'monday');
     setNotifEnabled(settings.notifEnabled ?? true);
     setPaymentMethodsList(ds.getPaymentMethods());
+    setTimeZone(settings.timeZone || getUserTimezone());
+    setInitialBalance(settings.initialBalance !== undefined ? String(settings.initialBalance) : '');
     if (settings.language) setLangState(settings.language);
-  }, [settings.monthlyBudget, settings.currency, settings.theme, settings.termName, settings.semesterStart, settings.semesterEnd, settings.firstDayOfWeek, settings.notifEnabled, settings.language]);
+  }, [settings.monthlyBudget, settings.currency, settings.theme, settings.termName, settings.semesterStart, settings.semesterEnd, settings.firstDayOfWeek, settings.notifEnabled, settings.language, settings.timeZone, settings.initialBalance]);
 
   const handleAddPaymentMethod = () => {
     if (!newPaymentMethod.trim()) return;
@@ -214,7 +219,9 @@ export function SettingsPage() {
     termStartDate !== settings.semesterStart ||
     termEndDate !== settings.semesterEnd ||
     firstDayOfWeek !== (settings.firstDayOfWeek || 'monday') ||
-    notifEnabled !== (settings.notifEnabled ?? true);
+    notifEnabled !== (settings.notifEnabled ?? true) ||
+    timeZone !== (settings.timeZone || getUserTimezone()) ||
+    initialBalance.trim() !== (settings.initialBalance !== undefined ? String(settings.initialBalance) : '');
 
   const handleReset = () => {
     setLangState(settings.language || 'id');
@@ -226,6 +233,8 @@ export function SettingsPage() {
     setTermEndDate(settings.semesterEnd);
     setFirstDayOfWeek(settings.firstDayOfWeek || 'monday');
     setNotifEnabled(settings.notifEnabled ?? true);
+    setTimeZone(settings.timeZone || getUserTimezone());
+    setInitialBalance(settings.initialBalance !== undefined ? String(settings.initialBalance) : '');
   };
 
   const handleSave = () => {
@@ -235,6 +244,7 @@ export function SettingsPage() {
       return;
     }
     setCurrencyError('');
+    const initBalNum = initialBalance.trim() ? parseFloat(initialBalance) : undefined;
     const updated: UserSettings = {
       ...settings,
       monthlyBudget: parseFloat(monthlyBudget) || 1850,
@@ -246,6 +256,8 @@ export function SettingsPage() {
       firstDayOfWeek,
       notifEnabled,
       language,
+      timeZone,
+      initialBalance: initBalNum,
     };
     setLanguage(language);
     ds.updateSettings(updated);
@@ -538,7 +550,7 @@ export function SettingsPage() {
                   ? 'Pilih mata uang untuk anggaran dan transaksi. Mengubahnya tidak mengonversi nominal sebelumnya.'
                   : 'Choose the currency used for your budget and transactions. Changing it does not convert existing amounts.'}
               </p>
-              <label htmlFor="currency-setting" className="label">{language === 'id' ? 'Kode mata uang ISO' : 'ISO currency code'}</label>
+              <label htmlFor="currency-setting" className="label">{language === 'id' ? 'Mata uang' : 'Currency'}</label>
               <input
                 id="currency-setting"
                 list="currency-code-suggestions"
@@ -554,6 +566,56 @@ export function SettingsPage() {
                 {['IDR', 'USD', 'EUR', 'GBP', 'SGD', 'MYR', 'AUD', 'CAD', 'JPY', 'CNY', 'INR', 'KRW', 'THB', 'PHP', 'VND', 'NZD', 'CHF', 'HKD', 'TWD', 'AED', 'SAR', 'BRL', 'MXN', 'ZAR', 'TRY', 'PLN', 'SEK', 'NOK', 'DKK', 'RUB', 'PKR', 'BDT', 'EGP', 'NGN', 'KES', 'LKR', 'NPR', 'CLP', 'COP', 'ARS', 'KWD', 'QAR', 'BHD', 'OMR', 'JOD', 'ILS', 'HUF', 'CZK', 'RON', 'BGN'].map((code) => <option key={code} value={code} />)}
               </datalist>
               {currencyError && <div id="currency-error" role="alert" style={{ marginTop: '0.375rem', color: 'var(--error)', fontSize: '0.75rem' }}>{currencyError}</div>}
+            </div>
+
+            {/* Saldo Kas Awal (Initial Balance) */}
+            <div className="card">
+              <h3 style={{ marginBottom: '0.5rem' }}>{language === 'id' ? 'Saldo Kas Awal (Opsional)' : 'Initial Cash Balance (Optional)'}</h3>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)', marginBottom: '0.75rem' }}>
+                {language === 'id'
+                  ? 'Catat saldo awal uang tunai, e-wallet, atau rekening bank kamu sebelum mulai mencatat pengeluaran di Omnia.'
+                  : 'Record starting balance across cash and accounts before logging expenses in Omnia.'}
+              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '1.125rem', fontWeight: 600 }}>{getCurrencySymbol(currency)}</span>
+                <label htmlFor="initial-balance-input" className="sr-only">
+                  {language === 'id' ? 'Saldo kas awal' : 'Initial cash balance'}
+                </label>
+                <input
+                  id="initial-balance-input"
+                  type="number"
+                  step="1000"
+                  className="tabular-nums"
+                  value={initialBalance}
+                  onChange={(e) => setInitialBalance(e.target.value)}
+                  placeholder="0"
+                  style={{ width: 'min(100%, 200px)', minWidth: 90 }}
+                />
+              </div>
+            </div>
+
+            {/* Timezone */}
+            <div className="card">
+              <h3 style={{ marginBottom: '0.5rem' }}>{language === 'id' ? 'Zona Waktu' : 'Timezone'}</h3>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)', marginBottom: '0.75rem' }}>
+                {language === 'id'
+                  ? 'Pilih zona waktu untuk jadwal kuliah, tenggat tugas, dan catatan pengeluaran.'
+                  : 'Select your preferred timezone for schedule timeline, assignment countdowns, and transactions.'}
+              </p>
+              <label htmlFor="timezone-setting" className="sr-only">
+                {language === 'id' ? 'Pilih zona waktu' : 'Select timezone'}
+              </label>
+              <select
+                id="timezone-setting"
+                value={timeZone}
+                onChange={(e) => setTimeZone(e.target.value)}
+                style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: 8, fontSize: '0.875rem' }}
+              >
+                <option value="Asia/Jakarta">WIB — Asia/Jakarta (Waktu Indonesia Barat, UTC+7)</option>
+                <option value="Asia/Makassar">WITA — Asia/Makassar (Waktu Indonesia Tengah, UTC+8)</option>
+                <option value="Asia/Jayapura">WIT — Asia/Jayapura (Waktu Indonesia Timur, UTC+9)</option>
+                <option value="UTC">UTC / GMT+0</option>
+              </select>
             </div>
 
             {/* Payment Methods Management Card */}

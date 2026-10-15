@@ -24,10 +24,13 @@ import type { EventType } from '../types';
 import { EXPENSE_CATEGORIES, type ExpenseCategory } from '../lib/categories';
 import { CATEGORY_NAMES_ID } from '../pages/FinancePage';
 import { useLanguage } from '../lib/useLanguage';
+import { useToast } from './Toast';
+import { getTodayDateString } from '../lib/dateUtils';
 
 export function MobileHeader() {
   const navigate = useNavigate();
   const lang = useLanguage();
+  const { showToast } = useToast();
   const { user, signOut } = useAuth();
   const profile = useData(ds.getProfile);
   const settings = useData(ds.getSettings);
@@ -42,11 +45,11 @@ export function MobileHeader() {
   // Quick Task form state
   const [taskTitle, setTaskTitle] = useState('');
   const [taskCourseId, setTaskCourseId] = useState('');
-  const [taskDueDate, setTaskDueDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [taskDueDate, setTaskDueDate] = useState(() => getTodayDateString());
 
   // Quick Event form state
   const [eventTitle, setEventTitle] = useState('');
-  const [eventDate, setEventDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [eventDate, setEventDate] = useState(() => getTodayDateString());
   const [eventStartTime, setEventStartTime] = useState('10:00');
   const [eventEndTime, setEventEndTime] = useState('11:00');
   const [eventType, setEventType] = useState<EventType>('exam');
@@ -59,12 +62,15 @@ export function MobileHeader() {
   useEffect(() => {
     const openQuickAdd = (event: Event) => {
       const type = (event as CustomEvent<'menu' | 'task' | 'event' | 'expense'>).detail || 'menu';
+      const today = getTodayDateString(settings.timeZone);
+      setTaskDueDate(today);
+      setEventDate(today);
       setQuickAddType(type);
       setShowQuickAddModal(true);
     };
     window.addEventListener('open-quick-add', openQuickAdd);
     return () => window.removeEventListener('open-quick-add', openQuickAdd);
-  }, []);
+  }, [settings.timeZone]);
 
   const displayName = profile?.fullName || user?.email?.split('@')[0] || 'Omnia Student';
   const displayEmail = profile?.universityEmail || user?.email || '';
@@ -87,50 +93,65 @@ export function MobileHeader() {
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!taskTitle.trim()) return;
-    await ds.addAssignment({
-      title: taskTitle.trim(),
-      courseId: taskCourseId || (courses[0]?.id ?? 'course-1'),
-      dueDate: `${taskDueDate}T23:59`,
-      status: 'not-started',
-      priority: 'medium',
-      category: 'classes',
-    });
-    setTaskTitle('');
-    setShowQuickAddModal(false);
-    setQuickAddType('menu');
+    try {
+      await ds.addAssignment({
+        title: taskTitle.trim(),
+        courseId: taskCourseId || (courses[0]?.id ?? 'course-1'),
+        dueDate: `${taskDueDate}T23:59`,
+        status: 'not-started',
+        priority: 'medium',
+        category: 'classes',
+      });
+      showToast({ message: lang === 'id' ? 'Tugas berhasil ditambahkan' : 'Task created successfully', type: 'success' });
+      setTaskTitle('');
+      setShowQuickAddModal(false);
+      setQuickAddType('menu');
+    } catch {
+      // handled
+    }
   };
 
-  const handleCreateEvent = (e: React.FormEvent) => {
+  const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!eventTitle.trim()) return;
-    ds.addEvent({
-      title: eventTitle.trim(),
-      date: eventDate,
-      startTime: eventStartTime,
-      endTime: eventEndTime,
-      type: eventType,
-      location: 'Campus',
-    });
-    setEventTitle('');
-    setShowQuickAddModal(false);
-    setQuickAddType('menu');
+    try {
+      await ds.addEvent({
+        title: eventTitle.trim(),
+        date: eventDate,
+        startTime: eventStartTime,
+        endTime: eventEndTime,
+        type: eventType,
+        location: 'Campus',
+      });
+      showToast({ message: lang === 'id' ? 'Acara berhasil ditambahkan' : 'Event created successfully', type: 'success' });
+      setEventTitle('');
+      setShowQuickAddModal(false);
+      setQuickAddType('menu');
+    } catch {
+      // handled
+    }
   };
 
-  const handleCreateExpense = (e: React.FormEvent) => {
+  const handleCreateExpense = async (e: React.FormEvent) => {
     e.preventDefault();
     const num = parseFloat(expenseAmount);
     if (!expenseTitle.trim() || isNaN(num) || num <= 0) return;
-    ds.addTransaction({
-      merchant: expenseTitle.trim(),
-      amount: num,
-      type: 'expense',
-      category: expenseCategory,
-      date: new Date().toISOString().split('T')[0],
-    });
-    setExpenseTitle('');
-    setExpenseAmount('');
-    setShowQuickAddModal(false);
-    setQuickAddType('menu');
+    try {
+      await ds.addTransaction({
+        merchant: expenseTitle.trim(),
+        amount: num,
+        type: 'expense',
+        category: expenseCategory,
+        date: getTodayDateString(settings.timeZone),
+      });
+      showToast({ message: lang === 'id' ? 'Pengeluaran berhasil dicatat' : 'Expense recorded successfully', type: 'success' });
+      setExpenseTitle('');
+      setExpenseAmount('');
+      setShowQuickAddModal(false);
+      setQuickAddType('menu');
+    } catch {
+      // handled
+    }
   };
 
   return (
@@ -235,7 +256,10 @@ export function MobileHeader() {
             <button
               type="button"
               className="mobile-quick-add-tile"
-              onClick={() => setQuickAddType('event')}
+              onClick={() => {
+                setEventDate(getTodayDateString(settings.timeZone));
+                setQuickAddType('event');
+              }}
             >
               <div className="mobile-quick-add-tile__icon" style={{ background: 'var(--surface-container-high)', color: 'var(--on-surface)' }}>
                 <CalendarIcon size={20} />

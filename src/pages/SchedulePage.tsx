@@ -5,6 +5,8 @@ import { useData } from '../lib/useData';
 import * as ds from '../lib/dataService';
 import type { CategoryKey } from '../lib/dataService';
 import { Modal } from '../components/Modal';
+import { ConfirmModal } from '../components/ConfirmModal';
+import { useToast } from '../components/Toast';
 import { CategoryIndicator } from '../components/CategoryIndicator';
 import { EventDetailsModal } from '../components/EventDetailsModal';
 import { useLanguage } from '../lib/useLanguage';
@@ -22,6 +24,7 @@ import {
   formatDateShort,
   formatDateLong,
   parseTime,
+  formatTimezoneLabel,
 } from '../lib/dateUtils';
 import type { ClassSession, Course, SessionException, ExceptionType, CategoryShape, CalendarEvent, EventType } from '../types';
 
@@ -179,6 +182,7 @@ export function SchedulePage() {
   const lang = useLanguage();
   const isId = lang === 'id';
   const t = translations[lang] || translations.id;
+  const settings = useData(ds.getSettings);
   const courses = useData(ds.getCourses);
   const sessions = useData(ds.getClassSessions);
   const exceptions = useData(ds.getSessionExceptions);
@@ -190,6 +194,7 @@ export function SchedulePage() {
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [viewMode, setViewMode] = useState<'week' | 'today'>('today');
   const currentTimeRef = useRef<HTMLDivElement>(null);
+  const firstActivityRef = useRef<HTMLDivElement>(null);
   const dayHeaderRef = useRef<HTMLDivElement>(null);
   const gridScrollRef = useRef<HTMLDivElement>(null);
   const isDraggingRef = useRef(false);
@@ -265,9 +270,6 @@ export function SchedulePage() {
   };
 
 
-  useEffect(() => {
-    (currentTimeRef.current || dayHeaderRef.current)?.scrollIntoView({ block: 'center', inline: 'nearest' });
-  }, [currentDate, viewMode]);
 
   useEffect(() => {
     if (viewMode === 'week') {
@@ -519,6 +521,30 @@ export function SchedulePage() {
 
     return blocks;
   }
+
+  // Auto-scroll logic: if remaining activity today, scroll to currentTimeRef; if all activities have passed, scroll to first activity so morning classes are visible
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (isToday(currentDate)) {
+        const daySessions = getSessionsForDay(currentDate);
+        const dayEvents = getEventsForDay(currentDate);
+        const gridStart = getGridStartForDay(daySessions, dayEvents);
+        const dayBlocks = getLayoutBlocksForDay(daySessions, dayEvents, gridStart);
+        const hasRemaining = dayBlocks.some((b) => !scheduleItemHasPassed(currentDate, b.endTime));
+
+        if (dayBlocks.length > 0 && !hasRemaining) {
+          firstActivityRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
+        } else if (currentTimeRef.current) {
+          currentTimeRef.current.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+        } else if (firstActivityRef.current) {
+          firstActivityRef.current.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
+        }
+      } else if (firstActivityRef.current) {
+        firstActivityRef.current.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
+      }
+    }, 120);
+    return () => clearTimeout(timer);
+  }, [currentDate, viewMode, sessions, events, exceptions]);
 
   // Today's sessions & events for the right panel
   const todayDate = new Date();
@@ -1313,6 +1339,36 @@ export function SchedulePage() {
                 >
                   {t.common.today}
                 </button>
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  onClick={() => {
+                    if (viewMode !== 'today') setViewMode('today');
+                    setCurrentDate(new Date());
+                    setTimeout(() => {
+                      currentTimeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 50);
+                  }}
+                  style={{
+                    fontSize: '0.75rem',
+                    padding: '0.25rem 0.5rem',
+                    color: 'var(--primary)',
+                    fontWeight: 600,
+                    borderRadius: 8,
+                    border: '1px solid var(--outline-variant)',
+                    background: 'var(--surface-container-low)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                  }}
+                  title={lang === 'id' ? 'Gulir ke garis waktu saat ini' : 'Scroll to current time indicator'}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                  {lang === 'id' ? 'Ke sekarang' : 'To now'}
+                </button>
               </div>
             </div>
             <div className="schedule-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -1457,11 +1513,7 @@ export function SchedulePage() {
                   }}>
                     {/* Day headers */}
                     {(() => {
-                      const detectedTz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Makassar';
-                      const tzOffsetMinutes = -new Date().getTimezoneOffset();
-                      const tzOffsetHours = Math.floor(Math.abs(tzOffsetMinutes) / 60);
-                      const tzSign = tzOffsetMinutes >= 0 ? '+' : '-';
-                      const tzLabel = detectedTz.split('/').pop()?.replace(/_/g, ' ') ?? `GMT${tzSign}${tzOffsetHours}`;
+                      const tzLabel = formatTimezoneLabel(settings?.timeZone);
                       return (
                         <div
                           style={{
@@ -1632,7 +1684,7 @@ export function SchedulePage() {
                       })()}
 
                       {/* Timetable blocks with collision / overlap layout */}
-                      {getLayoutBlocksForDay(daySessions, dayEvents, gridStart).map((block) => {
+                      {getLayoutBlocksForDay(daySessions, dayEvents, gridStart).map((block, blockIdx) => {
                         const isMultiCol = block.totalCols > 1;
                         const isPast = scheduleItemHasPassed(date, block.endTime);
                         const widthPct = 100 / block.totalCols;
@@ -1654,6 +1706,7 @@ export function SchedulePage() {
                           return (
                             <div
                               key={session.id}
+                              ref={blockIdx === 0 && isToday(date) ? firstActivityRef : undefined}
                               className="schedule-item-block"
                               role="button"
                               tabIndex={0}
@@ -1768,6 +1821,7 @@ export function SchedulePage() {
                           return (
                             <div
                               key={ev.id}
+                              ref={blockIdx === 0 && isToday(date) ? firstActivityRef : undefined}
                               className="schedule-item-block"
                               role="button"
                               tabIndex={0}
@@ -2507,6 +2561,7 @@ function ScheduleAddEventModal({
 function AddClassModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const lang = useLanguage();
   const isId = lang === 'id';
+  const { showToast } = useToast();
   const [courseName, setCourseName] = useState('');
   const [nameError, setNameError] = useState<string | null>(null);
   const [courseCode, setCourseCode] = useState('');
@@ -2521,6 +2576,22 @@ function AddClassModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
   const [type, setType] = useState<'lecture' | 'lab' | 'tutorial' | 'seminar'>('lecture');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [saveAndAdd, setSaveAndAdd] = useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+
+  const isDirty = Boolean(courseName.trim() || courseCode.trim() || instructor.trim() || days.length > 0 || room.trim());
+
+  const handleRequestClose = () => {
+    if (isDirty) {
+      setShowDiscardConfirm(true);
+    } else {
+      onClose();
+    }
+  };
+
+  const handleConfirmDiscard = () => {
+    setShowDiscardConfirm(false);
+    onClose();
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -2537,6 +2608,7 @@ function AddClassModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
       setColor('#1b4332');
       setType('lecture');
       setIsSubmitting(false);
+      setShowDiscardConfirm(false);
     }
   }, [isOpen]);
 
@@ -2569,6 +2641,7 @@ function AddClassModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
     setIsSubmitting(true);
     try {
       const keepOpen = saveAndAdd;
+      const savedName = courseName.trim();
       setSaveAndAdd(false);
       await ds.addClassSession({
         courseId: '',
@@ -2578,11 +2651,15 @@ function AddClassModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
         room,
         type,
       }, {
-        name: courseName.trim(),
+        name: savedName,
         code: courseCode.trim(),
         professor: instructor.trim(),
         room,
         color,
+      });
+      showToast({
+        message: isId ? `Mata kuliah "${savedName}" berhasil ditambahkan` : `Class "${savedName}" added`,
+        type: 'success',
       });
       setCourseName('');
       setNameError(null);
@@ -2600,7 +2677,7 @@ function AddClassModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={isId ? 'Tambah mata kuliah' : 'Add class'}>
+    <Modal isOpen={isOpen} onClose={handleRequestClose} title={isId ? 'Tambah mata kuliah' : 'Add class'}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <div className="modal-form-grid-2col">
           <div>
@@ -2614,15 +2691,18 @@ function AddClassModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                 setCourseName(e.target.value);
                 if (nameError && e.target.value.trim()) setNameError(null);
               }}
-              placeholder={isId ? 'contoh: Biologi Sel' : 'e.g. Biology'}
+              placeholder={isId ? 'Biologi Sel' : 'Biology'}
               style={{
                 width: '100%',
                 borderColor: nameError ? 'var(--critical, #dc2626)' : undefined,
                 boxShadow: nameError ? '0 0 0 1px var(--critical, #dc2626)' : undefined,
               }}
               aria-invalid={!!nameError}
-              aria-describedby={nameError ? 'class-name-error' : undefined}
+              aria-describedby={nameError ? 'class-name-error' : 'class-name-helper'}
             />
+            <div id="class-name-helper" style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', marginTop: '0.25rem' }}>
+              {isId ? 'Contoh: Biologi Sel, Algoritma Pemrograman' : 'e.g. Biology, Data Structures'}
+            </div>
             {nameError && (
               <div
                 id="class-name-error"
@@ -2649,15 +2729,18 @@ function AddClassModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                 setCourseCode(e.target.value);
                 if (codeError && e.target.value.trim()) setCodeError(null);
               }}
-              placeholder={isId ? 'contoh: BIO110' : 'e.g. BIO110'}
+              placeholder={isId ? 'BIO110' : 'BIO110'}
               style={{
                 width: '100%',
                 borderColor: codeError ? 'var(--critical, #dc2626)' : undefined,
                 boxShadow: codeError ? '0 0 0 1px var(--critical, #dc2626)' : undefined,
               }}
               aria-invalid={!!codeError}
-              aria-describedby={codeError ? 'class-code-error' : undefined}
+              aria-describedby={codeError ? 'class-code-error' : 'class-code-helper'}
             />
+            <div id="class-code-helper" style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', marginTop: '0.25rem' }}>
+              {isId ? 'Contoh: BIO110, IF2110' : 'e.g. BIO110, CS101'}
+            </div>
             {codeError && (
               <div
                 id="class-code-error"
@@ -2677,13 +2760,13 @@ function AddClassModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
 
         <div>
           <label htmlFor="class-instructor" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-            {isId ? 'Dosen Pengampu' : 'Instructor'}
+            {isId ? 'Dosen Pengampu (opsional)' : 'Instructor (optional)'}
           </label>
           <input
             id="class-instructor"
             value={instructor}
             onChange={(e) => setInstructor(e.target.value)}
-            placeholder={isId ? 'Opsional' : 'Optional'}
+            placeholder={isId ? 'Contoh: Dr. Budi Santoso' : 'e.g. Dr. Jane Smith'}
             style={{ width: '100%' }}
           />
         </div>
@@ -2742,13 +2825,13 @@ function AddClassModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
         <div className="modal-form-grid-2col">
           <div>
             <label htmlFor="class-start-time" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-              {isId ? 'Jam Mulai' : 'Start time'}
+              {isId ? 'Jam Mulai *' : 'Start time *'}
             </label>
             <input id="class-start-time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} style={{ width: '100%' }} />
           </div>
           <div>
             <label htmlFor="class-end-time" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-              {isId ? 'Jam Selesai' : 'End time'}
+              {isId ? 'Jam Selesai *' : 'End time *'}
             </label>
             <input id="class-end-time" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} style={{ width: '100%' }} />
           </div>
@@ -2756,52 +2839,81 @@ function AddClassModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
 
         <div>
           <label htmlFor="class-room" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-            {isId ? 'Ruang Kelas' : 'Room'}
+            {isId ? 'Ruang Kelas (opsional)' : 'Room (optional)'}
           </label>
           <input
             id="class-room"
             type="text"
             value={room}
             onChange={(e) => setRoom(e.target.value)}
-            placeholder={isId ? 'contoh: Ruang B-204' : 'e.g. Room B-204'}
+            placeholder={isId ? 'Ruang B-204' : 'Room B-204'}
             style={{ width: '100%' }}
           />
+          <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', marginTop: '0.25rem' }}>
+            {isId ? 'Contoh: Ruang B-204, Lab Riset 2' : 'e.g. Room B-204, Lab 2'}
+          </div>
         </div>
 
-        <div>
-          <label htmlFor="class-color" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-            {isId ? 'Warna Penanda' : 'Color'}
-          </label>
-          <input id="class-color" type="color" value={color} onChange={(e) => setColor(e.target.value)} style={{ width: 56, height: 40, padding: '0.25rem' }} />
+        <div className="modal-form-grid-2col" style={{ alignItems: 'flex-start' }}>
+          <div>
+            <label htmlFor="class-color" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+              {isId ? 'Warna Penanda' : 'Color'}
+            </label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <input id="class-color" type="color" value={color} onChange={(e) => setColor(e.target.value)} style={{ width: 52, height: 38, padding: '0.2rem', borderRadius: 8, cursor: 'pointer' }} />
+              <span style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>{color}</span>
+            </div>
+          </div>
+          <div>
+            <label htmlFor="class-type" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+              {isId ? 'Tipe Kegiatan' : 'Type'}
+            </label>
+            <select id="class-type" value={type} onChange={(e) => setType(e.target.value as typeof type)} style={{ width: '100%', height: 38 }}>
+              <option value="lecture">{isId ? 'Kuliah' : 'Lecture'}</option>
+              <option value="lab">{isId ? 'Praktikum' : 'Lab'}</option>
+              <option value="tutorial">{isId ? 'Tutorial' : 'Tutorial'}</option>
+              <option value="seminar">{isId ? 'Seminar' : 'Seminar'}</option>
+            </select>
+          </div>
         </div>
 
-        <div>
-          <label htmlFor="class-type" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-            {isId ? 'Tipe Kegiatan' : 'Type'}
-          </label>
-          <select id="class-type" value={type} onChange={(e) => setType(e.target.value as typeof type)} style={{ width: '100%' }}>
-            <option value="lecture">{isId ? 'Kuliah' : 'Lecture'}</option>
-            <option value="lab">{isId ? 'Praktikum' : 'Lab'}</option>
-            <option value="tutorial">{isId ? 'Tutorial' : 'Tutorial'}</option>
-            <option value="seminar">{isId ? 'Seminar' : 'Seminar'}</option>
-          </select>
-        </div>
-
-        <div className="modal-actions-sticky">
-          <button type="button" className="btn-outline" onClick={onClose} disabled={isSubmitting}>
-            {isId ? 'Batal' : 'Discard'}
-          </button>
-          <button type="button" className="btn-outline" onClick={() => setSaveAndAdd(true)} disabled={isSubmitting}>
-            {isId ? 'Simpan & tambah lagi' : 'Save & add another'}
-          </button>
-          <button type="button" className="btn-primary" onClick={handleSave} disabled={isSubmitting}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-            {isId ? 'Tambah Kelas' : 'Add class'}
+        <div className="modal-actions-sticky" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
+            <button type="button" className="btn-outline min-touch-target" onClick={handleRequestClose} disabled={isSubmitting} style={{ flex: 1, minHeight: 44 }}>
+              {isId ? 'Batal' : 'Discard'}
+            </button>
+            <button type="button" className="btn-primary min-touch-target" onClick={handleSave} disabled={isSubmitting} style={{ flex: 2, minHeight: 44, whiteSpace: 'nowrap' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              {isSubmitting ? (isId ? 'Menyimpan…' : 'Saving…') : (isId ? 'Tambah Kelas' : 'Add class')}
+            </button>
+          </div>
+          <button
+            type="button"
+            className="btn-ghost"
+            onClick={async () => {
+              setSaveAndAdd(true);
+              await handleSave();
+            }}
+            disabled={isSubmitting}
+            style={{ fontSize: '0.8125rem', padding: '0.35rem', color: 'var(--primary)', textAlign: 'center' }}
+          >
+            {isId ? '+ Simpan & tambah kelas lagi' : '+ Save & add another'}
           </button>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={showDiscardConfirm}
+        onClose={() => setShowDiscardConfirm(false)}
+        onConfirm={handleConfirmDiscard}
+        title={isId ? 'Buang Perubahan?' : 'Discard Changes?'}
+        message={isId ? 'Informasi mata kuliah yang kamu masukkan belum disimpan. Yakin ingin membuangnya?' : 'You have unsaved changes. Are you sure you want to discard them?'}
+        confirmText={isId ? 'Buang' : 'Discard'}
+        cancelText={isId ? 'Lanjut Edit' : 'Keep Editing'}
+        danger
+      />
     </Modal>
   );
 }
@@ -2822,6 +2934,7 @@ function ClassDetailsModal({
 }) {
   const lang = useLanguage();
   const isId = lang === 'id';
+  const { showToast } = useToast();
   const [scope, setScope] = useState<'this-day' | 'all-future'>('this-day');
   const [excType, setExcType] = useState<ExceptionType | ''>(exception?.type || '');
   const [isOnline, setIsOnline] = useState<boolean>(() => {
@@ -3280,17 +3393,58 @@ function ClassDetailsModal({
         </div>
       )}
 
-      <div className="modal-actions-sticky">
-        <button type="button" className="btn-outline min-touch-target" onClick={onClose}>
-          {isId ? 'Batal' : 'Discard'}
-        </button>
-        <button type="button" className="btn-primary min-touch-target" onClick={handleSave}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
-            <polyline points="20 6 9 17 4 12" />
+      <div className="modal-actions-sticky" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '0.5rem' }}>
+        <button
+          type="button"
+          className="btn-outline min-touch-target"
+          onClick={() => setShowDeleteCourse(true)}
+          style={{
+            color: 'var(--critical, #dc2626)',
+            borderColor: 'var(--outline-variant)',
+            background: 'transparent',
+            fontSize: '0.8125rem',
+            padding: '0.4rem 0.75rem',
+            display: 'inline-flex',
+            alignItems: 'center',
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" style={{ marginRight: '0.25rem' }}>
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
           </svg>
-          {isId ? 'Simpan perubahan' : 'Save changes'}
+          {isId ? 'Hapus' : 'Delete'}
         </button>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button type="button" className="btn-outline min-touch-target" onClick={onClose}>
+            {isId ? 'Batal' : 'Discard'}
+          </button>
+          <button type="button" className="btn-primary min-touch-target" onClick={handleSave}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            {isId ? 'Simpan' : 'Save'}
+          </button>
+        </div>
       </div>
+
+      <ConfirmModal
+        isOpen={showDeleteCourse}
+        onClose={() => setShowDeleteCourse(false)}
+        onConfirm={async () => {
+          setShowDeleteCourse(false);
+          await ds.deleteCourse(course.id);
+          showToast({
+            message: isId ? `Kelas "${course.name}" berhasil dihapus` : `Class "${course.name}" deleted`,
+            type: 'success',
+          });
+          onClose();
+        }}
+        title={isId ? 'Hapus Kelas?' : 'Delete Class?'}
+        message={isId ? `Apakah kamu yakin ingin menghapus kelas "${course.name}" (${course.code}) beserta seluruh jadwal sesinya?` : `Are you sure you want to delete "${course.name}" (${course.code}) and all its scheduled sessions?`}
+        confirmText={isId ? 'Hapus Kelas' : 'Delete Class'}
+        cancelText={isId ? 'Batal' : 'Cancel'}
+        danger
+      />
     </Modal>
   );
 }

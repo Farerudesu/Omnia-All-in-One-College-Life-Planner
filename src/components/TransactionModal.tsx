@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Modal } from './Modal';
+import { ConfirmModal } from './ConfirmModal';
+import { useToast } from './Toast';
 import { useData } from '../lib/useData';
 import * as ds from '../lib/dataService';
 import { getCurrencyFractionDigits, getCurrencySymbol } from '../lib/currency';
 import { EXPENSE_CATEGORIES, normalizeTransactionCategory } from '../lib/categories';
 import { CATEGORY_NAMES_ID } from '../pages/FinancePage';
 import { useLanguage } from '../lib/useLanguage';
+import { getTodayDateString, getUserTimezone } from '../lib/dateUtils';
 import type { Transaction, TransactionType } from '../types';
 
 interface TransactionModalProps {
@@ -16,8 +19,10 @@ interface TransactionModalProps {
 
 export function TransactionModal({ transaction, isOpen, onClose }: TransactionModalProps) {
   const lang = useLanguage();
+  const { showToast } = useToast();
   const isEditing = !!transaction;
-  const currency = useData(ds.getSettings).currency || 'IDR';
+  const settings = useData(ds.getSettings);
+  const currency = settings.currency || 'IDR';
   const currencyDigits = getCurrencyFractionDigits(currency);
   const paymentMethods = useData(ds.getPaymentMethods);
 
@@ -25,13 +30,15 @@ export function TransactionModal({ transaction, isOpen, onClose }: TransactionMo
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState<string>(EXPENSE_CATEGORIES[0]);
   const [type, setType] = useState<TransactionType>('expense');
-  const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(() => getTodayDateString(settings.timeZone || getUserTimezone()));
   const [notes, setNotes] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('QRIS');
   const [customPaymentMethod, setCustomPaymentMethod] = useState('');
   const [merchantError, setMerchantError] = useState('');
   const [amountError, setAmountError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
   useEffect(() => {
     if (transaction) {
@@ -48,7 +55,7 @@ export function TransactionModal({ transaction, isOpen, onClose }: TransactionMo
       setAmount('');
       setType('expense');
       setCategory(EXPENSE_CATEGORIES[0]);
-      setDate(new Date().toISOString().split('T')[0]);
+      setDate(getTodayDateString(settings.timeZone));
       setNotes('');
       setPaymentMethod(paymentMethods[0] || 'QRIS');
       setCustomPaymentMethod('');
@@ -63,7 +70,43 @@ export function TransactionModal({ transaction, isOpen, onClose }: TransactionMo
     setAmountError('');
     setCustomPaymentMethod('');
     setIsSubmitting(false);
+    setShowDeleteConfirm(false);
+    setShowDiscardConfirm(false);
     onClose();
+  };
+
+  const handleRequestClose = () => {
+    const isDirty = Boolean(merchant.trim() || amount.trim() || notes.trim());
+    if (isDirty) {
+      setShowDiscardConfirm(true);
+    } else {
+      handleClose();
+    }
+  };
+
+  const handleConfirmDiscard = () => {
+    handleClose();
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!transaction) return;
+    const toDelete = transaction;
+    setShowDeleteConfirm(false);
+    handleClose();
+    try {
+      await ds.deleteTransaction(toDelete.id);
+      showToast({
+        message: lang === 'id' ? `Transaksi "${toDelete.merchant}" dihapus` : `Transaction "${toDelete.merchant}" deleted`,
+        action: {
+          label: lang === 'id' ? 'Urungkan' : 'Undo',
+          onClick: async () => {
+            await ds.restoreTransaction(toDelete);
+          },
+        },
+      });
+    } catch {
+      // toast error handled in mutateTable
+    }
   };
 
   const handleSave = () => {
@@ -118,27 +161,21 @@ export function TransactionModal({ transaction, isOpen, onClose }: TransactionMo
           paymentMethod: resolvedPaymentMethod || undefined,
         });
       }
-      setMerchantError('');
-      setAmountError('');
-      setCustomPaymentMethod('');
-      setIsSubmitting(false);
-      onClose();
+      showToast({
+        message: lang === 'id'
+          ? (isEditing ? 'Perubahan transaksi disimpan' : type === 'expense' ? 'Pengeluaran dicatat' : 'Pemasukan dicatat')
+          : (isEditing ? 'Changes saved' : type === 'expense' ? 'Expense recorded' : 'Income recorded'),
+      });
+      handleClose();
     } catch {
       setIsSubmitting(false);
-    }
-  };
-
-  const handleDelete = () => {
-    if (transaction && window.confirm(lang === 'id' ? `Hapus transaksi "${transaction.merchant}"?` : `Delete transaction for "${transaction.merchant}"?`)) {
-      ds.deleteTransaction(transaction.id);
-      onClose();
     }
   };
 
   return (
     <Modal
       isOpen={isOpen}
-      onClose={handleClose}
+      onClose={handleRequestClose}
       title={isEditing ? (lang === 'id' ? 'Ubah Catatan Keuangan' : 'Edit Ledger Entry') : (lang === 'id' ? 'Tambah Catatan Keuangan' : 'Add Ledger Entry')}
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -314,7 +351,7 @@ export function TransactionModal({ transaction, isOpen, onClose }: TransactionMo
             <button
               type="button"
               className="btn-outline"
-              onClick={handleDelete}
+              onClick={() => setShowDeleteConfirm(true)}
               disabled={isSubmitting}
               style={{ color: 'var(--error)', borderColor: 'var(--error-container)' }}
             >
@@ -325,7 +362,7 @@ export function TransactionModal({ transaction, isOpen, onClose }: TransactionMo
           )}
 
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <button type="button" className="btn-ghost" onClick={handleClose} disabled={isSubmitting}>
+            <button type="button" className="btn-ghost" onClick={handleRequestClose} disabled={isSubmitting}>
               {lang === 'id' ? 'Batal' : 'Cancel'}
             </button>
             <button type="button" className="btn-primary" onClick={handleSave} disabled={isSubmitting}>
@@ -338,6 +375,28 @@ export function TransactionModal({ transaction, isOpen, onClose }: TransactionMo
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleConfirmDelete}
+        title={lang === 'id' ? 'Hapus transaksi?' : 'Delete transaction?'}
+        message={lang === 'id' ? `Apakah kamu yakin ingin menghapus catatan transaksi "${merchant || transaction?.merchant}"? Tindakan ini dapat diurungkan.` : `Are you sure you want to delete "${merchant || transaction?.merchant}"? You can undo this action.`}
+        confirmText={lang === 'id' ? 'Hapus transaksi' : 'Delete transaction'}
+        cancelText={lang === 'id' ? 'Batal' : 'Cancel'}
+        variant="danger"
+      />
+
+      <ConfirmModal
+        isOpen={showDiscardConfirm}
+        onClose={() => setShowDiscardConfirm(false)}
+        onConfirm={handleConfirmDiscard}
+        title={lang === 'id' ? 'Buang perubahan?' : 'Discard changes?'}
+        message={lang === 'id' ? 'Perubahan yang kamu buat belum disimpan dan akan hilang jika ditutup.' : 'You have unsaved changes that will be lost if you close now.'}
+        confirmText={lang === 'id' ? 'Buang' : 'Discard'}
+        cancelText={lang === 'id' ? 'Lanjut mengedit' : 'Keep editing'}
+        variant="danger"
+      />
     </Modal>
   );
 }

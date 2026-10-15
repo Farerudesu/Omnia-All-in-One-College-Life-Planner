@@ -86,8 +86,74 @@ export function formatTime24(time: string): string {
 }
 
 /** Format numeric date: "05/10/2026" (ID) or "10/05/2026" (EN) */
-export function localDateString(date = new Date()): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+export function getUserTimezone(): string {
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem('omnia_timezone');
+    if (stored) return stored;
+  }
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Jakarta';
+  } catch {
+    return 'Asia/Jakarta';
+  }
+}
+
+/** Get today's date formatted as "YYYY-MM-DD" strictly according to user's timezone */
+export function getTodayDateString(timeZone?: string): string {
+  const tz = timeZone || getUserTimezone();
+  try {
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: tz,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    return formatter.format(new Date());
+  } catch {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+}
+
+/** Convert timezone identifier into user-friendly abbreviation (WIB, WITA, WIT, or GMT+X) */
+export function formatTimezoneLabel(timeZone?: string): string {
+  const tz = timeZone || getUserTimezone();
+  if (tz === 'Asia/Jakarta' || tz === 'Asia/Pontianak') return 'WIB';
+  if (tz === 'Asia/Makassar' || tz === 'Asia/Ujung_Pandang') return 'WITA';
+  if (tz === 'Asia/Jayapura') return 'WIT';
+
+  try {
+    // Try Indonesian locale short name
+    const formatter = new Intl.DateTimeFormat('id-ID', { timeZone: tz, timeZoneName: 'short' });
+    const parts = formatter.formatToParts(new Date());
+    const tzPart = parts.find((p) => p.type === 'timeZoneName')?.value;
+    if (tzPart && !tzPart.includes('/')) return tzPart;
+  } catch {}
+
+  // Fallback to GMT+X format
+  try {
+    const formatter = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'shortOffset' });
+    const parts = formatter.formatToParts(new Date());
+    const offsetPart = parts.find((p) => p.type === 'timeZoneName')?.value;
+    if (offsetPart) return offsetPart;
+  } catch {}
+
+  return tz.split('/').pop()?.replace(/_/g, ' ') || 'WIB';
+}
+
+/** Single source of truth for urgent assignment definition: due <= 48 hours or overdue */
+export const URGENT_HOURS_THRESHOLD = 48;
+
+export function isAssignmentUrgent(dueDate: string, status: string, now = new Date()): boolean {
+  if (status === 'done') return false;
+  const due = dueDate.includes('T') ? new Date(dueDate) : new Date(`${dueDate}T23:59:59`);
+  if (isNaN(due.getTime())) return false;
+  const diffHours = (due.getTime() - now.getTime()) / (1000 * 60 * 60);
+  return diffHours <= URGENT_HOURS_THRESHOLD;
+}
+
+export function localDateString(_date = new Date(), timeZone?: string): string {
+  return getTodayDateString(timeZone);
 }
 
 export function formatDateNumeric(date: Date | string): string {

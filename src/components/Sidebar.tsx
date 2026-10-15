@@ -11,7 +11,7 @@ import type { EventType, Assignment } from '../types';
 import { useAuth } from '../lib/AuthContext';
 import { useLanguage } from '../lib/useLanguage';
 import { translations } from '../lib/i18n';
-import { formatDateShort, formatTime12, formatDetailedCountdown } from '../lib/dateUtils';
+import { formatDateShort, formatTime12, formatDetailedCountdown, getTodayDateString } from '../lib/dateUtils';
 
 const categories = [
   { key: 'classes' as CategoryKey, label: 'Classes', shape: 'square' as const, color: 'var(--classes)' },
@@ -567,12 +567,19 @@ export function Sidebar({ isCollapsed, onToggle }: { isCollapsed?: boolean; onTo
 // ─── Quick Add Event/Task Modal ───
 function QuickAddModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const lang = useLanguage();
+  const settings = useData(ds.getSettings);
   const [tab, setTab] = useState<'event' | 'task'>('event');
   const [title, setTitle] = useState('');
-  const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(() => getTodayDateString(settings.timeZone));
   const [time, setTime] = useState('10:00');
   const [endTime, setEndTime] = useState('11:00');
   const [type, setType] = useState<EventType>('personal');
+
+  useEffect(() => {
+    if (isOpen) {
+      setDate(getTodayDateString(settings.timeZone));
+    }
+  }, [isOpen, settings.timeZone]);
 
   const handleSave = async () => {
     if (!title.trim()) return;

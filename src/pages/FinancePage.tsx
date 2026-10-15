@@ -4,17 +4,20 @@ import { useData } from '../lib/useData';
 import * as ds from '../lib/dataService';
 import { TransactionModal } from '../components/TransactionModal';
 import { AddTransactionModal } from '../components/AddTransactionModal';
+import { ConfirmModal } from '../components/ConfirmModal';
+import { useToast } from '../components/Toast';
 import { formatCurrency, getCurrencyFractionDigits } from '../lib/currency';
 import type { Transaction } from '../types';
 import { EXPENSE_CATEGORIES, CATEGORY_COLORS } from '../lib/categories';
 import { useLanguage } from '../lib/useLanguage';
 import { translations } from '../lib/i18n';
-import { formatDateNumeric } from '../lib/dateUtils';
+import { formatDateNumeric, getTodayDateString } from '../lib/dateUtils';
 
 const CATEGORIES = EXPENSE_CATEGORIES;
 
 export const CATEGORY_NAMES_ID: Record<string, string> = {
-  'Food & Groceries': 'Food & Groceries',
+  'Food & Groceries': 'Makanan & Minuman',
+  'Phone & Internet': 'Pulsa & Internet',
   'Transport': 'Transportasi',
   'Academic Supplies': 'Kebutuhan Kuliah',
   'Housing & Utilities': 'Tempat Tinggal & Tagihan',
@@ -27,6 +30,7 @@ export function FinancePage() {
   const navigate = useNavigate();
   const lang = useLanguage();
   const t = translations[lang];
+  const { showToast } = useToast();
   const transactions = useData(ds.getTransactions);
   const settings = useData(ds.getSettings);
   const currency = settings.currency || 'IDR';
@@ -37,6 +41,7 @@ export function FinancePage() {
   const [showAddIncome, setShowAddIncome] = useState(false);
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
   const [showTxModal, setShowTxModal] = useState(false);
+  const [deletingTx, setDeletingTx] = useState<Transaction | null>(null);
 
   // Real filtering states
   const [searchQuery, setSearchQuery] = useState('');
@@ -48,7 +53,7 @@ export function FinancePage() {
   const currentYear = now.getFullYear();
 
   // Calculate financial summaries
-  const { balance, incomeThisMonth, spentThisMonth, categoryBreakdown, paymentBreakdown } = useMemo(() => {
+  const { incomeThisMonth, spentThisMonth, categoryBreakdown, paymentBreakdown } = useMemo(() => {
     let income = 0;
     let expense = 0;
     const catTotals = new Map<string, number>();
@@ -83,6 +88,23 @@ export function FinancePage() {
       .sort((a, b) => b.amount - a.amount),
     };
   }, [transactions, currentMonth, currentYear]);
+
+  const todayStr = getTodayDateString(settings.timeZone);
+  const spentToday = useMemo(() => {
+    return transactions
+      .filter((t) => t.type === 'expense' && t.date === todayStr)
+      .reduce((sum, t) => sum + t.amount, 0);
+  }, [transactions, todayStr]);
+
+  const initialBalance = settings.initialBalance ?? 0;
+  const totalIncomeAllTime = useMemo(() => {
+    return transactions.filter((t) => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+  }, [transactions]);
+  const totalExpenseAllTime = useMemo(() => {
+    return transactions.filter((t) => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+  }, [transactions]);
+  const hasIncomeOrInitialBalance = totalIncomeAllTime > 0 || initialBalance > 0;
+  const effectiveCashBalance = initialBalance + totalIncomeAllTime - totalExpenseAllTime;
 
   const effectiveMonthlyBudget = (currency === 'IDR' && settings.monthlyBudget < 10000)
     ? 2500000
@@ -169,6 +191,26 @@ export function FinancePage() {
     URL.revokeObjectURL(url);
   };
 
+  const handleDeleteTxConfirm = async () => {
+    if (!deletingTx) return;
+    const toDelete = deletingTx;
+    setDeletingTx(null);
+    try {
+      await ds.deleteTransaction(toDelete.id);
+      showToast({
+        message: lang === 'id' ? `Transaksi "${toDelete.merchant}" dihapus` : `Transaction "${toDelete.merchant}" deleted`,
+        action: {
+          label: lang === 'id' ? 'Urungkan' : 'Undo',
+          onClick: async () => {
+            await ds.restoreTransaction(toDelete);
+          },
+        },
+      });
+    } catch {
+      // toast error handled in mutateTable
+    }
+  };
+
   return (
     <div className="finance-page-container">
       <div className="page-header">
@@ -180,13 +222,6 @@ export function FinancePage() {
             <h1 style={{ margin: 0 }}>{t.finance.title}</h1>
           </div>
           <div className="finance-header-actions" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <button className="btn-ghost min-touch-target" onClick={() => navigate('/ask-omni')} style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                <circle cx="12" cy="13" r="4" />
-              </svg>
-              {t.finance.scanReceipt}
-            </button>
             <button className="btn-outline min-touch-target" onClick={() => setShowAddIncome(true)}>
               {t.finance.addIncome}
             </button>
@@ -206,7 +241,7 @@ export function FinancePage() {
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
         }}>
-          {/* Hero: remaining budget */}
+          {/* Hero: remaining budget (single hero metric) */}
           <div className="finance-summary-item finance-summary-hero" style={{
             padding: '1.5rem',
             background: 'var(--surface-container-lowest)',
@@ -216,18 +251,22 @@ export function FinancePage() {
             justifyContent: 'space-between',
             gridColumn: 'span 2',
           }}>
-            <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface-variant)', marginBottom: '0.25rem' }}>
-              {lang === 'id' ? 'Sisa anggaran' : 'Remaining budget'}
+            <div>
+              <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface-variant)', marginBottom: '0.25rem' }}>
+                {lang === 'id' ? 'Sisa Anggaran Bulan Ini' : 'Remaining Monthly Budget'}
+              </div>
+              <div className="tabular-nums" style={{ fontSize: '2.5rem', fontWeight: 700, fontFamily: 'var(--font-heading)', color: remaining >= 0 ? 'var(--on-surface)' : 'var(--error)', whiteSpace: 'nowrap' }}>
+                {formatMoney(remaining)}
+              </div>
             </div>
-            <div className="tabular-nums" style={{ fontSize: '2.5rem', fontWeight: 700, fontFamily: 'var(--font-heading)', color: remaining > 0 ? 'var(--on-surface)' : 'var(--error)', whiteSpace: 'nowrap' }}>
-              {formatMoney(remaining)}
-            </div>
-            <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>
-              {lang === 'id' ? `Batas budget bulanan: ${formatMoney(effectiveMonthlyBudget)}. Ini sisa dari batas tersebut setelah pengeluaran.` : `Monthly budget limit: ${formatMoney(effectiveMonthlyBudget)}. This is what remains after expenses.`}
+            <div style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>
+              {lang === 'id'
+                ? `Rencana pengeluaran bulanan: ${formatMoney(effectiveMonthlyBudget)}. Berkurang ${formatMoney(spentThisMonth)} dari pengeluaran tercatat.`
+                : `Monthly budget cap: ${formatMoney(effectiveMonthlyBudget)}. Reduced by ${formatMoney(spentThisMonth)} from recorded spending.`}
             </div>
           </div>
 
-          {/* Section 1: Liquid Balance */}
+          {/* Section 1: Liquid Cash Balance (supporting card) */}
           <div className="finance-summary-item" style={{
             padding: '1.5rem',
             background: 'var(--surface-container-lowest)',
@@ -238,18 +277,57 @@ export function FinancePage() {
           }}>
             <div>
               <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface-variant)', marginBottom: '0.25rem' }}>
-                {t.finance.balance}
+                {lang === 'id' ? 'Saldo Kas & Rekening' : 'Cash & Account Balance'}
               </div>
-              <div className="tabular-nums" style={{ fontSize: '2rem', fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--on-surface)', whiteSpace: 'nowrap' }}>
-                {formatMoney(balance)}
-              </div>
+              {!hasIncomeOrInitialBalance ? (
+                <div>
+                  <div style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--on-surface-variant)', marginBlock: '0.375rem' }}>
+                    {lang === 'id' ? 'Belum ada pemasukan tercatat' : 'No income recorded yet'}
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', marginBottom: '0.75rem' }}>
+                    {lang === 'id' ? 'Catat uang masuk atau atur saldo awal di Pengaturan.' : 'Record income or set initial balance in Settings.'}
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-outline min-touch-target"
+                    style={{ fontSize: '0.75rem', padding: '0.25rem 0.625rem' }}
+                    onClick={() => setShowAddIncome(true)}
+                  >
+                    + {lang === 'id' ? 'Catat pemasukan' : 'Add income'}
+                  </button>
+                </div>
+              ) : effectiveCashBalance < 0 ? (
+                <div>
+                  <div className="tabular-nums" style={{ fontSize: '2rem', fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--error)', whiteSpace: 'nowrap' }}>
+                    {formatMoney(effectiveCashBalance)}
+                  </div>
+                  <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    padding: '0.2rem 0.5rem',
+                    borderRadius: 4,
+                    background: 'var(--error-container)',
+                    color: 'var(--on-error-container)',
+                    fontSize: '0.6875rem',
+                    fontWeight: 600,
+                    marginTop: '0.375rem',
+                  }}>
+                    <span>⚠️ {lang === 'id' ? 'Pengeluaran lebih besar dari pemasukan tercatat' : 'Expenses exceed recorded income'}</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="tabular-nums" style={{ fontSize: '2rem', fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--on-surface)', whiteSpace: 'nowrap' }}>
+                  {formatMoney(effectiveCashBalance)}
+                </div>
+              )}
             </div>
-            <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>
+            <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <rect x="2" y="5" width="20" height="14" rx="2" />
                 <line x1="2" y1="10" x2="22" y2="10" />
               </svg>
-              {lang === 'id' ? 'Rekening Utama Mahasiswa' : 'Primary Student Account'}
+              {lang === 'id' ? 'Uang tunai, e-wallet & rekening' : 'Combined cash, e-wallet & bank'}
             </div>
           </div>
 
@@ -264,7 +342,7 @@ export function FinancePage() {
           }}>
             <div>
               <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface-variant)', marginBottom: '0.5rem' }}>
-                {lang === 'id' ? 'Arus Kas Bulan Ini' : 'Monthly Flow'} ({new Date().toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { month: 'short' })})
+                {lang === 'id' ? 'Uang Masuk & Keluar Bulan Ini' : 'Monthly Cash Flow'} ({new Date().toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { month: 'short' })})
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.375rem' }}>
                 <span style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)' }}>{t.finance.inflow}</span>
@@ -280,13 +358,13 @@ export function FinancePage() {
               </div>
             </div>
             <div style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>
-              {lang === 'id' ? 'Arus bersih:' : 'Net flow:'} <strong className="tabular-nums" style={{ color: (incomeThisMonth - spentThisMonth) >= 0 ? 'var(--primary)' : 'var(--error)' }}>
+              {lang === 'id' ? 'Selisih bulan ini:' : 'Net this month:'} <strong className="tabular-nums" style={{ color: (incomeThisMonth - spentThisMonth) >= 0 ? 'var(--primary)' : 'var(--error)' }}>
                 {(incomeThisMonth - spentThisMonth) >= 0 ? '+' : ''}{formatMoney(incomeThisMonth - spentThisMonth)}
               </strong>
             </div>
           </div>
 
-          {/* Section 3: Safe Daily Burn Runway */}
+          {/* Section 3: Safe Daily Burn Runway & Today's Spend */}
           <div className="finance-summary-item" style={{
             padding: '1.5rem',
             background: 'var(--surface-container-lowest)',
@@ -298,12 +376,20 @@ export function FinancePage() {
               <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface-variant)', marginBottom: '0.25rem' }}>
                 {lang === 'id' ? 'Alokasi Belanja Aman Harian' : 'Daily Safe Burn Runway'}
               </div>
-              <div className="tabular-nums" style={{ fontSize: '2rem', fontWeight: 700, fontFamily: 'var(--font-heading)', color: remaining > 0 ? 'var(--on-surface)' : 'var(--error)', whiteSpace: 'nowrap' }}>
-                {formatMoney(dailyAllowance)} <span style={{ fontSize: '0.9375rem', fontWeight: 500, color: 'var(--on-surface-variant)' }}>{lang === 'id' ? '/ hari' : '/ day'}</span>
+              <div className="tabular-nums" style={{ fontSize: '1.75rem', fontWeight: 700, fontFamily: 'var(--font-heading)', color: remaining > 0 ? 'var(--on-surface)' : 'var(--error)', whiteSpace: 'nowrap' }}>
+                {formatMoney(dailyAllowance)} <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--on-surface-variant)' }}>{lang === 'id' ? '/ hari' : '/ day'}</span>
+              </div>
+              <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--outline-variant)' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', marginBottom: '0.125rem' }}>
+                  {lang === 'id' ? 'Pengeluaran hari ini:' : "Today's spend:"}
+                </div>
+                <div className="tabular-nums" style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--on-surface)' }}>
+                  {formatMoney(spentToday)}
+                </div>
               </div>
             </div>
-            <div style={{ marginTop: '1rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>
-              {lang === 'id' ? `${daysLeftInMonth} hari tersisa hingga pembaruan alokasi` : `${daysLeftInMonth} days remaining until next allowance refresh`}
+            <div style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>
+              {lang === 'id' ? `${daysLeftInMonth} hari tersisa bulan ini` : `${daysLeftInMonth} days remaining this month`}
             </div>
           </div>
         </div>
@@ -699,12 +785,7 @@ export function FinancePage() {
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              const msg = lang === 'id'
-                                ? `Hapus transaksi dari "${t.merchant}" (${formatMoney(t.amount)})?`
-                                : `Delete transaction from "${t.merchant}" (${formatMoney(t.amount)})?`;
-                              if (window.confirm(msg)) {
-                                ds.deleteTransaction(t.id);
-                              }
+                              setDeletingTx(t);
                             }}
                             aria-label={`Delete transaction from ${t.merchant}`}
                             title={lang === 'id' ? 'Hapus transaksi' : 'Delete transaction'}
@@ -787,6 +868,18 @@ export function FinancePage() {
           setEditingTx(null);
         }}
         transaction={editingTx}
+      />
+
+      {/* Confirm Delete Transaction Modal */}
+      <ConfirmModal
+        isOpen={!!deletingTx}
+        onClose={() => setDeletingTx(null)}
+        onConfirm={handleDeleteTxConfirm}
+        title={lang === 'id' ? 'Hapus catatan transaksi?' : 'Delete transaction?'}
+        message={lang === 'id' ? `Apakah kamu yakin ingin menghapus catatan transaksi "${deletingTx?.merchant}" sejumlah ${formatMoney(deletingTx?.amount || 0)}? Tindakan ini dapat diurungkan.` : `Are you sure you want to delete "${deletingTx?.merchant}" (${formatMoney(deletingTx?.amount || 0)})? You can undo this action.`}
+        confirmText={lang === 'id' ? 'Hapus transaksi' : 'Delete transaction'}
+        cancelText={lang === 'id' ? 'Batal' : 'Cancel'}
+        variant="danger"
       />
     </div>
   );

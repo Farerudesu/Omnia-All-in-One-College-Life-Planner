@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Modal } from './Modal';
+import { ConfirmModal } from './ConfirmModal';
 import * as ds from '../lib/dataService';
 import { useData } from '../lib/useData';
 import type { Priority, AssignmentStatus } from '../types';
 import { useLanguage } from '../lib/useLanguage';
+import { getTodayDateString, getUserTimezone } from '../lib/dateUtils';
 
 export interface AddAssignmentModalProps {
   isOpen: boolean;
@@ -12,22 +14,55 @@ export interface AddAssignmentModalProps {
 
 export function AddAssignmentModal({ isOpen, onClose }: AddAssignmentModalProps) {
   const lang = useLanguage();
+  const settings = useData(ds.getSettings);
   const courses = useData(ds.getCourses);
   const uniqueCourses = courses.filter((course, index, list) => list.findIndex((item) => `${item.code}|${item.name}` === `${course.code}|${course.name}`) === index);
+  
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<string>('classes');
   const [courseId, setCourseId] = useState('');
-  const [dueDate, setDueDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [dueDate, setDueDate] = useState(() => getTodayDateString(settings.timeZone || getUserTimezone()));
   const [dueTime, setDueTime] = useState('23:59');
   const [priority, setPriority] = useState<Priority>('medium');
   const [status, setStatus] = useState<AssignmentStatus>('not-started');
   const [notes, setNotes] = useState('');
   const [titleError, setTitleError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
-  const handleClose = () => {
+  // Sync default courseId when category is 'classes'
+  useEffect(() => {
+    if (category === 'classes' && !courseId && uniqueCourses.length > 0) {
+      setCourseId(uniqueCourses[0].id);
+    }
+  }, [category, courseId, uniqueCourses]);
+
+  // Sync default date with user timezone when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setDueDate(getTodayDateString(settings.timeZone || getUserTimezone()));
+    }
+  }, [isOpen, settings.timeZone]);
+
+  const resetForm = () => {
+    setTitle('');
+    setNotes('');
     setTitleError('');
     setIsSubmitting(false);
+    setShowDiscardConfirm(false);
+  };
+
+  const handleRequestClose = () => {
+    if (title.trim() || notes.trim()) {
+      setShowDiscardConfirm(true);
+    } else {
+      resetForm();
+      onClose();
+    }
+  };
+
+  const handleConfirmDiscard = () => {
+    resetForm();
     onClose();
   };
 
@@ -41,7 +76,7 @@ export function AddAssignmentModal({ isOpen, onClose }: AddAssignmentModalProps)
     setIsSubmitting(true);
 
     try {
-      const finalDueDate = dueDate || new Date().toISOString().split('T')[0];
+      const finalDueDate = dueDate || getTodayDateString(settings.timeZone || getUserTimezone());
       await ds.addAssignment({
         courseId: courseId || undefined,
         category: (category as any) || 'other',
@@ -51,10 +86,7 @@ export function AddAssignmentModal({ isOpen, onClose }: AddAssignmentModalProps)
         status,
         notes: notes.trim() || undefined,
       });
-      setTitle('');
-      setNotes('');
-      setTitleError('');
-      setIsSubmitting(false);
+      resetForm();
       onClose();
     } catch {
       setIsSubmitting(false);
@@ -62,7 +94,7 @@ export function AddAssignmentModal({ isOpen, onClose }: AddAssignmentModalProps)
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title={lang === 'id' ? 'Tambah tugas' : 'Add assignment'}>
+    <Modal isOpen={isOpen} onClose={handleRequestClose} title={lang === 'id' ? 'Tambah tugas' : 'Add assignment'}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <div>
           <label htmlFor="assignment-title" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
@@ -184,7 +216,7 @@ export function AddAssignmentModal({ isOpen, onClose }: AddAssignmentModalProps)
         </div>
 
         <div className="modal-actions-sticky">
-          <button type="button" className="btn-outline min-touch-target" onClick={handleClose} disabled={isSubmitting}>
+          <button type="button" className="btn-outline min-touch-target" onClick={handleRequestClose} disabled={isSubmitting}>
             {lang === 'id' ? 'Batal' : 'Cancel'}
           </button>
           <button type="button" className="btn-primary min-touch-target" onClick={handleSave} disabled={isSubmitting}>
@@ -195,6 +227,17 @@ export function AddAssignmentModal({ isOpen, onClose }: AddAssignmentModalProps)
           </button>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={showDiscardConfirm}
+        onClose={() => setShowDiscardConfirm(false)}
+        onConfirm={handleConfirmDiscard}
+        title={lang === 'id' ? 'Buang perubahan?' : 'Discard changes?'}
+        message={lang === 'id' ? 'Perubahan yang kamu buat belum disimpan dan akan hilang jika ditutup.' : 'You have unsaved changes that will be lost if you close now.'}
+        confirmText={lang === 'id' ? 'Buang' : 'Discard'}
+        cancelText={lang === 'id' ? 'Lanjut mengedit' : 'Keep editing'}
+        variant="danger"
+      />
     </Modal>
   );
 }

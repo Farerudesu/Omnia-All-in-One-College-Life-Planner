@@ -7,6 +7,7 @@ import { CommandPalette } from './CommandPalette';
 import { DataState } from './DataState';
 import { ErrorBoundary } from './ErrorBoundary';
 import { useData, useDataStatus } from '../lib/useData';
+import { ToastProvider } from './Toast';
 import * as ds from '../lib/dataService';
 
 export function AppLayout() {
@@ -64,32 +65,34 @@ export function AppLayout() {
   }
 
   return (
-    <div className="app-layout">
-      {/* Skip to content link for keyboard & screen reader users */}
-      <a href="#main-content" className="skip-link">
-        Skip to main content
-      </a>
+    <ToastProvider>
+      <div className="app-layout">
+        {/* Skip to content link for keyboard & screen reader users */}
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
 
-      <Sidebar isCollapsed={isSidebarCollapsed} onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)} />
+        <Sidebar isCollapsed={isSidebarCollapsed} onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)} />
 
-      <div className="app-content-wrapper">
-        <MobileHeader />
-        <main id="main-content" tabIndex={-1} className="app-main" style={{ outline: 'none', position: 'relative' }}>
-          {isDataLoading && (
-            <div style={{ position: 'absolute', inset: 0, zIndex: 10, background: 'var(--surface)', minHeight: 'calc(100vh - 5rem)' }}>
-              <DataState />
-            </div>
-          )}
-          <ErrorBoundary>
-            <Outlet />
-          </ErrorBoundary>
-        </main>
+        <div className="app-content-wrapper">
+          <MobileHeader />
+          <main id="main-content" tabIndex={-1} className="app-main" style={{ outline: 'none', position: 'relative' }}>
+            {isDataLoading && (
+              <div style={{ position: 'absolute', inset: 0, zIndex: 10, background: 'var(--surface)', minHeight: 'calc(100vh - 5rem)' }}>
+                <DataState />
+              </div>
+            )}
+            <ErrorBoundary>
+              <Outlet />
+            </ErrorBoundary>
+          </main>
+        </div>
+
+        <BottomNav />
+
+        {/* Global Universal Search & Command Palette */}
+        <CommandPalette isOpen={isPaletteOpen} onClose={() => setIsPaletteOpen(false)} />
       </div>
-
-      <BottomNav />
-
-      {/* Global Universal Search & Command Palette */}
-      <CommandPalette isOpen={isPaletteOpen} onClose={() => setIsPaletteOpen(false)} />
-    </div>
+    </ToastProvider>
   );
 }

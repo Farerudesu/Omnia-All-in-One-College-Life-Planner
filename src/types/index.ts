@@ -118,6 +118,8 @@ export interface UserSettings {
   language?: 'en' | 'id';
   paymentMethods?: string[];
   chatHistory?: any[];
+  timeZone?: string;
+  initialBalance?: number;
 }
 
 // ─── Category Shape mapping (accessibility) ───
