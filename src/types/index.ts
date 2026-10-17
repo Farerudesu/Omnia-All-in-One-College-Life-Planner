@@ -60,6 +60,9 @@ export interface CalendarEvent {
   color?: string;
   notes?: string;
   reminderMinutesBefore?: number;
+  googleEventId?: string;
+  isGoogleEvent?: boolean;
+  htmlLink?: string;
 }
 
 // ─── Assignments ───
@@ -75,6 +78,7 @@ export interface Assignment {
   priority: Priority;
   status: AssignmentStatus;
   notes?: string;
+  googleEventId?: string;
 }
 
 // ─── Transactions ───
@@ -120,6 +124,17 @@ export interface UserSettings {
   chatHistory?: any[];
   timeZone?: string;
   initialBalance?: number;
+  // Google Calendar Sync
+  googleCalendarSyncEnabled?: boolean;
+  googleCalendarId?: string;
+  googleCalendarName?: string;
+  googleAccountEmail?: string;
+  googleSyncClasses?: boolean;
+  googleSyncAssignments?: boolean;
+  googleSyncEvents?: boolean;
+  googleImportPersonal?: boolean;
+  googleLastSynced?: string;
+  googleCalendarTarget?: 'primary' | 'secondary';
 }
 
 // ─── Category Shape mapping (accessibility) ───

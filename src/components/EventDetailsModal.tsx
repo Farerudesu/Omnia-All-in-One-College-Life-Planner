@@ -325,20 +325,33 @@ export function EventDetailsModal({ event, isOpen, onClose, openInEditMode }: Ev
           {/* Header: Type & Course */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <CategoryIndicator shape={shape} color={color} size={10} />
+              <CategoryIndicator shape={event.isGoogleEvent ? 'circle' : shape} color={event.isGoogleEvent ? '#4285F4' : color} size={10} />
               <span
                 style={{
-                  color: color,
+                  color: event.isGoogleEvent ? '#4285F4' : color,
                   fontWeight: 600,
                   fontSize: '0.75rem',
                   textTransform: 'uppercase',
                   letterSpacing: '0.04em',
                 }}
               >
-                {getTypeName(event.type)}
+                {event.isGoogleEvent ? 'Google Calendar' : getTypeName(event.type)}
               </span>
             </div>
-            {course && (
+            {event.isGoogleEvent ? (
+              <span
+                style={{
+                  fontSize: '0.6875rem',
+                  fontWeight: 600,
+                  padding: '0.2rem 0.5rem',
+                  borderRadius: 999,
+                  background: 'color-mix(in srgb, #4285F4 12%, transparent)',
+                  color: '#4285F4',
+                }}
+              >
+                2-Way Synced
+              </span>
+            ) : course ? (
               <span
                 style={{
                   fontSize: '0.75rem',
@@ -350,7 +363,7 @@ export function EventDetailsModal({ event, isOpen, onClose, openInEditMode }: Ev
               >
                 {course.code}
               </span>
-            )}
+            ) : null}
           </div>
 
           {/* Title */}
@@ -452,18 +465,39 @@ export function EventDetailsModal({ event, isOpen, onClose, openInEditMode }: Ev
               <button type="button" className="btn-ghost" onClick={onClose}>
                 {isId ? 'Tutup' : 'Close'}
               </button>
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={() => setIsEditing(true)}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                </svg>
-                {isId ? 'Ubah Kegiatan' : 'Edit Event'}
-              </button>
+              {event.isGoogleEvent ? (
+                event.htmlLink ? (
+                  <a
+                    href={event.htmlLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-primary"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.375rem',
+                      textDecoration: 'none',
+                      background: '#4285F4',
+                      color: '#ffffff',
+                    }}
+                  >
+                    {isId ? 'Buka di Google Calendar ↗' : 'Open in Google Calendar ↗'}
+                  </a>
+                ) : null
+              ) : (
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={() => setIsEditing(true)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                  {isId ? 'Ubah Kegiatan' : 'Edit Event'}
+                </button>
+              )}
             </div>
           </div>
         </div>

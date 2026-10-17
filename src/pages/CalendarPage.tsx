@@ -10,7 +10,8 @@ import { CategoryIndicator } from '../components/CategoryIndicator';
 import { EventDetailsModal } from '../components/EventDetailsModal';
 import { AssignmentDetailsModal } from '../components/AssignmentDetailsModal';
 import { useLanguage } from '../lib/useLanguage';
-import { Pin, PinOff } from 'lucide-react';
+import { Pin, PinOff, RefreshCw } from 'lucide-react';
+import * as gcal from '../lib/googleCalendarService';
 import {
   getMonthGrid,
   getMonthName,
@@ -110,6 +111,44 @@ export function CalendarPage() {
   const assignments = useData(ds.getAssignments);
   const categoryVisibility = useData(ds.getCategoryVisibility);
 
+  const [googleEvents, setGoogleEvents] = useState<CalendarEvent[]>(() => gcal.getImportedGoogleEvents());
+  const [isGcalSyncing, setIsGcalSyncing] = useState(false);
+  const [isGcalConnected, setIsGcalConnected] = useState(() => gcal.isGoogleCalendarConnected());
+
+  useEffect(() => {
+    return gcal.subscribeGoogleCalendar(() => {
+      setGoogleEvents([...gcal.getImportedGoogleEvents()]);
+      setIsGcalConnected(gcal.isGoogleCalendarConnected());
+    });
+  }, []);
+
+  const handleGoogleCalendarSync = async () => {
+    if (isGcalSyncing) return;
+    setIsGcalSyncing(true);
+    try {
+      if (!gcal.isGoogleCalendarConnected()) {
+        showToast({ message: lang === 'id' ? 'Menghubungkan ke Google Calendar…' : 'Connecting to Google Calendar…', type: 'info' });
+        await gcal.connectGoogleCalendar();
+      }
+      showToast({ message: lang === 'id' ? 'Menyinkronkan dengan Google Calendar…' : 'Syncing with Google Calendar…', type: 'info' });
+      const result = await gcal.syncTwoWay();
+      showToast({
+        message: lang === 'id'
+          ? `Sukses! ${result.classesCount} kuliah, ${result.assignmentsCount} tugas, ${result.eventsCount} kegiatan terkirim ke Google Calendar.`
+          : `Synced! ${result.classesCount} classes, ${result.assignmentsCount} tasks, ${result.eventsCount} events pushed to Google Calendar.`,
+        type: 'success',
+      });
+    } catch (err: any) {
+      console.error('Google calendar sync failed:', err);
+      showToast({
+        message: err?.message || (lang === 'id' ? 'Gagal sinkronisasi Google Calendar' : 'Failed to sync Google Calendar'),
+        type: 'error',
+      });
+    } finally {
+      setIsGcalSyncing(false);
+    }
+  };
+
   const filters = {
     classes: categoryVisibility.classes !== false,
     exam: categoryVisibility.exams !== false,
@@ -197,6 +236,25 @@ export function CalendarPage() {
         rawEvent: ev,
       });
     });
+
+    // Google Calendar imported events
+    if (filters.personal) {
+      googleEvents.forEach((gev) => {
+        if (gev.date !== dateStr) return;
+        items.push({
+          id: gev.id,
+          title: gev.title,
+          type: 'personal',
+          time: gev.startTime,
+          endTime: gev.endTime,
+          room: gev.location,
+          color: '#4285F4',
+          shape: 'circle',
+          notes: gev.notes,
+          rawEvent: gev,
+        });
+      });
+    }
 
     // Assignments as deadlines
     if (filters.deadline) {
@@ -491,6 +549,37 @@ export function CalendarPage() {
               </button>
             ) : null}
           </div>
+
+          <button
+            type="button"
+            className="btn-outline calendar-gcal-sync"
+            onClick={handleGoogleCalendarSync}
+            disabled={isGcalSyncing}
+            title={
+              isGcalConnected
+                ? (lang === 'id' ? 'Sinkronkan dengan Google Calendar' : 'Sync with Google Calendar')
+                : (lang === 'id' ? 'Hubungkan Google Calendar' : 'Connect Google Calendar')
+            }
+            style={{
+              padding: '0.45rem 0.75rem',
+              fontSize: '0.8125rem',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.375rem',
+              borderRadius: 'var(--radius-sm)',
+              borderColor: isGcalConnected ? 'var(--primary)' : 'var(--outline-variant)',
+              color: isGcalConnected ? 'var(--primary)' : 'var(--on-surface-variant)',
+              cursor: isGcalSyncing ? 'not-allowed' : 'pointer',
+            }}
+          >
+            <RefreshCw
+              size={13}
+              style={{
+                animation: isGcalSyncing ? 'spin 1s linear infinite' : 'none',
+              }}
+            />
+            <span>{isGcalSyncing ? (lang === 'id' ? 'Sinkron…' : 'Syncing…') : 'Google Cal'}</span>
+          </button>
 
           <button
             className="btn-primary calendar-add-event"
