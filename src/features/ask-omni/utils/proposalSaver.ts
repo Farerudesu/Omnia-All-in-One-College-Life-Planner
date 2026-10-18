@@ -1,5 +1,6 @@
 import * as ds from '@/lib/dataService';
 import { formatCurrency } from '@/lib/currency';
+import { createNote, updateNote, getNote, getCachedNotes } from '@/lib/notesService';
 import type { PrefilledData } from '@/types';
 
 export async function saveProposalToOmnia(data: PrefilledData): Promise<{
@@ -54,7 +55,6 @@ export async function saveProposalToOmnia(data: PrefilledData): Promise<{
     const currency = ds.getSettings()?.currency || 'IDR';
     confirmationText = `Logged expense **${formatCurrency(savedTxn.amount, currency)}** for "${savedTxn.merchant}" under ${savedTxn.category} on ${savedTxn.date}.`;
   } else if (data.type === 'note') {
-    const { createNote, updateNote, getNote, getCachedNotes } = await import('@/lib/notesService');
     if (data.mode === 'append' && data.noteId) {
       const existing = getCachedNotes().find((n) => n.id === data.noteId) || (await getNote(data.noteId));
       const appendText = data.content || data.notes || '';
