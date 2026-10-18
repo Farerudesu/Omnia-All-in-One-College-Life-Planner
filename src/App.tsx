@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider, useAuth } from './lib/AuthContext';
 import { AppLayout } from './components/AppLayout';
@@ -10,7 +11,10 @@ import { FinancePage } from './pages/FinancePage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AskOmniPage } from './pages/AskOmniPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
-import { DebugPage } from './pages/DebugPage';
+
+const LazyDebugPage = import.meta.env.DEV
+  ? lazy(() => import('./pages/DebugPage').then((m) => ({ default: m.DebugPage })))
+  : null;
 
 export default function App() {
   return (
@@ -18,41 +22,55 @@ export default function App() {
       <AuthProvider>
         <BrowserRouter>
           <Routes>
-          <Route path="/version" element={<VersionPage />} />
-          <Route path="/debug" element={<DebugPage />} />
-          <Route path="/debug-omni" element={<DebugPage />} />
-          <Route path="/signin" element={<SignInRoute />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route element={<RequireAuth />}>
-        <Route element={<AppLayout />}>
-          <Route path="/schedule" element={<SchedulePage />} />
-          <Route path="/calendar" element={<CalendarPage />} />
-          <Route path="/assignments" element={<AssignmentsPage />} />
-          <Route path="/finance" element={<FinancePage />} />
-          <Route path="/ask-omni" element={<AskOmniPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/" element={<Navigate to="/schedule" replace />} />
-        </Route>
-          </Route>
-          <Route path="*" element={<Navigate to="/schedule" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+            <Route path="/version" element={<VersionPage />} />
+            {import.meta.env.DEV && LazyDebugPage && (
+              <>
+                <Route
+                  path="/debug"
+                  element={
+                    <Suspense fallback={<div style={{ padding: '2rem' }}>Loading debug console…</div>}>
+                      <LazyDebugPage />
+                    </Suspense>
+                  }
+                />
+                <Route path="/debug-omni" element={<Navigate to="/debug" replace />} />
+              </>
+            )}
+            <Route path="/signin" element={<SignInRoute />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route element={<RequireAuth />}>
+              <Route element={<AppLayout />}>
+                <Route path="/schedule" element={<SchedulePage />} />
+                <Route path="/calendar" element={<CalendarPage />} />
+                <Route path="/assignments" element={<AssignmentsPage />} />
+                <Route path="/finance" element={<FinancePage />} />
+                <Route path="/ask-omni" element={<AskOmniPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/" element={<Navigate to="/schedule" replace />} />
+              </Route>
+            </Route>
+            <Route path="*" element={<Navigate to="/schedule" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
     </ErrorBoundary>
   );
 }
 
 function VersionPage() {
+  const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0';
+  const buildTime = typeof __BUILD_TIME__ !== 'undefined' ? __BUILD_TIME__ : '';
+
   return (
     <main style={{ padding: '2rem', fontFamily: 'monospace' }}>
       <h1>Omnia version</h1>
-      <p>Version: 1.7.2</p>
-      <p>Build: 2026-10-15 05:45:00 +08:00</p>
-      <p>Commit: feat-omni-api-diagnostics-and-debug-page</p>
-      <p>Changelog: Add full-featured Omnia API &amp; Engine Debug Console (/debug), fix LLM model fallback chain with active Google Gemini (gemini-flash-latest, gemini-3.8-flash) &amp; Groq models, and surface deep Edge Function diagnostics</p>
+      <p>Version: {version}</p>
+      {buildTime && <p>Build: {buildTime}</p>}
       <p style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem' }}>
         <a href="/schedule" style={{ color: 'var(--primary, #0284c7)', textDecoration: 'underline' }}>← Back to App</a>
-        <a href="/debug" style={{ color: 'var(--primary, #0284c7)', textDecoration: 'underline' }}>🔧 Open Debug Console</a>
+        {import.meta.env.DEV && (
+          <a href="/debug" style={{ color: 'var(--primary, #0284c7)', textDecoration: 'underline' }}>🔧 Open Debug Console</a>
+        )}
       </p>
     </main>
   );

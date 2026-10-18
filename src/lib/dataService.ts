@@ -226,11 +226,11 @@ async function refreshTable(table: DataTable, attempt = 0) {
       };
       if (settings.chatHistory && settings.chatHistory.length > 0) {
         try {
-          const localStr = localStorage.getItem('omnia_omni_chat_session');
-          const localArr = localStr ? JSON.parse(localStr) : [];
-          if (!Array.isArray(localArr) || localArr.length === 0) {
-            localStorage.setItem('omnia_omni_chat_session', JSON.stringify(settings.chatHistory));
-          }
+          const trimmed = settings.chatHistory.slice(-50);
+          localStorage.setItem(
+            'omnia_omni_chat_session',
+            JSON.stringify({ messages: trimmed, updatedAt: Date.now() })
+          );
         } catch {
           // ignore localStorage sync error
         }
@@ -1038,15 +1038,29 @@ export function updateSettings(data: Partial<UserSettings>): void {
   });
 }
 
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
 let chatSyncTimeout: ReturnType<typeof setTimeout> | null = null;
 
 export function getSavedChatHistory(): any[] {
   if (settings.chatHistory && settings.chatHistory.length > 0) {
-    return settings.chatHistory;
+    return settings.chatHistory.slice(-50);
   }
   try {
     const saved = localStorage.getItem('omnia_omni_chat_session');
-    return saved ? JSON.parse(saved) : [];
+    if (!saved) return [];
+    const parsed = JSON.parse(saved);
+    if (Array.isArray(parsed)) {
+      return parsed.slice(-50);
+    }
+    if (parsed && typeof parsed === 'object' && Array.isArray(parsed.messages)) {
+      if (typeof parsed.updatedAt === 'number' && Date.now() - parsed.updatedAt > SEVEN_DAYS_MS) {
+        localStorage.removeItem('omnia_omni_chat_session');
+        return [];
+      }
+      return parsed.messages.slice(-50);
+    }
+    return [];
   } catch {
     return [];
   }
@@ -1056,7 +1070,10 @@ export function saveChatHistory(history: any[]): void {
   const trimmed = history.slice(-50);
   settings.chatHistory = trimmed;
   try {
-    localStorage.setItem('omnia_omni_chat_session', JSON.stringify(trimmed));
+    localStorage.setItem(
+      'omnia_omni_chat_session',
+      JSON.stringify({ messages: trimmed, updatedAt: Date.now() })
+    );
   } catch {
     // ignore quota error
   }

@@ -15,26 +15,23 @@ const CLIENT_ID =
 const SCOPES = 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar';
 const CALENDAR_NAME = 'Omnia College Life';
 
-interface StoredAuth {
+interface MemoryAuth {
   accessToken: string;
   expiresAt: number;
   email?: string;
   calendarId?: string;
 }
 
-let authState: StoredAuth | null = (() => {
-  try {
-    const raw = localStorage.getItem('omnia_gcal_auth');
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed.accessToken === 'string') {
-      return parsed;
-    }
-  } catch {
-    // ignore
+let authState: MemoryAuth | null = null;
+
+// Remove legacy stored auth containing access_token from localStorage
+try {
+  if (typeof localStorage !== 'undefined') {
+    localStorage.removeItem('omnia_gcal_auth');
   }
-  return null;
-})();
+} catch {
+  // ignore
+}
 
 let tokenClient: any = null;
 let importedGoogleEvents: CalendarEvent[] = (() => {
@@ -80,16 +77,18 @@ function saveImportedGoogleEvents(events: CalendarEvent[]) {
   notifyListeners();
 }
 
-function saveAuthState(state: StoredAuth | null) {
+function setAuthState(state: MemoryAuth | null) {
   authState = state;
-  if (!state) {
-    localStorage.removeItem('omnia_gcal_auth');
-  } else {
-    try {
-      localStorage.setItem('omnia_gcal_auth', JSON.stringify(state));
-    } catch (err) {
-      console.error('Failed to save auth state:', err);
+  try {
+    if (!state) {
+      localStorage.removeItem('omnia_gcal_connected');
+      localStorage.removeItem('omnia_gcal_auth');
+    } else {
+      localStorage.setItem('omnia_gcal_connected', 'true');
+      localStorage.removeItem('omnia_gcal_auth');
     }
+  } catch {
+    // ignore
   }
   notifyListeners();
 }
@@ -136,12 +135,18 @@ export async function ensureGisLoaded(): Promise<boolean> {
  * Check if the user is currently connected to Google Calendar and token hasn't expired.
  */
 export function isGoogleCalendarConnected(): boolean {
-  if (!authState?.accessToken) return false;
-  return Date.now() < authState.expiresAt - 60000;
+  if (authState?.accessToken && Date.now() < authState.expiresAt - 60000) {
+    return true;
+  }
+  try {
+    return typeof localStorage !== 'undefined' && localStorage.getItem('omnia_gcal_connected') === 'true';
+  } catch {
+    return false;
+  }
 }
 
 export function getConnectedGoogleEmail(): string | undefined {
-  return authState?.email;
+  return authState?.email || ds.getSettings().googleAccountEmail;
 }
 
 /**
@@ -183,7 +188,7 @@ export async function getValidAccessToken(forceConsent = false): Promise<string>
             // non-fatal
           }
 
-          saveAuthState({
+          setAuthState({
             accessToken: token,
             expiresAt,
             email,
@@ -221,7 +226,7 @@ export async function connectGoogleCalendar(): Promise<{ email: string; calendar
   // Use primary by default so events appear directly on user's main calendar
   const calendarId = 'primary';
 
-  saveAuthState({
+  setAuthState({
     accessToken: token,
     expiresAt: authState?.expiresAt || Date.now() + 3600 * 1000,
     email,
@@ -260,7 +265,7 @@ export async function disconnectGoogleCalendar(): Promise<void> {
     }
   }
 
-  saveAuthState(null);
+  setAuthState(null);
   saveImportedGoogleEvents([]);
 
   try {

@@ -1,7 +1,8 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useRef, type ReactNode } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from './supabase.js';
 import * as ds from './dataService';
+import { clearUserLocalData } from './localData';
 
 interface AuthContextValue {
   user: User | null;
@@ -57,11 +58,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  const prevUserIdRef = useRef<string | null>(null);
+
   useEffect(() => {
+    if (prevUserIdRef.current && prevUserIdRef.current !== user?.id) {
+      clearUserLocalData();
+    }
+    prevUserIdRef.current = user?.id ?? null;
+
     if (user) {
       void ds.loadUserData(user.id);
     } else {
       ds.clearUserData();
+      clearUserLocalData();
     }
   }, [user?.id]);
 
@@ -106,6 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    clearUserLocalData();
     const { error } = await getClient().auth.signOut();
     if (error) throw error;
   };

@@ -164,32 +164,62 @@ export async function askOmni(request: AskOmniRequest): Promise<AskOmniResponse>
   }
 }
 
+function maskHeaderValue(val: string): string {
+  if (!val) return '';
+  return val.length > 8 ? `${val.slice(0, 8)}…` : `${val}…`;
+}
+
 export async function testAskOmniRaw(payload: Record<string, unknown>): Promise<RawApiResult> {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://idrraytmjdbcgerdahkj.supabase.co';
   const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
   const endpoint = `${supabaseUrl}/functions/v1/ask-omni`;
 
-  let token = anonKey;
+  let token: string | null = null;
   try {
     const session = await supabase?.auth?.getSession();
     if (session?.data?.session?.access_token) {
       token = session.data.session.access_token;
     }
   } catch {
-    // fallback to anon key
+    token = null;
   }
 
-  const requestHeaders: Record<string, string> = {
+  if (!token) {
+    return {
+      endpoint,
+      status: 401,
+      statusText: 'Unauthorized',
+      durationMs: 0,
+      requestHeaders: {
+        'Content-Type': 'application/json',
+        'apikey': maskHeaderValue(anonKey),
+        'Authorization': '',
+      },
+      requestBody: payload,
+      responseHeaders: {},
+      rawResponseText: '',
+      parsedJson: null,
+      error: 'Belum login',
+    };
+  }
+
+  const actualHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
     'apikey': anonKey,
     'Authorization': `Bearer ${token}`,
+  };
+
+  const maskedHeaders: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'apikey': maskHeaderValue(anonKey),
+    'Authorization': `Bearer ${maskHeaderValue(token)}`,
   };
 
   const startTime = Date.now();
   try {
     const res = await fetch(endpoint, {
       method: 'POST',
-      headers: requestHeaders,
+      headers: actualHeaders,
       body: JSON.stringify(payload),
     });
 
@@ -212,26 +242,26 @@ export async function testAskOmniRaw(payload: Record<string, unknown>): Promise<
       status: res.status,
       statusText: res.statusText,
       durationMs,
-      requestHeaders,
+      requestHeaders: maskedHeaders,
       requestBody: payload,
       responseHeaders,
       rawResponseText,
       parsedJson,
       error: res.ok ? null : `HTTP ${res.status}: ${res.statusText}`,
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
     const durationMs = Date.now() - startTime;
     return {
       endpoint,
       status: 0,
       statusText: 'Network / Client Error',
       durationMs,
-      requestHeaders,
+      requestHeaders: maskedHeaders,
       requestBody: payload,
       responseHeaders: {},
       rawResponseText: '',
       parsedJson: null,
-      error: err?.message || String(err),
+      error: err instanceof Error ? err.message : String(err),
     };
   }
 }
