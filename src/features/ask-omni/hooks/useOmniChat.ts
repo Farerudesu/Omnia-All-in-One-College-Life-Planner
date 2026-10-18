@@ -12,6 +12,7 @@ import {
   validateProposal,
   extractProposalFromResponse,
 } from '../aiIntentParser';
+import { buildNotesContext } from '../utils/notesContext';
 import type { ImageAttachment } from '../types';
 
 type Message = ChatMessage;
@@ -139,6 +140,13 @@ export function useOmniChat(options?: UseOmniChatOptions) {
             : item.content,
       }));
 
+      const profile = ds.getProfile();
+      const notesContext = await buildNotesContext({
+        userMessage: userMessage.content,
+        omniNotesAccess: Boolean(profile?.omniNotesAccess),
+        activeNoteId: options?.pageContext?.noteId,
+      });
+
       const response = await askOmni({
         message: userMessage.content,
         history,
@@ -146,6 +154,7 @@ export function useOmniChat(options?: UseOmniChatOptions) {
         mimeType: sentAttachment?.mimeType,
         scheduleContext: getScheduleContext(),
         pageContext: options?.pageContext,
+        notesContext,
       });
 
       let aiPrefilled: PrefilledData | undefined = undefined;
@@ -176,11 +185,23 @@ export function useOmniChat(options?: UseOmniChatOptions) {
         setPrefilledError('');
       }
 
+      let resolvedNoteSource = response.noteSource;
+      if (!resolvedNoteSource && notesContext && notesContext.length > 0) {
+        const lowerReply = response.reply.toLowerCase();
+        const matchedNote = notesContext.find((n) =>
+          n.title.trim() && lowerReply.includes(n.title.toLowerCase())
+        );
+        if (matchedNote) {
+          resolvedNoteSource = { id: matchedNote.id, title: matchedNote.title };
+        }
+      }
+
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: response.reply,
         prefilledData: aiPrefilled || undefined,
+        noteSource: resolvedNoteSource,
       };
 
       setMessages((prev) => [

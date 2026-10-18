@@ -15,6 +15,9 @@ export function formatPrefilledSummary(data: PrefilledData): string {
   if (data.type === 'task') {
     return `Add Task: "${data.title}" due ${data.date}${data.dueTime ? ` at ${data.dueTime}` : ''}`;
   }
+  if (data.type === 'note') {
+    return `${data.mode === 'append' ? 'Tambahkan Catatan' : 'Catatan Baru'}: "${data.title}"`;
+  }
   return `Schedule Event: "${data.title}" on ${data.date}${data.startTime ? ` at ${data.startTime}${data.endTime ? `–${data.endTime}` : ''}` : ''}${data.location && data.location !== 'Campus' ? ` • ${data.location}` : ''}`;
 }
 
@@ -40,9 +43,27 @@ export function validateProposal(
 ): { valid: boolean; error?: string } {
   const t = translations[lang].proposalValidation;
 
-  // 1. Title is non-empty
+  // 1. Title is non-empty and <= 200 chars
   if (!data.title || !data.title.trim()) {
     return { valid: false, error: t.titleRequired };
+  }
+  if (data.title.trim().length > 200) {
+    return { valid: false, error: lang === 'id' ? 'Judul maksimal 200 karakter.' : 'Title cannot exceed 200 characters.' };
+  }
+
+  // Note specific validation
+  if (data.type === 'note') {
+    const content = data.content || data.notes || '';
+    if (content.length > 20000) {
+      return { valid: false, error: lang === 'id' ? 'Isi catatan maksimal 20.000 karakter.' : 'Note content cannot exceed 20,000 characters.' };
+    }
+    if (data.tags && data.tags.length > 10) {
+      return { valid: false, error: lang === 'id' ? 'Maksimal 10 tag untuk catatan.' : 'Maximum 10 tags allowed for note.' };
+    }
+    if (data.mode === 'append' && !data.noteId) {
+      return { valid: false, error: lang === 'id' ? 'ID catatan tujuan penambahan tidak ditemukan.' : 'Target note ID for append mode is required.' };
+    }
+    return { valid: true };
   }
 
   // 2. Date format YYYY-MM-DD valid
@@ -88,7 +109,7 @@ export function mapProposedActionToPrefilled(action: ProposedAction): PrefilledD
     return {
       type: 'event',
       title: action.title,
-      date: action.date,
+      date: action.date || new Date().toISOString().split('T')[0],
       startTime: action.startTime,
       endTime: action.endTime,
       location: action.location,
@@ -100,17 +121,31 @@ export function mapProposedActionToPrefilled(action: ProposedAction): PrefilledD
     return {
       type: 'task',
       title: action.title,
-      date: action.date,
+      date: action.date || new Date().toISOString().split('T')[0],
       dueTime: action.dueTime,
       courseId: action.courseId,
       priority: action.priority,
       notes: action.notes,
     };
   }
+  if (action.type === 'note') {
+    return {
+      type: 'note',
+      title: action.title,
+      date: action.date || new Date().toISOString().split('T')[0],
+      content: action.content || action.notes || '',
+      notes: action.notes,
+      tags: action.tags,
+      courseId: action.courseId,
+      assignmentId: action.assignmentId,
+      noteId: action.noteId,
+      mode: action.mode || 'create',
+    };
+  }
   return {
     type: 'expense',
     title: action.title,
-    date: action.date,
+    date: action.date || new Date().toISOString().split('T')[0],
     amount: action.amount,
     category: (action.category
       ? normalizeTransactionCategory(action.category)

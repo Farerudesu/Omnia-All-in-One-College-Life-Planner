@@ -1,6 +1,7 @@
 import type { ChangeEvent } from 'react';
 import type { Language } from '@/lib/i18n';
 import type { UserProfile } from '@/types';
+import * as ds from '@/lib/dataService';
 
 interface AccountSectionProps {
   language: Language;
@@ -289,6 +290,42 @@ export function AccountSection({
           {isId ? 'Profil tersimpan.' : 'Profile saved.'}
         </div>
       )}
+
+      {/* Omni AI Notes Access (Opt-in Privacy Toggle) */}
+      <div
+        style={{
+          padding: '0.875rem',
+          borderRadius: 'var(--radius-md)',
+          background: 'var(--surface-container-low)',
+          border: '1px solid var(--outline-variant)',
+          marginBottom: '1rem',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.5rem',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
+          <div>
+            <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--on-surface)' }}>
+              {isId ? 'Izinkan Omni membaca catatan saya' : 'Allow Omni to read my notes'}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', marginTop: '0.125rem' }}>
+              {isId
+                ? 'Omni hanya membaca cuplikan catatan yang relevan saat menjawab Anda (Opt-in).'
+                : 'Omni only reads relevant note snippets to answer your queries (Opt-in).'}
+            </div>
+          </div>
+          <input
+            type="checkbox"
+            checked={Boolean(profile?.omniNotesAccess)}
+            onChange={(e) => {
+              void ds.updateProfile({ omniNotesAccess: e.target.checked });
+            }}
+            aria-label={isId ? 'Izinkan Omni membaca catatan saya' : 'Allow Omni to read my notes'}
+            style={{ width: 18, height: 18, cursor: 'pointer', accentColor: 'var(--primary)' }}
+          />
+        </div>
+      </div>
 
       <button
         type="button"

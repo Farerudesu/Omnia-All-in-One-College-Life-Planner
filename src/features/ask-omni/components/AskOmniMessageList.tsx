@@ -1,5 +1,6 @@
 import type { RefObject } from 'react';
-import { Sparkles, Calendar, PlusCircle, DollarSign } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Sparkles, Calendar, PlusCircle, DollarSign, StickyNote } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import type { Language } from '@/lib/i18n';
 import type { ChatMessage, PrefilledData } from '@/types';
@@ -271,6 +272,32 @@ export function AskOmniMessageList({
                         {msg.content}
                       </div>
                     ))}
+
+                  {msg.role === 'assistant' && msg.noteSource && (
+                    <Link
+                      to={`/notes?open=${msg.noteSource.id}`}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.3125rem',
+                        marginTop: '0.5rem',
+                        padding: '0.2rem 0.5rem',
+                        borderRadius: 6,
+                        background: 'var(--surface-container-high)',
+                        color: 'var(--primary)',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        textDecoration: 'none',
+                      }}
+                    >
+                      <StickyNote size={12} />
+                      <span>
+                        {lang === 'id'
+                          ? `dari catatan: ${msg.noteSource.title}`
+                          : `from note: ${msg.noteSource.title}`}
+                      </span>
+                    </Link>
+                  )}
                 </div>
 
                 {msg.prefilledData && (

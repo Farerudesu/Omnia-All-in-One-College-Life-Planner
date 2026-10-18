@@ -105,9 +105,9 @@ export interface BreakWeek {
 }
 
 export interface PrefilledData {
-  type: 'event' | 'task' | 'expense';
+  type: 'event' | 'task' | 'expense' | 'note';
   title: string;
-  date: string;
+  date?: string;
   startTime?: string;
   endTime?: string;
   location?: string;
@@ -121,6 +121,12 @@ export interface PrefilledData {
   amount?: number;
   paymentMethod?: string;
   category?: string;
+  // For notes
+  content?: string;
+  tags?: string[];
+  assignmentId?: string;
+  noteId?: string;
+  mode?: 'create' | 'append';
 }
 
 export interface ChatMessage {
@@ -129,6 +135,7 @@ export interface ChatMessage {
   content: string;
   attachmentUrl?: string | null;
   prefilledData?: PrefilledData;
+  noteSource?: { id: string; title: string };
   actionStatus?: 'saved' | 'cancelled' | 'replaced';
   actionError?: string;
 }

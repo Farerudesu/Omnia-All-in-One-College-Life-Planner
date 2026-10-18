@@ -9,10 +9,12 @@ export async function saveProposalToOmnia(data: PrefilledData): Promise<{
   let confirmationText = '';
   let savedAmount = 0;
 
+  const targetDate = data.date || new Date().toISOString().split('T')[0];
+
   if (data.type === 'event') {
     const savedEvent = await ds.createEvent({
       title: data.title.trim(),
-      date: data.date,
+      date: targetDate,
       type: data.eventType || 'personal',
       startTime: data.startTime || undefined,
       endTime: data.endTime || undefined,
@@ -30,13 +32,13 @@ export async function saveProposalToOmnia(data: PrefilledData): Promise<{
     const dueTime = data.dueTime || (data.startTime ? data.startTime : '23:59');
     const savedTask = await ds.addAssignment({
       title: data.title.trim(),
-      dueDate: `${data.date}T${dueTime}`,
+      dueDate: `${targetDate}T${dueTime}`,
       courseId: data.courseId,
       priority: data.priority || 'medium',
       status: 'not-started',
       notes: data.notes?.trim() || undefined,
     });
-    confirmationText = `Added assignment **${savedTask.title}** due on ${data.date}${dueTime ? ` at ${dueTime}` : ''}.`;
+    confirmationText = `Added assignment **${savedTask.title}** due on ${targetDate}${dueTime ? ` at ${dueTime}` : ''}.`;
   } else if (data.type === 'expense') {
     const amt = Number(data.amount) || 0;
     savedAmount = amt;
@@ -45,12 +47,35 @@ export async function saveProposalToOmnia(data: PrefilledData): Promise<{
       amount: amt,
       type: 'expense',
       category: data.category || 'Other Discretionary',
-      date: data.date,
+      date: targetDate,
       paymentMethod: data.paymentMethod || 'QRIS',
       notes: data.notes?.trim() || undefined,
     });
     const currency = ds.getSettings()?.currency || 'IDR';
     confirmationText = `Logged expense **${formatCurrency(savedTxn.amount, currency)}** for "${savedTxn.merchant}" under ${savedTxn.category} on ${savedTxn.date}.`;
+  } else if (data.type === 'note') {
+    const { createNote, updateNote, getNote, getCachedNotes } = await import('@/lib/notesService');
+    if (data.mode === 'append' && data.noteId) {
+      const existing = getCachedNotes().find((n) => n.id === data.noteId) || (await getNote(data.noteId));
+      const appendText = data.content || data.notes || '';
+      const mergedContent = existing?.content ? `${existing.content}\n\n${appendText}` : appendText;
+      const mergedTags = Array.from(new Set([...(existing?.tags || []), ...(data.tags || [])])).slice(0, 10);
+      const updated = await updateNote(data.noteId, {
+        content: mergedContent.slice(0, 50000),
+        tags: mergedTags,
+      });
+      confirmationText = `Berhasil menambahkan catatan ke **${updated.title || 'Catatan'}**.`;
+    } else {
+      const newNote = await createNote({
+        title: data.title.trim().slice(0, 200) || 'Catatan Baru',
+        content: (data.content || data.notes || '').slice(0, 20000),
+        tags: (data.tags || []).slice(0, 10),
+        courseId: data.courseId,
+        assignmentId: data.assignmentId,
+        source: 'omni',
+      });
+      confirmationText = `Catatan **${newNote.title}** berhasil disimpan.`;
+    }
   }
 
   return { confirmationText, savedAmount };

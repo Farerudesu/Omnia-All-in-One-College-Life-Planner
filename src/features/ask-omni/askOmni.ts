@@ -45,6 +45,14 @@ export interface AskOmniRequest {
     route: string;
     noteId?: string;
   };
+  notesContext?: Array<{
+    id: string;
+    title: string;
+    snippet: string;
+    tags: string[];
+    updatedAt: string;
+    courseId?: string;
+  }>;
 }
 
 export interface ProposedCalendarEvent {
@@ -57,9 +65,9 @@ export interface ProposedCalendarEvent {
 }
 
 export interface ProposedAction {
-  type: 'event' | 'task' | 'expense';
+  type: 'event' | 'task' | 'expense' | 'note';
   title: string;
-  date: string;
+  date?: string;
   startTime?: string;
   endTime?: string;
   location?: string;
@@ -70,6 +78,12 @@ export interface ProposedAction {
   amount?: number;
   category?: ExpenseCategory | string;
   paymentMethod?: string;
+  // Note specific
+  content?: string;
+  tags?: string[];
+  assignmentId?: string;
+  noteId?: string;
+  mode?: 'create' | 'append';
 }
 
 export interface ModelAttempt {
@@ -99,6 +113,7 @@ export interface AskOmniResponse {
   proposedAction?: ProposedAction;
   proposedActions?: ProposedAction[];
   receiptTotal?: number;
+  noteSource?: { id: string; title: string };
   proposedEvent?: ProposedCalendarEvent;
   error?: string;
   diagnostics?: AskOmniDiagnostics;

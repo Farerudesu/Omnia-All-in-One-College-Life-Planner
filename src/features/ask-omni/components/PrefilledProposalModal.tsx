@@ -36,10 +36,14 @@ export function PrefilledProposalModal({
   const titleText = (() => {
     const base =
       prefilledModal.data.type === 'expense'
-        ? 'Catat pengeluaran kampus'
+        ? lang === 'id' ? 'Catat pengeluaran kampus' : 'Log campus expense'
         : prefilledModal.data.type === 'task'
-          ? 'Tambah tugas kuliah'
-          : 'Tambah acara ke jadwal';
+          ? lang === 'id' ? 'Tambah tugas kuliah' : 'Add assignment'
+          : prefilledModal.data.type === 'note'
+            ? prefilledModal.data.mode === 'append'
+              ? lang === 'id' ? 'Tambahkan ke catatan' : 'Append to note'
+              : lang === 'id' ? 'Simpan catatan kuliah' : 'Save note'
+            : lang === 'id' ? 'Tambah acara ke jadwal' : 'Add schedule event';
     const total = receiptSavedAmounts.length + receiptQueue.length + 1;
     if (total > 1) {
       const current = receiptSavedAmounts.length + 1;

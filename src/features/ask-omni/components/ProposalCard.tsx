@@ -1,4 +1,4 @@
-import { Sparkles, Calendar, Check, DollarSign, CheckSquare } from 'lucide-react';
+import { Sparkles, Calendar, Check, DollarSign, CheckSquare, StickyNote } from 'lucide-react';
 import type { Language } from '@/lib/i18n';
 import type { ChatMessage, PrefilledData } from '@/types';
 import { formatPrefilledSummary } from '../proposalValidator';
@@ -52,6 +52,8 @@ export function ProposalCard({ message, lang, onOpenModal }: ProposalCardProps) 
             <DollarSign size={13} />
           ) : data.type === 'task' ? (
             <CheckSquare size={13} />
+          ) : data.type === 'note' ? (
+            <StickyNote size={13} />
           ) : (
             <Calendar size={13} />
           )}
@@ -61,12 +63,20 @@ export function ProposalCard({ message, lang, onOpenModal }: ProposalCardProps) 
               ? 'Pengeluaran'
               : data.type === 'task'
                 ? 'Tugas'
-                : 'Acara'
+                : data.type === 'note'
+                  ? data.mode === 'append'
+                    ? 'Tambah Catatan'
+                    : 'Catatan'
+                  : 'Acara'
             : data.type === 'expense'
               ? 'Expense'
               : data.type === 'task'
                 ? 'Assignment'
-                : 'Schedule Event'}
+                : data.type === 'note'
+                  ? data.mode === 'append'
+                    ? 'Append Note'
+                    : 'Note'
+                  : 'Schedule Event'}
         </span>
         {message.actionStatus === 'saved' ? (
           <span
@@ -88,12 +98,16 @@ export function ProposalCard({ message, lang, onOpenModal }: ProposalCardProps) 
                 ? 'Keuangan'
                 : data.type === 'task'
                   ? 'Tugas'
-                  : 'Jadwal'
+                  : data.type === 'note'
+                    ? 'Catatan'
+                    : 'Jadwal'
               : data.type === 'expense'
                 ? 'Finance'
                 : data.type === 'task'
                   ? 'Tasks'
-                  : 'Schedule'}
+                  : data.type === 'note'
+                    ? 'Notes'
+                    : 'Schedule'}
           </span>
         ) : (
           <span

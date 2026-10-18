@@ -28,19 +28,21 @@ export function getProfile(): UserProfile | null {
   return profile;
 }
 
-export async function updateProfile(data: UserProfile) {
+export async function updateProfile(data: Partial<UserProfile>) {
   if (!activeUserId) throw new Error('Sign in before saving profile.');
   setTableStatus('profiles', { loading: true, error: null });
   try {
+    const existing = profile;
     const { error } = await getClient()
       .from('profiles')
       .upsert(
         {
           id: activeUserId,
-          full_name: data.fullName,
-          university_email: data.universityEmail,
-          avatar_url: data.avatarUrl || null,
-          omni_notes_access: data.omniNotesAccess ?? false,
+          full_name: data.fullName ?? existing?.fullName ?? '',
+          university_email: data.universityEmail ?? existing?.universityEmail ?? '',
+          avatar_url: data.avatarUrl !== undefined ? data.avatarUrl : (existing?.avatarUrl || null),
+          omni_notes_access:
+            data.omniNotesAccess !== undefined ? data.omniNotesAccess : (existing?.omniNotesAccess ?? false),
         },
         { onConflict: 'id' }
       );

@@ -17,6 +17,129 @@ export function ProposalFields({
   lang,
   onChangeData,
 }: ProposalFieldsProps) {
+  if (data.type === 'note') {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+        {data.mode === 'append' && (
+          <div
+            style={{
+              padding: '0.625rem 0.75rem',
+              borderRadius: 'var(--radius-sm)',
+              background: 'var(--primary-container)',
+              color: 'var(--primary)',
+              fontSize: '0.8125rem',
+              fontWeight: 500,
+            }}
+          >
+            {lang === 'id'
+              ? '📝 Mode: Menambahkan teks baru ke akhir catatan yang sudah ada.'
+              : '📝 Mode: Appending new content to existing note.'}
+          </div>
+        )}
+
+        <div>
+          <label
+            style={{
+              display: 'block',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              color: 'var(--on-surface)',
+              marginBottom: '0.25rem',
+            }}
+          >
+            {lang === 'id' ? 'Judul Catatan *' : 'Note Title *'}
+          </label>
+          <input
+            type="text"
+            value={data.title}
+            maxLength={200}
+            onChange={(e) => onChangeData((prev) => ({ ...prev, title: e.target.value }))}
+            placeholder={lang === 'id' ? 'Contoh: Catatan Kuliah Aljabar' : 'e.g. Linear Algebra Notes'}
+            style={{ width: '100%', boxSizing: 'border-box' }}
+          />
+        </div>
+
+        <div>
+          <label
+            style={{
+              display: 'block',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              color: 'var(--on-surface)',
+              marginBottom: '0.25rem',
+            }}
+          >
+            {lang === 'id' ? 'Isi Catatan' : 'Note Content'}
+          </label>
+          <textarea
+            rows={5}
+            value={data.content ?? data.notes ?? ''}
+            onChange={(e) =>
+              onChangeData((prev) => ({ ...prev, content: e.target.value, notes: e.target.value }))
+            }
+            placeholder={lang === 'id' ? 'Ketik isi catatan...' : 'Write note content...'}
+            style={{ width: '100%', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit' }}
+          />
+        </div>
+
+        <div>
+          <label
+            style={{
+              display: 'block',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              color: 'var(--on-surface)',
+              marginBottom: '0.25rem',
+            }}
+          >
+            {lang === 'id' ? 'Mata Kuliah (Opsional)' : 'Course (Optional)'}
+          </label>
+          <select
+            value={data.courseId || ''}
+            onChange={(e) =>
+              onChangeData((prev) => ({ ...prev, courseId: e.target.value ? e.target.value : undefined }))
+            }
+            style={{ width: '100%', boxSizing: 'border-box' }}
+          >
+            <option value="">{lang === 'id' ? '— Tanpa Mata Kuliah —' : '— No Course —'}</option>
+            {courses.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.code} · {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label
+            style={{
+              display: 'block',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              color: 'var(--on-surface)',
+              marginBottom: '0.25rem',
+            }}
+          >
+            {lang === 'id' ? 'Tag (pisahkan dengan koma)' : 'Tags (comma-separated)'}
+          </label>
+          <input
+            type="text"
+            value={(data.tags || []).join(', ')}
+            onChange={(e) => {
+              const parsed = e.target.value
+                .split(',')
+                .map((t) => t.trim().replace(/^#/, ''))
+                .filter(Boolean);
+              onChangeData((prev) => ({ ...prev, tags: parsed }));
+            }}
+            placeholder="kuliah, tugas, rumus"
+            style={{ width: '100%', boxSizing: 'border-box' }}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
       {/* Title */}
