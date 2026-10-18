@@ -22,6 +22,8 @@ import { useData } from '../lib/useData';
 import {
   formatPrefilledSummary,
   isConfirmationIntent,
+  validateProposal,
+  parseProposalFromText,
   type PrefilledData,
 } from '../lib/aiIntentParser';
 import { EXPENSE_CATEGORIES, normalizeTransactionCategory, type ExpenseCategory } from '../lib/categories';
@@ -199,18 +201,16 @@ export function AskOmniPage() {
     const userText = input.trim();
     setRetryText('');
 
-    // Check if the user is confirming a pending proposal (e.g. "tambahkan", "add", "oke", "ya")
-    if (isConfirmationIntent(userText)) {
-      const pendingMessage = messages.slice().reverse().find((m) => m.prefilledData && m.actionStatus !== 'saved');
-      if (pendingMessage?.prefilledData) {
-        setPrefilledModal({
-          data: { ...pendingMessage.prefilledData },
-          messageId: pendingMessage.id,
-        });
-        setPrefilledError('');
-        setInput('');
-        return;
-      }
+    // Check if there is a pending proposal awaiting confirmation
+    const pendingMessage = messages.slice().reverse().find((m) => m.prefilledData && !m.actionStatus);
+    if (pendingMessage?.prefilledData && isConfirmationIntent(userText)) {
+      setPrefilledModal({
+        data: { ...pendingMessage.prefilledData },
+        messageId: pendingMessage.id,
+      });
+      setPrefilledError('');
+      setInput('');
+      return;
     }
 
     const userMessage: Message = {
@@ -293,8 +293,26 @@ export function AskOmniPage() {
           aiPrefilled = first;
         }
       } else if (response.proposedAction) {
-        // Single proposedAction — existing behaviour preserved
+        // Single proposedAction — primary structured action
         aiPrefilled = mapAction(response.proposedAction);
+      } else if (response.proposedEvent) {
+        // Structured calendar event
+        aiPrefilled = {
+          type: 'event',
+          title: response.proposedEvent.title,
+          date: response.proposedEvent.date,
+          startTime: response.proposedEvent.startTime,
+          endTime: response.proposedEvent.endTime,
+          location: response.proposedEvent.location,
+          notes: response.proposedEvent.notes,
+          eventType: 'personal',
+        };
+      } else {
+        // Fallback terakhir: hanya aktif jika respons TIDAK punya proposal terstruktur
+        const fallback = parseProposalFromText(response.reply);
+        if (fallback) {
+          aiPrefilled = fallback;
+        }
       }
 
       // Only popup if AI returned a complete proposal
@@ -333,16 +351,9 @@ export function AskOmniPage() {
     if (!prefilledModal) return;
     const { data, messageId } = prefilledModal;
 
-    if (!data.title.trim()) {
-      setPrefilledError('Please provide a title or description.');
-      return;
-    }
-    if (!data.date) {
-      setPrefilledError('Please select a valid date.');
-      return;
-    }
-    if (data.type === 'expense' && (!data.amount || data.amount <= 0)) {
-      setPrefilledError('Please enter an amount greater than $0.');
+    const validation = validateProposal(data, lang);
+    if (!validation.valid) {
+      setPrefilledError(validation.error || 'Data proposal tidak valid.');
       return;
     }
 

@@ -64,6 +64,15 @@ export const translations = {
       saved: 'Saved!',
       resetChanges: 'Reset changes',
     },
+    // Proposal Validation
+    proposalValidation: {
+      titleRequired: 'Title or description is required.',
+      invalidDateFormat: 'Date must be a valid date in YYYY-MM-DD format.',
+      invalidStartTimeFormat: 'Start time must be in HH:mm format.',
+      invalidEndTimeFormat: 'End time must be in HH:mm format.',
+      endTimeBeforeStartTime: 'End time must be greater than or equal to start time.',
+      invalidExpenseAmount: 'Expense amount must be a positive whole number.',
+    },
   },
   id: {
     // Navigation
@@ -127,6 +136,15 @@ export const translations = {
       savePreferences: 'Simpan perubahan',
       saved: 'Tersimpan!',
       resetChanges: 'Kembalikan setelan',
+    },
+    // Proposal Validation
+    proposalValidation: {
+      titleRequired: 'Judul atau deskripsi wajib diisi.',
+      invalidDateFormat: 'Tanggal harus berupa tanggal valid berformat YYYY-MM-DD.',
+      invalidStartTimeFormat: 'Waktu mulai harus dalam format HH:mm.',
+      invalidEndTimeFormat: 'Waktu selesai harus dalam format HH:mm.',
+      endTimeBeforeStartTime: 'Waktu selesai harus lebih dari atau sama dengan waktu mulai.',
+      invalidExpenseAmount: 'Nominal pengeluaran harus berupa bilangan bulat positif.',
     },
   },
 } as const;

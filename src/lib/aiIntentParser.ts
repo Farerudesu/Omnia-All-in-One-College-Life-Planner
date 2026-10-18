@@ -1,9 +1,37 @@
 import type { Course, PrefilledData } from '../types';
-import type { ExpenseCategory } from './categories';
+import { normalizeTransactionCategory, type ExpenseCategory } from './categories';
 import { toDateString } from './dateUtils';
 import { getCurrencySymbol } from './currency';
+import { translations, type Language } from './i18n';
+import type { ProposedAction, AskOmniResponse } from './askOmni';
 
 export type { PrefilledData };
+
+const ID_MONTH_MAP: Record<string, string> = {
+  januari: 'January',
+  februari: 'February',
+  maret: 'March',
+  april: 'April',
+  mei: 'May',
+  juni: 'June',
+  juli: 'July',
+  agustus: 'August',
+  september: 'September',
+  oktober: 'October',
+  november: 'November',
+  desember: 'December',
+  jan: 'Jan',
+  feb: 'Feb',
+  mar: 'Mar',
+  apr: 'Apr',
+  jun: 'Jun',
+  jul: 'Jul',
+  agu: 'Aug',
+  sep: 'Sep',
+  okt: 'Oct',
+  nov: 'Nov',
+  des: 'Dec',
+};
 
 export function formatPrefilledSummary(data: PrefilledData): string {
   if (data.type === 'expense') {
@@ -26,6 +54,129 @@ export function isConfirmationIntent(text: string): boolean {
   const t = text.trim().toLowerCase();
   return /^(tambahkan|tambah|add|oke|ok|yes|ya|simpan|save|confirm|deal|lanjut|gas|yep|iya|setuju|bisa)$/i.test(t)
     || /^(tambahkan\s+(ini|itu|jadwal|acara|event)|add\s+(this|it|event))$/i.test(t);
+}
+
+/**
+ * Validates a proposal before client-side saving.
+ * Rejects invalid proposals with clear i18n messages.
+ */
+export function validateProposal(
+  data: PrefilledData,
+  lang: Language = 'id'
+): { valid: boolean; error?: string } {
+  const t = translations[lang].proposalValidation;
+
+  // 1. Title is non-empty
+  if (!data.title || !data.title.trim()) {
+    return { valid: false, error: t.titleRequired };
+  }
+
+  // 2. Date format YYYY-MM-DD valid
+  if (!data.date || !/^\d{4}-\d{2}-\d{2}$/.test(data.date)) {
+    return { valid: false, error: t.invalidDateFormat };
+  }
+  const [y, m, d] = data.date.split('-').map(Number);
+  const dateObj = new Date(y, m - 1, d);
+  if (
+    dateObj.getFullYear() !== y ||
+    dateObj.getMonth() !== m - 1 ||
+    dateObj.getDate() !== d
+  ) {
+    return { valid: false, error: t.invalidDateFormat };
+  }
+
+  // 3. Start time format HH:mm if provided
+  if (data.startTime && !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(data.startTime)) {
+    return { valid: false, error: t.invalidStartTimeFormat };
+  }
+
+  // 4. End time format HH:mm and endTime >= startTime
+  if (data.endTime) {
+    if (!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(data.endTime)) {
+      return { valid: false, error: t.invalidEndTimeFormat };
+    }
+    if (data.startTime && data.endTime < data.startTime) {
+      return { valid: false, error: t.endTimeBeforeStartTime };
+    }
+  }
+
+  // 5. Positive integer amount for expenses
+  if (data.type === 'expense') {
+    if (
+      typeof data.amount !== 'number' ||
+      !Number.isInteger(data.amount) ||
+      data.amount <= 0
+    ) {
+      return { valid: false, error: t.invalidExpenseAmount };
+    }
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Maps a structured ProposedAction from AskOmniResponse to PrefilledData.
+ */
+export function mapProposedActionToPrefilled(action: ProposedAction): PrefilledData {
+  if (action.type === 'event') {
+    return {
+      type: 'event',
+      title: action.title,
+      date: action.date,
+      startTime: action.startTime,
+      endTime: action.endTime,
+      location: action.location,
+      notes: action.notes,
+      eventType: 'personal',
+    };
+  }
+  if (action.type === 'task') {
+    return {
+      type: 'task',
+      title: action.title,
+      date: action.date,
+      dueTime: action.dueTime,
+      courseId: action.courseId,
+      priority: action.priority,
+      notes: action.notes,
+    };
+  }
+  return {
+    type: 'expense',
+    title: action.title,
+    date: action.date,
+    amount: action.amount,
+    category: (action.category ? normalizeTransactionCategory(action.category) : 'Food & Groceries') as ExpenseCategory,
+    paymentMethod: action.paymentMethod || 'QRIS',
+    notes: action.notes,
+  };
+}
+
+/**
+ * Primary flow: extracts proposal from AskOmniResponse using structured objects first.
+ * parseProposalFromText is only invoked as the last fallback when NO structured action/event exists.
+ */
+export function extractProposalFromResponse(response: AskOmniResponse): PrefilledData | null {
+  if (response.proposedActions && response.proposedActions.length > 0) {
+    return mapProposedActionToPrefilled(response.proposedActions[0]);
+  }
+  if (response.proposedAction) {
+    return mapProposedActionToPrefilled(response.proposedAction);
+  }
+  if (response.proposedEvent) {
+    return {
+      type: 'event',
+      title: response.proposedEvent.title,
+      date: response.proposedEvent.date,
+      startTime: response.proposedEvent.startTime,
+      endTime: response.proposedEvent.endTime,
+      location: response.proposedEvent.location,
+      notes: response.proposedEvent.notes,
+      eventType: 'personal',
+    };
+  }
+  // Fallback terakhir: hanya aktif jika respons TIDAK punya proposal terstruktur
+  return parseProposalFromText(response.reply);
 }
 
 /**
@@ -54,8 +205,15 @@ export function parseProposalFromText(text: string): PrefilledData | null {
     if (isoMatch) {
       dateStr = isoMatch[1];
     } else {
-      // Try parsing e.g. "Tuesday, October 6, 2026" or "October 6, 2026"
-      const cleanedDate = rawDate.replace(/^[A-Za-z]+,\s*/, '');
+      // Try parsing English or Indonesian dates
+      let cleanedDate = rawDate.replace(/^[A-Za-z'’]+,\s*/, '');
+      for (const [idMonth, enMonth] of Object.entries(ID_MONTH_MAP)) {
+        const regex = new RegExp(`\\b${idMonth}\\b`, 'i');
+        if (regex.test(cleanedDate)) {
+          cleanedDate = cleanedDate.replace(regex, enMonth);
+          break;
+        }
+      }
       const parsed = Date.parse(cleanedDate);
       if (!isNaN(parsed)) {
         dateStr = toDateString(new Date(parsed));
