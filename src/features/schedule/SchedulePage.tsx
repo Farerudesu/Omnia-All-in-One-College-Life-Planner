@@ -21,7 +21,7 @@ export function SchedulePage() {
   const isId = lang === 'id';
 
   const [currentDate, setCurrentDate] = useState(() => new Date());
-  const [viewMode, setViewMode] = useState<'today' | 'week'>('week');
+  const [viewMode, setViewMode] = useState<'today' | 'week'>('today');
 
   const gridScrollRef = useRef<HTMLDivElement>(null);
   const currentTimeRef = useRef<HTMLDivElement>(null);
