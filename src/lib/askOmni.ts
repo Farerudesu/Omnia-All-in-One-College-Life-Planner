@@ -1,4 +1,4 @@
-import { supabase } from './supabase.js';
+import { supabase, supabaseUrl, anonKey } from './supabase';
 import type { ExpenseCategory } from './categories';
 
 export interface AskOmniRequest {
@@ -116,7 +116,10 @@ export interface RawApiResult {
 
 export async function askOmni(request: AskOmniRequest): Promise<AskOmniResponse> {
   if (!supabase) {
-    throw new Error('Add VITE_SUPABASE_ANON_KEY to your .env file to connect to Supabase.');
+    if (!supabaseUrl) {
+      throw new Error('Environment variable VITE_SUPABASE_URL is missing. Please set it in your .env file.');
+    }
+    throw new Error('Environment variable VITE_SUPABASE_ANON_KEY is missing. Please set it in your .env file.');
   }
 
   const isId = localStorage.getItem('omnia_language') === 'id';
@@ -156,11 +159,12 @@ export async function askOmni(request: AskOmniRequest): Promise<AskOmniResponse>
       throw new Error(`${isId ? 'Omni sedang bermasalah. Tekan Coba lagi.' : 'Omni is having trouble. Press Try again.'} [${detail}]`);
     }
     return data;
-  } catch (err: any) {
-    if (err?.message?.includes('Omni lagi lambat')) {
-      throw err;
+  } catch (err: unknown) {
+    const errorObj = err instanceof Error ? err : new Error(String(err));
+    if (errorObj.message?.includes('Omni lagi lambat')) {
+      throw errorObj;
     }
-    throw new Error(err?.message || (isId ? 'Omni lagi lambat, coba lagi ya' : 'Unable to reach Omni. Try again.'));
+    throw new Error(errorObj.message || (isId ? 'Omni lagi lambat, coba lagi ya' : 'Unable to reach Omni. Try again.'));
   }
 }
 
@@ -170,8 +174,10 @@ function maskHeaderValue(val: string): string {
 }
 
 export async function testAskOmniRaw(payload: Record<string, unknown>): Promise<RawApiResult> {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://idrraytmjdbcgerdahkj.supabase.co';
-  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+  if (!supabaseUrl) {
+    throw new Error('Environment variable VITE_SUPABASE_URL is missing. Please set it in your .env file.');
+  }
+  const currentAnonKey = anonKey || '';
   const endpoint = `${supabaseUrl}/functions/v1/ask-omni`;
 
   let token: string | null = null;
@@ -192,7 +198,7 @@ export async function testAskOmniRaw(payload: Record<string, unknown>): Promise<
       durationMs: 0,
       requestHeaders: {
         'Content-Type': 'application/json',
-        'apikey': maskHeaderValue(anonKey),
+        'apikey': maskHeaderValue(currentAnonKey),
         'Authorization': '',
       },
       requestBody: payload,
@@ -205,13 +211,13 @@ export async function testAskOmniRaw(payload: Record<string, unknown>): Promise<
 
   const actualHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
-    'apikey': anonKey,
+    'apikey': currentAnonKey,
     'Authorization': `Bearer ${token}`,
   };
 
   const maskedHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
-    'apikey': maskHeaderValue(anonKey),
+    'apikey': maskHeaderValue(currentAnonKey),
     'Authorization': `Bearer ${maskHeaderValue(token)}`,
   };
 

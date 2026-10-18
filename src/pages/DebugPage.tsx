@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 import { testAskOmniRaw, type RawApiResult } from '../lib/askOmni';
 import { useAuth } from '../lib/AuthContext';
-import { supabase } from '../lib/supabase.js';
+import { supabase, supabaseUrl } from '../lib/supabase';
 
 interface PresetItem {
   id: string;
@@ -106,7 +106,6 @@ export function DebugPage() {
   const [expandResHeaders, setExpandResHeaders] = useState(false);
 
   // Environment checks
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://idrraytmjdbcgerdahkj.supabase.co';
   const hasAnonKey = Boolean(import.meta.env.VITE_SUPABASE_ANON_KEY);
   const [sessionTokenPresent, setSessionTokenPresent] = useState<boolean | null>(null);
 
@@ -201,9 +200,10 @@ export function DebugPage() {
 
       const res = await testAskOmniRaw(payload);
       setResult(res);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
       setResult({
-        endpoint: `${supabaseUrl}/functions/v1/ask-omni`,
+        endpoint: `${supabaseUrl || ''}/functions/v1/ask-omni`,
         status: 0,
         statusText: 'Client Exception',
         durationMs: elapsedMs,
@@ -212,7 +212,7 @@ export function DebugPage() {
         responseHeaders: {},
         rawResponseText: '',
         parsedJson: null,
-        error: err?.message || String(err),
+        error: errorMsg,
       });
     } finally {
       clearInterval(timer);
@@ -226,7 +226,7 @@ export function DebugPage() {
     return [
       '# OMNIA ENGINE & API DEBUG REPORT',
       `Timestamp: ${new Date().toISOString()}`,
-      `Supabase Endpoint: ${supabaseUrl}`,
+      `Supabase Endpoint: ${supabaseUrl || 'NOT SET'}`,
       `Anon Key: ${hasAnonKey ? 'LOADED' : 'MISSING'}`,
       `User Session: ${sessionTokenPresent ? 'ACTIVE' : 'ANONYMOUS'}`,
       `User ID: ${user?.id || 'anonymous'}`,
@@ -304,8 +304,8 @@ export function DebugPage() {
               </div>
               <div className="min-w-0">
                 <div className="text-[10px] font-mono uppercase tracking-wider text-[#7e9487]">Supabase Endpoint</div>
-                <div className="text-xs font-mono text-white truncate" title={supabaseUrl}>
-                  {supabaseUrl.replace(/^https?:\/\//, '')}
+                <div className="text-xs font-mono text-white truncate" title={supabaseUrl || ''}>
+                  {(supabaseUrl || 'NOT SET').replace(/^https?:\/\//, '')}
                 </div>
               </div>
             </div>

@@ -109,6 +109,35 @@ export interface BreakWeek {
   end: string;          // "YYYY-MM-DD"
 }
 
+export interface PrefilledData {
+  type: 'event' | 'task' | 'expense';
+  title: string;
+  date: string;
+  startTime?: string;
+  endTime?: string;
+  location?: string;
+  notes?: string;
+  eventType?: EventType;
+  // For tasks
+  courseId?: string;
+  dueTime?: string;
+  priority?: Priority;
+  // For expenses
+  amount?: number;
+  paymentMethod?: string;
+  category?: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  attachmentUrl?: string | null;
+  prefilledData?: PrefilledData;
+  actionStatus?: 'saved' | 'cancelled' | 'replaced';
+  actionError?: string;
+}
+
 export interface UserSettings {
   semesterStart: string;
   semesterEnd: string;
@@ -121,7 +150,7 @@ export interface UserSettings {
   notifEnabled?: boolean;
   language?: 'en' | 'id';
   paymentMethods?: string[];
-  chatHistory?: any[];
+  chatHistory?: ChatMessage[];
   timeZone?: string;
   initialBalance?: number;
   // Google Calendar Sync

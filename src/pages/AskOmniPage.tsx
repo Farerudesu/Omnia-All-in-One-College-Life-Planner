@@ -27,17 +27,9 @@ import {
 import { EXPENSE_CATEGORIES, normalizeTransactionCategory, type ExpenseCategory } from '../lib/categories';
 import { Modal } from '../components/Modal';
 import { useLanguage } from '../lib/useLanguage';
-import type { EventType, Priority } from '../types';
+import type { EventType, Priority, ChatMessage } from '../types';
 
-interface Message {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  attachmentUrl?: string | null;
-  prefilledData?: PrefilledData;
-  actionStatus?: 'saved' | 'cancelled' | 'replaced';
-  actionError?: string;
-}
+type Message = ChatMessage;
 
 interface ImageAttachment {
   dataUrl: string;

@@ -1,10 +1,34 @@
 import type { CalendarEvent, Course } from '../types';
 import * as ds from './dataService';
 
+interface GoogleTokenResponse {
+  access_token?: string;
+  expires_in?: number | string;
+  error?: string;
+  error_description?: string;
+}
+
+interface GoogleTokenClient {
+  requestAccessToken: (options?: { prompt?: string }) => void;
+}
+
+interface GoogleOAuth2 {
+  initTokenClient: (config: {
+    client_id: string;
+    scope: string;
+    callback: (resp: GoogleTokenResponse) => void | Promise<void>;
+  }) => GoogleTokenClient;
+  revoke?: (token: string, done?: () => void) => void;
+}
+
 declare global {
   interface Window {
-    google?: any;
-    gapi?: any;
+    google?: {
+      accounts?: {
+        oauth2?: GoogleOAuth2;
+      };
+    };
+    gapi?: unknown;
   }
 }
 
@@ -33,7 +57,7 @@ try {
   // ignore
 }
 
-let tokenClient: any = null;
+let tokenClient: GoogleTokenClient | null = null;
 let importedGoogleEvents: CalendarEvent[] = (() => {
   try {
     const raw = localStorage.getItem('omnia_gcal_imported_events');
@@ -158,22 +182,27 @@ export async function getValidAccessToken(forceConsent = false): Promise<string>
   }
 
   const loaded = await ensureGisLoaded();
-  if (!loaded || !window.google?.accounts?.oauth2) {
+  const oauth2 = window.google?.accounts?.oauth2;
+  if (!loaded || !oauth2) {
     throw new Error('Google Identity Services could not be loaded.');
   }
 
   return new Promise((resolve, reject) => {
     try {
-      tokenClient = window.google.accounts.oauth2.initTokenClient({
+      tokenClient = oauth2.initTokenClient({
         client_id: CLIENT_ID,
         scope: SCOPES,
-        callback: async (resp: any) => {
+        callback: async (resp: GoogleTokenResponse) => {
           if (resp.error) {
             reject(new Error(resp.error_description || resp.error || 'Google authorization failed'));
             return;
           }
 
           const token = resp.access_token;
+          if (!token) {
+            reject(new Error('No access token returned by Google authorization'));
+            return;
+          }
           const expiresIn = Number(resp.expires_in) || 3600;
           const expiresAt = Date.now() + expiresIn * 1000;
 
@@ -295,7 +324,9 @@ export async function getOrCreateOmniaCalendar(token: string): Promise<string> {
   }
 
   const data = await res.json();
-  const existing = (data.items || []).find((c: any) => c.summary === CALENDAR_NAME && !c.deleted);
+  const existing = (data.items || []).find(
+    (c: { summary?: string; deleted?: boolean; id?: string }) => c.summary === CALENDAR_NAME && !c.deleted
+  );
 
   if (existing) {
     return existing.id;
@@ -502,9 +533,10 @@ export async function pushOmniaToGoogleCalendar(options?: {
           console.error(`Google API class push failed (${resp.status}):`, errText);
           errors.push(`Class "${title}": ${resp.status}`);
         }
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.warn('Failed to push class to Google Calendar:', title, e);
-        errors.push(`Class "${title}": ${e?.message || 'Error'}`);
+        const errMsg = e instanceof Error ? e.message : 'Error';
+        errors.push(`Class "${title}": ${errMsg}`);
       }
     }
   }
@@ -577,9 +609,10 @@ export async function pushOmniaToGoogleCalendar(options?: {
           console.error(`Google API task push failed (${resp.status}):`, errText);
           errors.push(`Task "${a.title}": ${resp.status}`);
         }
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.warn('Failed to push assignment to Google Calendar:', a.title, e);
-        errors.push(`Task "${a.title}": ${e?.message || 'Error'}`);
+        const errMsg = e instanceof Error ? e.message : 'Error';
+        errors.push(`Task "${a.title}": ${errMsg}`);
       }
     }
   }
@@ -592,8 +625,8 @@ export async function pushOmniaToGoogleCalendar(options?: {
       const prefix = ev.type === 'exam' ? '🎯 [Exam] ' : ev.type === 'lab' ? '🔬 [Lab] ' : '';
       const title = `${prefix}${ev.title}`;
 
-      let startPayload: any;
-      let endPayload: any;
+      let startPayload: { date?: string; dateTime?: string; timeZone?: string };
+      let endPayload: { date?: string; dateTime?: string; timeZone?: string };
 
       if (!ev.startTime) {
         // All-day event in Google Calendar
@@ -663,9 +696,10 @@ export async function pushOmniaToGoogleCalendar(options?: {
           console.error(`Google API event push failed for "${title}" (${resp.status}):`, errText);
           errors.push(`Event "${title}": ${resp.status}`);
         }
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.warn('Failed to push event to Google Calendar:', ev.title, e);
-        errors.push(`Event "${title}": ${e?.message || 'Error'}`);
+        const errMsg = e instanceof Error ? e.message : 'Error';
+        errors.push(`Event "${title}": ${errMsg}`);
       }
     }
   }

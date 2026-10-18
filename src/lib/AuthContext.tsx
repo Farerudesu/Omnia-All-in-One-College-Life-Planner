@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useRef, type ReactNode } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { supabase } from './supabase.js';
+import { supabase } from './supabase';
 import * as ds from './dataService';
 import { clearUserLocalData } from './localData';
 

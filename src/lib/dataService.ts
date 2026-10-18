@@ -7,8 +7,9 @@ import type {
   Transaction,
   UserSettings,
   UserProfile,
+  ChatMessage,
 } from '../types';
-import { supabase } from './supabase.js';
+import { supabase } from './supabase';
 import { getCurrencyScale, normalizeCurrency } from './currency';
 import { normalizeTransactionCategory } from './categories';
 import { localDateString, formatDetailedCountdown } from './dateUtils';
@@ -222,7 +223,7 @@ async function refreshTable(table: DataTable, attempt = 0) {
         theme: rowText(row || {}, 'theme', 'light') === 'dark' ? 'dark' : 'light',
         language: (localStorage.getItem('omnia_language') as 'en' | 'id') || 'id',
         paymentMethods: row && Array.isArray(row.payment_methods) && row.payment_methods.length > 0 ? (row.payment_methods as string[]) : getPaymentMethods(),
-        chatHistory: row && Array.isArray(row.chat_history) ? (row.chat_history as any[]) : undefined,
+        chatHistory: row && Array.isArray(row.chat_history) ? (row.chat_history as ChatMessage[]) : undefined,
       };
       if (settings.chatHistory && settings.chatHistory.length > 0) {
         try {
@@ -306,7 +307,7 @@ export async function mutateTable(
     }
     await refreshTable(table);
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     clearTimeout(timeoutHandle!);
     const msg = errorMessage(error);
     setTableStatus(table, { loading: false, error: msg });
@@ -1042,7 +1043,7 @@ const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
 let chatSyncTimeout: ReturnType<typeof setTimeout> | null = null;
 
-export function getSavedChatHistory(): any[] {
+export function getSavedChatHistory(): ChatMessage[] {
   if (settings.chatHistory && settings.chatHistory.length > 0) {
     return settings.chatHistory.slice(-50);
   }
@@ -1051,14 +1052,14 @@ export function getSavedChatHistory(): any[] {
     if (!saved) return [];
     const parsed = JSON.parse(saved);
     if (Array.isArray(parsed)) {
-      return parsed.slice(-50);
+      return (parsed as ChatMessage[]).slice(-50);
     }
     if (parsed && typeof parsed === 'object' && Array.isArray(parsed.messages)) {
       if (typeof parsed.updatedAt === 'number' && Date.now() - parsed.updatedAt > SEVEN_DAYS_MS) {
         localStorage.removeItem('omnia_omni_chat_session');
         return [];
       }
-      return parsed.messages.slice(-50);
+      return (parsed.messages as ChatMessage[]).slice(-50);
     }
     return [];
   } catch {
@@ -1066,7 +1067,7 @@ export function getSavedChatHistory(): any[] {
   }
 }
 
-export function saveChatHistory(history: any[]): void {
+export function saveChatHistory(history: ChatMessage[]): void {
   const trimmed = history.slice(-50);
   settings.chatHistory = trimmed;
   try {

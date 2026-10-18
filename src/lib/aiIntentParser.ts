@@ -1,26 +1,9 @@
-import type { Course, EventType, Priority } from '../types';
+import type { Course, PrefilledData } from '../types';
+import type { ExpenseCategory } from './categories';
 import { toDateString } from './dateUtils';
 import { getCurrencySymbol } from './currency';
-import type { ExpenseCategory } from './categories';
 
-export interface PrefilledData {
-  type: 'event' | 'task' | 'expense';
-  title: string;
-  date: string;
-  startTime?: string;
-  endTime?: string;
-  location?: string;
-  notes?: string;
-  eventType?: EventType;
-  // For tasks
-  courseId?: string;
-  dueTime?: string;
-  priority?: Priority;
-  // For expenses
-  amount?: number;
-  paymentMethod?: string;
-  category?: ExpenseCategory;
-}
+export type { PrefilledData };
 
 export function formatPrefilledSummary(data: PrefilledData): string {
   if (data.type === 'expense') {
