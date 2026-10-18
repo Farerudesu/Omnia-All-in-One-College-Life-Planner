@@ -3,6 +3,7 @@ import type { User } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import * as ds from './dataService';
 import { clearUserLocalData } from './localData';
+import { clearNotesCache } from './notesService';
 
 interface AuthContextValue {
   user: User | null;
@@ -68,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (prevUserIdRef.current && prevUserIdRef.current !== user?.id) {
       clearUserLocalData();
+      clearNotesCache();
     }
     prevUserIdRef.current = user?.id ?? null;
 
@@ -76,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } else {
       ds.clearUserData();
       clearUserLocalData();
+      clearNotesCache();
     }
   }, [user?.id]);
 

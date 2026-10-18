@@ -40,6 +40,7 @@ export async function updateProfile(data: UserProfile) {
           full_name: data.fullName,
           university_email: data.universityEmail,
           avatar_url: data.avatarUrl || null,
+          omni_notes_access: data.omniNotesAccess ?? false,
         },
         { onConflict: 'id' }
       );

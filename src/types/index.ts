@@ -95,6 +95,7 @@ export interface UserProfile {
   fullName: string;
   universityEmail: string;
   avatarUrl?: string;
+  omniNotesAccess?: boolean;
 }
 
 // ─── Settings ───
@@ -176,3 +177,43 @@ export const CATEGORY_COLORS: Record<string, string> = {
   deadlines: 'var(--deadlines)',
   personal: 'var(--personal)',
 };
+
+// ─── Notes ───
+export interface Note {
+  id: string;
+  userId: string;
+  title: string;
+  content: string;
+  tags: string[];
+  color?: string | null;
+  isPinned: boolean;
+  isArchived: boolean;
+  courseId?: string | null;
+  assignmentId?: string | null;
+  eventId?: string | null;
+  source: 'manual' | 'omni';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NoteInput {
+  title: string;
+  content: string;
+  tags?: string[];
+  color?: string | null;
+  isPinned?: boolean;
+  isArchived?: boolean;
+  courseId?: string | null;
+  assignmentId?: string | null;
+  eventId?: string | null;
+  source?: 'manual' | 'omni';
+}
+
+export interface NoteFilter {
+  search?: string;
+  tag?: string;
+  courseId?: string;
+  isPinned?: boolean;
+  isArchived?: boolean;
+}
+

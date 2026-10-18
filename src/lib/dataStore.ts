@@ -285,9 +285,9 @@ export async function refreshTable(table: DataTable, attempt = 0): Promise<void>
       const query = activeUserId
         ? client
             .from('profiles')
-            .select('full_name, university_email, avatar_url')
+            .select('full_name, university_email, avatar_url, omni_notes_access')
             .eq('id', activeUserId)
-        : client.from('profiles').select('full_name, university_email, avatar_url');
+        : client.from('profiles').select('full_name, university_email, avatar_url, omni_notes_access');
       const { data, error } = await query.maybeSingle();
       if (error) throw error;
       const row = data as DbRow | null;
@@ -296,6 +296,7 @@ export async function refreshTable(table: DataTable, attempt = 0): Promise<void>
             fullName: rowText(row, 'full_name'),
             universityEmail: rowText(row, 'university_email'),
             avatarUrl: rowText(row, 'avatar_url') || undefined,
+            omniNotesAccess: Boolean(row.omni_notes_access),
           }
         : null;
     } else {
