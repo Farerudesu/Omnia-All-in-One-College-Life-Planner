@@ -28,7 +28,7 @@ import {
   FileText,
   User,
 } from 'lucide-react';
-import { testAskOmniRaw, type RawApiResult } from '../lib/askOmni';
+import { testAskOmniRaw, type RawApiResult, type ProposedAction, type ModelAttempt } from '../lib/askOmni';
 import { useAuth } from '../lib/AuthContext';
 import { supabase, supabaseUrl } from '../lib/supabase';
 
@@ -639,7 +639,7 @@ export function DebugPage() {
                           )}
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {result.parsedJson.proposedActions.map((action, idx) => (
+                          {result.parsedJson.proposedActions.map((action: ProposedAction, idx: number) => (
                             <div key={idx} className="p-2.5 rounded-lg bg-[#090d0b] border border-[#23382c] text-xs flex justify-between items-center">
                               <div>
                                 <span className="font-medium text-white">{action.title}</span>
@@ -676,7 +676,7 @@ export function DebugPage() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-[#17221b] text-[#c0cfc6] font-mono text-xs">
-                          {result.parsedJson.diagnostics.attempts.map((attempt, idx) => (
+                          {result.parsedJson.diagnostics.attempts.map((attempt: ModelAttempt, idx: number) => (
                             <tr key={idx} className="hover:bg-[#141d18]">
                               <td className="py-2 px-2.5 uppercase font-semibold text-white">{attempt.provider}</td>
                               <td className="py-2 px-2.5 text-[#93c5fd]">{attempt.model}</td>
