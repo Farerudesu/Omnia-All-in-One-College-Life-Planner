@@ -7,17 +7,15 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies and build outputs
 node_modules
 dist
 dist-ssr
-.vercel
-.hallmark
-skills/
-supabase/.temp/
-*.local
-.env
-.env.*
+
+# Environments
+.env*
 !.env.example
+*.local
 
 # Editor directories and files
 .vscode/*
@@ -30,6 +28,17 @@ supabase/.temp/
 *.sln
 *.sw?
 
+# Deployment & tools
 .vercel
-.env*
+.hallmark
+skills/
 skills.rar
+supabase/.temp/
+test-screenshots/
+
+# Android build and secrets
+android/local.properties
+*.keystore
+*.jks
+android/.gradle/
+android/**/build/
