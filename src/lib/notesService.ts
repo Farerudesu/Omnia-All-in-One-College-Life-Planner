@@ -3,23 +3,21 @@ import type { Note, NoteInput, NoteFilter } from '@/types';
 import { translations, getLanguage } from './i18n';
 
 let cachedNotes: Note[] = [];
-const listeners = new Set<(notes: Note[]) => void>();
+const listeners = new Set<() => void>();
 
 function notify() {
-  const current = [...cachedNotes];
-  listeners.forEach((listener) => listener(current));
+  listeners.forEach((listener) => listener());
 }
 
-export function subscribeNotes(listener: (notes: Note[]) => void): () => void {
+export function subscribeNotes(listener: () => void): () => void {
   listeners.add(listener);
-  listener([...cachedNotes]);
   return () => {
     listeners.delete(listener);
   };
 }
 
 export function getCachedNotes(): Note[] {
-  return [...cachedNotes];
+  return cachedNotes;
 }
 
 export function clearNotesCache(): void {

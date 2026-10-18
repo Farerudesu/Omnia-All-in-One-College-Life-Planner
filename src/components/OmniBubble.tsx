@@ -36,7 +36,6 @@ export function OmniBubble() {
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 768);
   const [isDragging, setIsDragging] = useState(false);
   const [hasNewMessage, setHasNewMessage] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Drag coordinates ref
   const dragRef = useRef({
@@ -59,18 +58,6 @@ export function OmniBubble() {
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // Monitor open modals
-  useEffect(() => {
-    const checkModal = () => {
-      const modal = document.querySelector('.modal-overlay');
-      setIsModalOpen(Boolean(modal));
-    };
-    const observer = new MutationObserver(checkModal);
-    observer.observe(document.body, { childList: true, subtree: true });
-    checkModal();
-    return () => observer.disconnect();
   }, []);
 
   // Persist preference
@@ -184,7 +171,7 @@ export function OmniBubble() {
 
   // Conditions where bubble MUST NOT be displayed
   const isHiddenRoute = ['/ask-omni', '/signin', '/reset-password'].includes(location.pathname);
-  if (!isMobile || isHiddenRoute || isModalOpen) {
+  if (!isMobile || isHiddenRoute) {
     return null;
   }
 
@@ -196,6 +183,7 @@ export function OmniBubble() {
       <div
         ref={bubbleRef}
         role="region"
+        className="omni-bubble-root"
         aria-label="Omni AI Assistant Bubble"
         style={{
           position: 'fixed',

@@ -610,3 +610,7 @@ textarea:focus-visible {
   font-family: monospace;
 }
 
+body:has(.modal-overlay) .omni-bubble-root {
+  display: none !important;
+}
+

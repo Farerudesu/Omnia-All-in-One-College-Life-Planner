@@ -55,18 +55,22 @@ export function NoteEditor({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Reset editor form state when active note changes
+  const prevIdRef = useRef(note.id);
+  // Reset editor form state when active note ID changes
   useEffect(() => {
-    setTitle(note.title);
-    setContent(note.content);
-    setTags(note.tags || []);
-    setLinks({
-      courseId: note.courseId ?? null,
-      assignmentId: note.assignmentId ?? null,
-      eventId: note.eventId ?? null,
-    });
-    setSaveStatus('saved');
-  }, [note.id]);
+    if (prevIdRef.current !== note.id) {
+      prevIdRef.current = note.id;
+      setTitle(note.title);
+      setContent(note.content);
+      setTags(note.tags || []);
+      setLinks({
+        courseId: note.courseId ?? null,
+        assignmentId: note.assignmentId ?? null,
+        eventId: note.eventId ?? null,
+      });
+      setSaveStatus('saved');
+    }
+  }, [note.id, note.title, note.content, note.tags, note.courseId, note.assignmentId, note.eventId]);
 
   // Autosave with ~800ms debounce
   const triggerAutosave = useCallback(
