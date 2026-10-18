@@ -1,4 +1,10 @@
-const PRESERVED_KEYS = new Set(['omnia_theme', 'omnia_language', 'omnia_sidebar_collapsed']);
+const PRESERVED_KEYS = new Set([
+  'omnia_theme',
+  'omnia_language',
+  'omnia_sidebar_collapsed',
+  'omnia_omni_bubble',
+  'omnia_omni_bubble_intro_seen',
+]);
 
 /**
  * Clears all user-specific data from localStorage with prefix `omnia_`,

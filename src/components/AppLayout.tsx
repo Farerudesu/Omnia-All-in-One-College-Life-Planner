@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Sidebar } from './Sidebar';
 import { MobileHeader } from './MobileHeader';
 import { BottomNav } from './BottomNav';
+import { OmniBubble } from './OmniBubble';
 import { CommandPalette } from './CommandPalette';
 import { DataState } from './DataState';
 import { ErrorBoundary } from './ErrorBoundary';
@@ -105,6 +106,9 @@ export function AppLayout() {
         </div>
 
         <BottomNav />
+
+        {/* Floating Draggable Omni AI Bubble for Mobile Viewports */}
+        <OmniBubble />
 
         {/* Global Universal Search & Command Palette */}
         <CommandPalette isOpen={isPaletteOpen} onClose={() => setIsPaletteOpen(false)} />
