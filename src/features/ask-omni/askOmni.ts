@@ -41,6 +41,10 @@ export interface AskOmniRequest {
       notes?: string;
     }>;
   };
+  pageContext?: {
+    route: string;
+    noteId?: string;
+  };
 }
 
 export interface ProposedCalendarEvent {
