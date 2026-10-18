@@ -23,7 +23,9 @@ export function useShareSchedule() {
     try {
       setShareCode(await ds.createShareCode());
     } catch (error: unknown) {
-      setShareCreateError(error instanceof Error ? error.message : 'Unable to create a share code.');
+      setShareCreateError(
+        error instanceof Error ? error.message : 'Unable to create a share code.'
+      );
     } finally {
       setIsCreatingShareCode(false);
     }

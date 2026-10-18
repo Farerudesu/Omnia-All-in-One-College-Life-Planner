@@ -35,23 +35,54 @@ export let settings: UserSettings = {
   currency: 'IDR',
   theme: 'light',
   language: (localStorage.getItem('omnia_language') as 'en' | 'id') || 'id',
-  timeZone: localStorage.getItem('omnia_timezone') || (typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'Asia/Jakarta'),
+  timeZone:
+    localStorage.getItem('omnia_timezone') ||
+    (typeof Intl !== 'undefined'
+      ? Intl.DateTimeFormat().resolvedOptions().timeZone
+      : 'Asia/Jakarta'),
   initialBalance: Number(localStorage.getItem('omnia_initial_balance') || 0),
 };
 
-export function setCourses(next: Course[]) { courses = next; }
-export function setClassSessions(next: ClassSession[]) { classSessions = next; }
-export function setSessionExceptions(next: SessionException[]) { sessionExceptions = next; }
-export function setEvents(next: CalendarEvent[]) { events = next; }
-export function setAssignments(next: Assignment[]) { assignments = next; }
-export function setTransactions(next: Transaction[]) { transactions = next; }
-export function setProfile(next: UserProfile | null) { profile = next; }
-export function setSettings(next: UserSettings) { settings = next; }
+export function setCourses(next: Course[]) {
+  courses = next;
+}
+export function setClassSessions(next: ClassSession[]) {
+  classSessions = next;
+}
+export function setSessionExceptions(next: SessionException[]) {
+  sessionExceptions = next;
+}
+export function setEvents(next: CalendarEvent[]) {
+  events = next;
+}
+export function setAssignments(next: Assignment[]) {
+  assignments = next;
+}
+export function setTransactions(next: Transaction[]) {
+  transactions = next;
+}
+export function setProfile(next: UserProfile | null) {
+  profile = next;
+}
+export function setSettings(next: UserSettings) {
+  settings = next;
+}
 
-export type DataTable = 'transactions' | 'classes' | 'events' | 'assignments' | 'profiles' | 'user_settings';
-export interface TableStatus { loading: boolean; error: string | null }
+export type DataTable =
+  'transactions' | 'classes' | 'events' | 'assignments' | 'profiles' | 'user_settings';
+export interface TableStatus {
+  loading: boolean;
+  error: string | null;
+}
 
-const DATA_TABLES: DataTable[] = ['transactions', 'classes', 'events', 'assignments', 'profiles', 'user_settings'];
+const DATA_TABLES: DataTable[] = [
+  'transactions',
+  'classes',
+  'events',
+  'assignments',
+  'profiles',
+  'user_settings',
+];
 
 export type DbRow = Record<string, unknown>;
 
@@ -88,23 +119,32 @@ export function exceptionRow(exception: SessionException) {
 
 export async function refreshSessionExceptions() {
   if (!activeUserId) return;
-  const { data, error } = await getClient().from('session_exceptions').select('*').eq('user_id', activeUserId);
+  const { data, error } = await getClient()
+    .from('session_exceptions')
+    .select('*')
+    .eq('user_id', activeUserId);
   if (error) throw error;
   sessionExceptions = ((data || []) as DbRow[]).map(exceptionFromRow);
 }
 
 export async function persistSessionException(exception: SessionException) {
-  const { error } = await getClient().from('session_exceptions').upsert(exceptionRow(exception), { onConflict: 'user_id,class_session_id,date' });
+  const { error } = await getClient()
+    .from('session_exceptions')
+    .upsert(exceptionRow(exception), { onConflict: 'user_id,class_session_id,date' });
   if (error) throw error;
 }
 
 const emptyTableStatus = (loading = false): Record<DataTable, TableStatus> =>
-  Object.fromEntries(DATA_TABLES.map((table) => [table, { loading, error: null }])) as Record<DataTable, TableStatus>;
+  Object.fromEntries(DATA_TABLES.map((table) => [table, { loading, error: null }])) as Record<
+    DataTable,
+    TableStatus
+  >;
 
 let tableStatus = emptyTableStatus(true);
 
 export function getClient() {
-  if (!supabase) throw new Error('Add VITE_SUPABASE_ANON_KEY to your .env file to connect to Supabase.');
+  if (!supabase)
+    throw new Error('Add VITE_SUPABASE_ANON_KEY to your .env file to connect to Supabase.');
   return supabase;
 }
 
@@ -128,7 +168,13 @@ export function errorMessage(error: unknown): string {
 }
 
 const dayNumbers: Record<string, number> = {
-  senin: 1, selasa: 2, rabu: 3, kamis: 4, jumat: 5, sabtu: 6, minggu: 7,
+  senin: 1,
+  selasa: 2,
+  rabu: 3,
+  kamis: 4,
+  jumat: 5,
+  sabtu: 6,
+  minggu: 7,
 };
 
 export async function refreshTable(table: DataTable, attempt = 0): Promise<void> {
@@ -138,7 +184,11 @@ export async function refreshTable(table: DataTable, attempt = 0): Promise<void>
   try {
     const client = getClient();
     if (table === 'transactions') {
-      const { data, error } = await client.from('transactions').select('*').eq('user_id', activeUserId).order('tanggal', { ascending: false });
+      const { data, error } = await client
+        .from('transactions')
+        .select('*')
+        .eq('user_id', activeUserId)
+        .order('tanggal', { ascending: false });
       if (error) throw error;
       transactions = ((data || []) as DbRow[]).map((row) => {
         const type = rowText(row, 'tipe') === 'pemasukan' ? 'income' : 'expense';
@@ -154,7 +204,12 @@ export async function refreshTable(table: DataTable, attempt = 0): Promise<void>
         };
       });
     } else if (table === 'classes') {
-      const { data, error } = await client.from('classes').select('*').eq('user_id', activeUserId).order('hari').order('jam_mulai');
+      const { data, error } = await client
+        .from('classes')
+        .select('*')
+        .eq('user_id', activeUserId)
+        .order('hari')
+        .order('jam_mulai');
       if (error) throw error;
       const rows = (data || []) as DbRow[];
       courses = rows.map((row) => ({
@@ -170,14 +225,22 @@ export async function refreshTable(table: DataTable, attempt = 0): Promise<void>
       classSessions = rows.map((row) => ({
         id: rowText(row, 'id'),
         courseId: rowText(row, 'id'),
-        daysOfWeek: dayNumbers[rowText(row, 'hari').toLowerCase()] ? [dayNumbers[rowText(row, 'hari').toLowerCase()]] : [],
+        daysOfWeek: dayNumbers[rowText(row, 'hari').toLowerCase()]
+          ? [dayNumbers[rowText(row, 'hari').toLowerCase()]]
+          : [],
         startTime: rowText(row, 'jam_mulai'),
         endTime: rowText(row, 'jam_selesai'),
         room: rowText(row, 'ruangan'),
-        type: (['lecture', 'lab', 'tutorial', 'seminar'].includes(rowText(row, 'tipe')) ? rowText(row, 'tipe') : 'lecture') as ClassSession['type'],
+        type: (['lecture', 'lab', 'tutorial', 'seminar'].includes(rowText(row, 'tipe'))
+          ? rowText(row, 'tipe')
+          : 'lecture') as ClassSession['type'],
       }));
     } else if (table === 'events') {
-      const { data, error } = await client.from('events').select('*').eq('user_id', activeUserId).order('tanggal');
+      const { data, error } = await client
+        .from('events')
+        .select('*')
+        .eq('user_id', activeUserId)
+        .order('tanggal');
       if (error) throw error;
       events = ((data || []) as DbRow[]).map((row) => ({
         id: rowText(row, 'id'),
@@ -185,7 +248,9 @@ export async function refreshTable(table: DataTable, attempt = 0): Promise<void>
         date: rowText(row, 'tanggal'),
         startTime: rowText(row, 'jam_mulai') || undefined,
         endTime: rowText(row, 'jam_selesai') || undefined,
-        type: (['class', 'exam', 'deadline', 'personal'].includes(rowText(row, 'kategori')) ? rowText(row, 'kategori') : 'personal') as CalendarEvent['type'],
+        type: (['class', 'exam', 'deadline', 'personal'].includes(rowText(row, 'kategori'))
+          ? rowText(row, 'kategori')
+          : 'personal') as CalendarEvent['type'],
         courseId: rowText(row, 'class_id') || undefined,
         course: rowText(row, 'course') || undefined,
         location: rowText(row, 'lokasi') || undefined,
@@ -193,7 +258,11 @@ export async function refreshTable(table: DataTable, attempt = 0): Promise<void>
         color: rowText(row, 'warna') || undefined,
       }));
     } else if (table === 'assignments') {
-      const { data, error } = await client.from('assignments').select('*').eq('user_id', activeUserId).order('due_date');
+      const { data, error } = await client
+        .from('assignments')
+        .select('*')
+        .eq('user_id', activeUserId)
+        .order('due_date');
       if (error) throw error;
       assignments = ((data || []) as DbRow[]).map((row) => ({
         id: rowText(row, 'id'),
@@ -201,13 +270,23 @@ export async function refreshTable(table: DataTable, attempt = 0): Promise<void>
         category: rowText(row, 'class_id') ? 'classes' : 'personal',
         title: rowText(row, 'judul'),
         dueDate: `${rowText(row, 'due_date')}T${rowText(row, 'due_time', '23:59')}`,
-        priority: (['low', 'medium', 'high'].includes(rowText(row, 'priority')) ? rowText(row, 'priority') : 'medium') as Assignment['priority'],
-        status: rowText(row, 'status') === 'done' ? 'done' : rowText(row, 'status') === 'in_progress' ? 'in-progress' : 'not-started',
+        priority: (['low', 'medium', 'high'].includes(rowText(row, 'priority'))
+          ? rowText(row, 'priority')
+          : 'medium') as Assignment['priority'],
+        status:
+          rowText(row, 'status') === 'done'
+            ? 'done'
+            : rowText(row, 'status') === 'in_progress'
+              ? 'in-progress'
+              : 'not-started',
         notes: rowText(row, 'catatan') || undefined,
       }));
     } else if (table === 'profiles') {
       const query = activeUserId
-        ? client.from('profiles').select('full_name, university_email, avatar_url').eq('id', activeUserId)
+        ? client
+            .from('profiles')
+            .select('full_name, university_email, avatar_url')
+            .eq('id', activeUserId)
         : client.from('profiles').select('full_name, university_email, avatar_url');
       const { data, error } = await query.maybeSingle();
       if (error) throw error;
@@ -227,15 +306,21 @@ export async function refreshTable(table: DataTable, attempt = 0): Promise<void>
         ...settings,
         semesterStart: row ? rowText(row, 'term_start_date') : '',
         semesterEnd: row ? rowText(row, 'term_end_date') : '',
-        monthlyBudget: row ? rowNumber(row, 'monthly_budget', settings.monthlyBudget) : settings.monthlyBudget,
+        monthlyBudget: row
+          ? rowNumber(row, 'monthly_budget', settings.monthlyBudget)
+          : settings.monthlyBudget,
         termName: row ? rowText(row, 'term_name') : '',
         firstDayOfWeek: row ? rowText(row, 'first_day_of_week', 'monday') : 'monday',
         notifEnabled: row ? row.notif_enabled !== false : true,
         currency: normalizeCurrency(row ? rowText(row, 'currency', 'IDR') : 'IDR'),
         theme: rowText(row || {}, 'theme', 'light') === 'dark' ? 'dark' : 'light',
         language: (localStorage.getItem('omnia_language') as 'en' | 'id') || 'id',
-        paymentMethods: row && Array.isArray(row.payment_methods) && row.payment_methods.length > 0 ? (row.payment_methods as string[]) : undefined,
-        chatHistory: row && Array.isArray(row.chat_history) ? (row.chat_history as ChatMessage[]) : undefined,
+        paymentMethods:
+          row && Array.isArray(row.payment_methods) && row.payment_methods.length > 0
+            ? (row.payment_methods as string[])
+            : undefined,
+        chatHistory:
+          row && Array.isArray(row.chat_history) ? (row.chat_history as ChatMessage[]) : undefined,
       };
       if (settings.chatHistory && settings.chatHistory.length > 0) {
         try {
@@ -265,7 +350,9 @@ export async function loadUserData(userId: string) {
   await refreshSessionExceptions();
   settings = { ...settings, currency: 'IDR' };
   await refreshTable('user_settings');
-  await Promise.all(DATA_TABLES.filter((table) => table !== 'user_settings').map((table) => refreshTable(table)));
+  await Promise.all(
+    DATA_TABLES.filter((table) => table !== 'user_settings').map((table) => refreshTable(table))
+  );
 }
 
 export function clearUserData() {
@@ -277,7 +364,14 @@ export function clearUserData() {
   assignments = [];
   transactions = [];
   profile = null;
-  settings = { semesterStart: '', semesterEnd: '', breakWeeks: [], monthlyBudget: 2500000, currency: 'IDR', theme: 'light' };
+  settings = {
+    semesterStart: '',
+    semesterEnd: '',
+    breakWeeks: [],
+    monthlyBudget: 2500000,
+    currency: 'IDR',
+    theme: 'light',
+  };
   tableStatus = emptyTableStatus(true);
   notify();
 }
@@ -305,7 +399,9 @@ export async function mutateTable(
   let timeoutHandle: ReturnType<typeof setTimeout>;
   const timeoutPromise = new Promise<{ error: { message: string } }>((_, reject) => {
     timeoutHandle = setTimeout(() => {
-      reject(new Error('Permintaan melebihi batas waktu (15 detik). Periksa koneksi internet Anda.'));
+      reject(
+        new Error('Permintaan melebihi batas waktu (15 detik). Periksa koneksi internet Anda.')
+      );
     }, MUTATION_TIMEOUT_MS);
   });
 
@@ -333,11 +429,17 @@ export async function mutateTable(
 // Row builders
 export function transactionRow(transaction: Omit<Transaction, 'id'> | Partial<Transaction>) {
   const row: Record<string, unknown> = {};
-  const txType = transaction.type || ('amount' in transaction && transaction.amount && transaction.amount > 0 ? 'expense' : undefined);
+  const txType =
+    transaction.type ||
+    ('amount' in transaction && transaction.amount && transaction.amount > 0
+      ? 'expense'
+      : undefined);
   if ('date' in transaction) row.tanggal = transaction.date;
   if ('type' in transaction) row.tipe = transaction.type === 'income' ? 'pemasukan' : 'pengeluaran';
-  if ('amount' in transaction) row.jumlah = Math.round((transaction.amount || 0) * getCurrencyScale(settings.currency));
-  if ('category' in transaction) row.kategori = normalizeTransactionCategory(transaction.category, txType || 'expense');
+  if ('amount' in transaction)
+    row.jumlah = Math.round((transaction.amount || 0) * getCurrencyScale(settings.currency));
+  if ('category' in transaction)
+    row.kategori = normalizeTransactionCategory(transaction.category, txType || 'expense');
   if ('merchant' in transaction) row.merchant = transaction.merchant;
   if ('paymentMethod' in transaction) row.payment_method = transaction.paymentMethod ?? null;
   if ('notes' in transaction) row.catatan = transaction.notes ?? null;
@@ -368,13 +470,23 @@ export function assignmentRow(assignment: Partial<Assignment>) {
     row.due_date = date;
     row.due_time = time || '23:59';
   }
-  if ('status' in assignment) row.status = assignment.status === 'done' ? 'done' : assignment.status === 'in-progress' ? 'in_progress' : 'todo';
+  if ('status' in assignment)
+    row.status =
+      assignment.status === 'done'
+        ? 'done'
+        : assignment.status === 'in-progress'
+          ? 'in_progress'
+          : 'todo';
   if ('priority' in assignment) row.priority = assignment.priority;
   if ('notes' in assignment) row.catatan = assignment.notes ?? null;
   return row;
 }
 
-export function classRow(course: Course, session: Pick<ClassSession, 'startTime' | 'endTime' | 'room' | 'type'>, day: number) {
+export function classRow(
+  course: Course,
+  session: Pick<ClassSession, 'startTime' | 'endTime' | 'room' | 'type'>,
+  day: number
+) {
   return {
     nama_kelas: course.name,
     kode: course.code,

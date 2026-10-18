@@ -15,7 +15,8 @@ export function Modal({ isOpen, onClose, title, children, maxWidth }: ModalProps
 
   useEffect(() => {
     if (!isOpen) return;
-    triggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    triggerRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
     document.body.style.overflow = 'hidden';
     requestAnimationFrame(() => {
       const initialFocus = dialogRef.current?.querySelector<HTMLElement>('[data-autofocus]');
@@ -57,7 +58,13 @@ export function Modal({ isOpen, onClose, title, children, maxWidth }: ModalProps
   if (!isOpen) return null;
 
   const modalElement = (
-    <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div
+      className="modal-overlay"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+    >
       <div
         ref={dialogRef}
         className="modal-content"
@@ -66,30 +73,48 @@ export function Modal({ isOpen, onClose, title, children, maxWidth }: ModalProps
         tabIndex={-1}
       >
         <div className="mobile-sheet-handle" aria-hidden="true" />
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '1rem 1.25rem 0.75rem',
-          borderBottom: '0.5px solid var(--outline-variant)',
-          flexShrink: 0,
-        }}>
-          <h3 id="modal-title" style={{ fontFamily: 'var(--font-heading)', fontSize: '1.0625rem', fontWeight: 600 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '1rem 1.25rem 0.75rem',
+            borderBottom: '0.5px solid var(--outline-variant)',
+            flexShrink: 0,
+          }}
+        >
+          <h3
+            id="modal-title"
+            style={{ fontFamily: 'var(--font-heading)', fontSize: '1.0625rem', fontWeight: 600 }}
+          >
             {title}
           </h3>
           <button
             onClick={onClose}
             style={{
-              width: 30, height: 30, display: 'inline-flex',
-              alignItems: 'center', justifyContent: 'center',
-              borderRadius: '50%', color: 'var(--on-surface-variant)',
+              width: 30,
+              height: 30,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '50%',
+              color: 'var(--on-surface-variant)',
               background: 'var(--surface-container-high)',
               border: 'none',
               padding: 0,
             }}
             aria-label="Close dialog"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
           </button>

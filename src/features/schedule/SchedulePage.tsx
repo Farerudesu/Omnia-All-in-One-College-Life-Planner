@@ -172,12 +172,14 @@ export function SchedulePage() {
       {nextClass && (
         <div className="show-mobile schedule-mobile-upnext" style={{ padding: '0.75rem 1rem 0' }}>
           <div
-            onClick={() => setSelectedBlock({
-              session: nextClass.session,
-              course: nextClass.course,
-              date: nextClass.date,
-              exception: nextClass.exception,
-            })}
+            onClick={() =>
+              setSelectedBlock({
+                session: nextClass.session,
+                course: nextClass.course,
+                date: nextClass.date,
+                exception: nextClass.exception,
+              })
+            }
             role="button"
             tabIndex={0}
             onKeyDown={(e) => {
@@ -204,33 +206,102 @@ export function SchedulePage() {
               boxSizing: 'border-box',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--primary)', minWidth: 0 }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '0.5rem',
+                flexWrap: 'wrap',
+              }}
+            >
+              <span
+                style={{
+                  fontSize: '0.6875rem',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                  color: 'var(--primary)',
+                  minWidth: 0,
+                }}
+              >
                 {getUpcomingBadgeText(nextClass.date, nextClass.minutesUntil, lang)}
               </span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', flexWrap: 'wrap' }}>
-                <span className="badge" style={{ background: `color-mix(in srgb, ${nextClass.course.color || 'var(--primary)'} 15%, transparent)`, color: nextClass.course.color || 'var(--primary)', fontWeight: 700, fontSize: '0.6875rem' }}>
+              <div
+                style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', flexWrap: 'wrap' }}
+              >
+                <span
+                  className="badge"
+                  style={{
+                    background: `color-mix(in srgb, ${nextClass.course.color || 'var(--primary)'} 15%, transparent)`,
+                    color: nextClass.course.color || 'var(--primary)',
+                    fontWeight: 700,
+                    fontSize: '0.6875rem',
+                  }}
+                >
                   {nextClass.course.code}
                 </span>
-                {getClassBadges(nextClass.session, nextClass.course, nextClass.exception, isId).map((b) => (
-                  <span key={b.key} className="badge" style={{ background: b.bg, color: b.color, fontWeight: 700, fontSize: '0.625rem', letterSpacing: '0.02em' }}>
-                    {b.label}
-                  </span>
-                ))}
+                {getClassBadges(nextClass.session, nextClass.course, nextClass.exception, isId).map(
+                  (b) => (
+                    <span
+                      key={b.key}
+                      className="badge"
+                      style={{
+                        background: b.bg,
+                        color: b.color,
+                        fontWeight: 700,
+                        fontSize: '0.625rem',
+                        letterSpacing: '0.02em',
+                      }}
+                    >
+                      {b.label}
+                    </span>
+                  )
+                )}
               </div>
             </div>
-            <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--on-surface)', overflowWrap: 'anywhere', lineHeight: 1.3 }}>
+            <div
+              style={{
+                fontWeight: 700,
+                fontSize: '1rem',
+                color: 'var(--on-surface)',
+                overflowWrap: 'anywhere',
+                lineHeight: 1.3,
+              }}
+            >
               {nextClass.course.name}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)', flexWrap: 'wrap' }}>
-              <span className="tabular-nums" style={{ fontWeight: 600, color: 'var(--on-surface)' }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.625rem',
+                fontSize: '0.75rem',
+                color: 'var(--on-surface-variant)',
+                flexWrap: 'wrap',
+              }}
+            >
+              <span
+                className="tabular-nums"
+                style={{ fontWeight: 600, color: 'var(--on-surface)' }}
+              >
                 {formatTime12(nextClass.startTime)} – {formatTime12(nextClass.endTime)}
               </span>
-              <span style={{ background: 'var(--surface-container)', padding: '0.15rem 0.45rem', borderRadius: 6, fontWeight: 500, color: 'var(--on-surface)' }}>
+              <span
+                style={{
+                  background: 'var(--surface-container)',
+                  padding: '0.15rem 0.45rem',
+                  borderRadius: 6,
+                  fontWeight: 500,
+                  color: 'var(--on-surface)',
+                }}
+              >
                 {nextClass.room}
               </span>
               {nextClass.course.professor && (
-                <span style={{ color: 'var(--on-surface-variant)' }}>{nextClass.course.professor}</span>
+                <span style={{ color: 'var(--on-surface-variant)' }}>
+                  {nextClass.course.professor}
+                </span>
               )}
             </div>
           </div>
@@ -278,27 +349,85 @@ export function SchedulePage() {
       </div>
 
       {/* Modals */}
-      <Modal isOpen={showShareModal} onClose={() => setShowShareModal(false)} title="Share your schedule">
+      <Modal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        title="Share your schedule"
+      >
         <div style={{ textAlign: 'center', padding: '0.75rem 0.5rem' }}>
-          <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.875rem', marginBottom: '1rem' }}>
+          <p
+            style={{
+              color: 'var(--on-surface-variant)',
+              fontSize: '0.875rem',
+              marginBottom: '1rem',
+            }}
+          >
             Share this code with someone to copy your current classes and assignments.
           </p>
           {isCreatingShareCode ? (
-            <div role="status" aria-live="polite" style={{ padding: '1.25rem', color: 'var(--on-surface-variant)' }}>
+            <div
+              role="status"
+              aria-live="polite"
+              style={{ padding: '1.25rem', color: 'var(--on-surface-variant)' }}
+            >
               Creating code…
             </div>
           ) : shareCode ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}>
-              <output aria-label="Schedule share code" className="tabular-nums" style={{ fontFamily: 'var(--font-mono)', fontSize: '2rem', fontWeight: 700, letterSpacing: '0.18em', padding: '0.75rem 1rem', borderRadius: 8, background: 'var(--surface-container)', color: 'var(--on-surface)' }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.75rem',
+              }}
+            >
+              <output
+                aria-label="Schedule share code"
+                className="tabular-nums"
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '2rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.18em',
+                  padding: '0.75rem 1rem',
+                  borderRadius: 8,
+                  background: 'var(--surface-container)',
+                  color: 'var(--on-surface)',
+                }}
+              >
                 {shareCode}
               </output>
-              <button type="button" className="btn-outline min-touch-target" onClick={() => void handleCopyShareCode()} aria-label={isShareCodeCopied ? 'Code copied' : 'Copy share code'} title="Copy code">
-                {isShareCodeCopied ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
+              <button
+                type="button"
+                className="btn-outline min-touch-target"
+                onClick={() => void handleCopyShareCode()}
+                aria-label={isShareCodeCopied ? 'Code copied' : 'Copy share code'}
+                title="Copy code"
+              >
+                {isShareCodeCopied ? (
+                  <Check size={16} aria-hidden="true" />
+                ) : (
+                  <Copy size={16} aria-hidden="true" />
+                )}
               </button>
             </div>
           ) : null}
-          {shareError && <div role="alert" style={{ marginTop: '0.75rem', color: 'var(--error)', fontSize: '0.8125rem' }}>{shareError}</div>}
-          {isShareCodeCopied && <div role="status" style={{ marginTop: '0.5rem', color: 'var(--primary)', fontSize: '0.8125rem' }}>Code copied.</div>}
+          {shareError && (
+            <div
+              role="alert"
+              style={{ marginTop: '0.75rem', color: 'var(--error)', fontSize: '0.8125rem' }}
+            >
+              {shareError}
+            </div>
+          )}
+          {isShareCodeCopied && (
+            <div
+              role="status"
+              style={{ marginTop: '0.5rem', color: 'var(--primary)', fontSize: '0.8125rem' }}
+            >
+              Code copied.
+            </div>
+          )}
         </div>
       </Modal>
 

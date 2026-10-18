@@ -73,7 +73,11 @@ export function CalendarToolbar({
         >
           ‹
         </button>
-        <button className="btn-ghost" onClick={goToToday} style={{ fontSize: '0.8125rem', fontWeight: 600, padding: '0.25rem 0.5rem' }}>
+        <button
+          className="btn-ghost"
+          onClick={goToToday}
+          style={{ fontSize: '0.8125rem', fontWeight: 600, padding: '0.25rem 0.5rem' }}
+        >
           {lang === 'id' ? 'Hari Ini' : 'Today'}
         </button>
         <button
@@ -85,7 +89,15 @@ export function CalendarToolbar({
           ›
         </button>
 
-        <span className="tabular-nums" style={{ fontFamily: 'var(--font-heading)', fontSize: '1.125rem', fontWeight: 700, marginLeft: '0.25rem' }}>
+        <span
+          className="tabular-nums"
+          style={{
+            fontFamily: 'var(--font-heading)',
+            fontSize: '1.125rem',
+            fontWeight: 700,
+            marginLeft: '0.25rem',
+          }}
+        >
           {viewMode === 'Day' && selectedDate
             ? formatDateLong(selectedDate)
             : `${getMonthName(month)} ${year}`}
@@ -93,7 +105,10 @@ export function CalendarToolbar({
       </div>
 
       {/* Search Bar with auto-suggest dropdown & View Mode Switcher */}
-      <div className="calendar-toolbar-controls" style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+      <div
+        className="calendar-toolbar-controls"
+        style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+      >
         <div
           className="calendar-view-modes"
           style={{
@@ -105,9 +120,16 @@ export function CalendarToolbar({
           }}
         >
           {VIEW_MODES.map((v) => {
-            const label = lang === 'id'
-              ? (v === 'Day' ? 'Hari' : v === 'Week' ? 'Minggu' : v === 'Month' ? 'Bulan' : 'Agenda')
-              : v;
+            const label =
+              lang === 'id'
+                ? v === 'Day'
+                  ? 'Hari'
+                  : v === 'Week'
+                    ? 'Minggu'
+                    : v === 'Month'
+                      ? 'Bulan'
+                      : 'Agenda'
+                : v;
             return (
               <button
                 key={v}
@@ -133,7 +155,9 @@ export function CalendarToolbar({
             id="calendar-search"
             className="calendar-search-input"
             type="text"
-            placeholder={lang === 'id' ? 'Cari kegiatan, ujian, matkul…' : 'Search events, exams, courses…'}
+            placeholder={
+              lang === 'id' ? 'Cari kegiatan, ujian, matkul…' : 'Search events, exams, courses…'
+            }
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
@@ -170,8 +194,12 @@ export function CalendarToolbar({
           disabled={isGcalSyncing}
           title={
             isGcalConnected
-              ? (lang === 'id' ? 'Sinkronkan dengan Google Calendar' : 'Sync with Google Calendar')
-              : (lang === 'id' ? 'Hubungkan Google Calendar' : 'Connect Google Calendar')
+              ? lang === 'id'
+                ? 'Sinkronkan dengan Google Calendar'
+                : 'Sync with Google Calendar'
+              : lang === 'id'
+                ? 'Hubungkan Google Calendar'
+                : 'Connect Google Calendar'
           }
           style={{
             padding: '0.45rem 0.75rem',
@@ -196,10 +224,19 @@ export function CalendarToolbar({
 
         <button
           className="btn-primary calendar-add-event"
-          onClick={() => window.dispatchEvent(new CustomEvent('open-quick-add', { detail: 'event' }))}
+          onClick={() =>
+            window.dispatchEvent(new CustomEvent('open-quick-add', { detail: 'event' }))
+          }
           style={{ padding: '0.45rem 0.875rem', fontSize: '0.8125rem' }}
         >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <svg
+            width="13"
+            height="13"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+          >
             <path d="M12 5v14M5 12h14" />
           </svg>
           {lang === 'id' ? 'Tambah acara' : 'Add event'}
@@ -235,11 +272,23 @@ export function CalendarToolbar({
                 letterSpacing: '0.04em',
               }}
             >
-              {searchResults.length} {lang === 'id' ? 'hasil ditemukan' : `Match${searchResults.length !== 1 ? 'es' : ''} found`}
+              {searchResults.length}{' '}
+              {lang === 'id'
+                ? 'hasil ditemukan'
+                : `Match${searchResults.length !== 1 ? 'es' : ''} found`}
             </div>
             {searchResults.length === 0 ? (
-              <div style={{ padding: '1rem', textAlign: 'center', fontSize: '0.8125rem', color: 'var(--on-surface-variant)' }}>
-                {lang === 'id' ? `Tidak ada acara atau mata kuliah sesuai "${searchQuery}"` : `No events or courses matching “${searchQuery}”`}
+              <div
+                style={{
+                  padding: '1rem',
+                  textAlign: 'center',
+                  fontSize: '0.8125rem',
+                  color: 'var(--on-surface-variant)',
+                }}
+              >
+                {lang === 'id'
+                  ? `Tidak ada acara atau mata kuliah sesuai "${searchQuery}"`
+                  : `No events or courses matching “${searchQuery}”`}
               </div>
             ) : (
               searchResults.map((item) => (
@@ -266,7 +315,16 @@ export function CalendarToolbar({
                 >
                   <CategoryIndicator shape={item.shape} color={item.color} size={8} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 600, fontSize: '0.8125rem', color: 'var(--on-surface)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div
+                      style={{
+                        fontWeight: 600,
+                        fontSize: '0.8125rem',
+                        color: 'var(--on-surface)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
                       {item.title}
                     </div>
                     <div style={{ fontSize: '0.6875rem', color: 'var(--on-surface-variant)' }}>

@@ -3,25 +3,73 @@
  */
 
 const DAY_NAMES_SHORT_EN = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const DAY_NAMES_FULL_EN = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const DAY_NAMES_FULL_EN = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+];
 const MONTH_NAMES_EN = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 const MONTH_NAMES_SHORT_EN = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ];
 
 const DAY_NAMES_SHORT_ID = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
 const DAY_NAMES_FULL_ID = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
 const MONTH_NAMES_ID = [
-  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+  'Januari',
+  'Februari',
+  'Maret',
+  'April',
+  'Mei',
+  'Juni',
+  'Juli',
+  'Agustus',
+  'September',
+  'Oktober',
+  'November',
+  'Desember',
 ];
 const MONTH_NAMES_SHORT_ID = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-  'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'Mei',
+  'Jun',
+  'Jul',
+  'Agu',
+  'Sep',
+  'Okt',
+  'Nov',
+  'Des',
 ];
 
 export function getLanguage(): 'en' | 'id' {
@@ -132,7 +180,10 @@ export function formatTimezoneLabel(timeZone?: string): string {
 
   // Fallback to GMT+X format
   try {
-    const formatter = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'shortOffset' });
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: tz,
+      timeZoneName: 'shortOffset',
+    });
     const parts = formatter.formatToParts(new Date());
     const offsetPart = parts.find((p) => p.type === 'timeZoneName')?.value;
     if (offsetPart) return offsetPart;
@@ -174,7 +225,7 @@ export function durationMinutes(start?: string | null, end?: string | null): num
   if (!start || !end) return 0;
   const s = parseTime(start);
   const e = parseTime(end);
-  const diff = (e.hours * 60 + e.minutes) - (s.hours * 60 + s.minutes);
+  const diff = e.hours * 60 + e.minutes - (s.hours * 60 + s.minutes);
   return Number.isFinite(diff) ? Math.max(0, diff) : 0;
 }
 
@@ -285,9 +336,21 @@ export interface DetailedCountdown {
  * High-precision countdown formatter for deadlines and tasks.
  * Eliminates deceptive "1 hari lagi" readouts for deadlines < 24h or near-term.
  */
-export function formatDetailedCountdown(dueDateStr: string, from = new Date(), lang = 'id'): DetailedCountdown {
+export function formatDetailedCountdown(
+  dueDateStr: string,
+  from = new Date(),
+  lang = 'id'
+): DetailedCountdown {
   if (!dueDateStr) {
-    return { label: '', text: '', isUrgent: false, isOverdue: false, diffMinutes: 0, diffHours: 0, diffDays: 0 };
+    return {
+      label: '',
+      text: '',
+      isUrgent: false,
+      isOverdue: false,
+      diffMinutes: 0,
+      diffHours: 0,
+      diffDays: 0,
+    };
   }
 
   let due: Date;
@@ -327,24 +390,42 @@ export function formatDetailedCountdown(dueDateStr: string, from = new Date(), l
 
   if (isOverdue) {
     if (totalMinutes < 60) {
-      return makeResult(isId ? `Terlambat ${Math.max(1, totalMinutes)} mnt` : `Overdue ${Math.max(1, totalMinutes)}m`, true, true);
+      return makeResult(
+        isId
+          ? `Terlambat ${Math.max(1, totalMinutes)} mnt`
+          : `Overdue ${Math.max(1, totalMinutes)}m`,
+        true,
+        true
+      );
     }
     if (totalHours < 24) {
       const minText = remMinutes > 0 ? (isId ? ` ${remMinutes} mnt` : ` ${remMinutes}m`) : '';
-      return makeResult(isId ? `Terlambat ${totalHours} jam${minText}` : `Overdue ${totalHours}h${minText}`, true, true);
+      return makeResult(
+        isId ? `Terlambat ${totalHours} jam${minText}` : `Overdue ${totalHours}h${minText}`,
+        true,
+        true
+      );
     }
     return makeResult(isId ? `Terlambat ${totalDays} hari` : `Overdue ${totalDays}d`, true, true);
   }
 
   // Active future deadline
   if (totalMinutes < 60) {
-    return makeResult(isId ? `${Math.max(1, totalMinutes)} menit lagi` : `${Math.max(1, totalMinutes)}m left`, true, false);
+    return makeResult(
+      isId ? `${Math.max(1, totalMinutes)} menit lagi` : `${Math.max(1, totalMinutes)}m left`,
+      true,
+      false
+    );
   }
 
   if (totalHours < 24) {
     // High-precision <24h: "3 jam 20 mnt lagi" or "10 jam lagi"
     const minText = remMinutes > 0 ? (isId ? ` ${remMinutes} mnt` : ` ${remMinutes}m`) : '';
-    return makeResult(isId ? `${totalHours} jam${minText} lagi` : `${totalHours}h${minText} left`, totalHours < 6, false);
+    return makeResult(
+      isId ? `${totalHours} jam${minText} lagi` : `${totalHours}h${minText} left`,
+      totalHours < 6,
+      false
+    );
   }
 
   if (totalHours < 48) {
@@ -385,20 +466,13 @@ export function relativeTime(target: Date, from = new Date()): string {
 }
 
 /** Check if a date falls within a break week */
-export function isInBreak(
-  date: Date,
-  breaks: { start: string; end: string }[]
-): boolean {
+export function isInBreak(date: Date, breaks: { start: string; end: string }[]): boolean {
   const ds = toDateString(date);
   return breaks.some((b) => ds >= b.start && ds <= b.end);
 }
 
 /** "time-slot" position: what fraction of a time grid does this time occupy? */
-export function timeToGridPosition(
-  time?: string | null,
-  gridStart = 7,
-  gridEnd = 19
-): number {
+export function timeToGridPosition(time?: string | null, gridStart = 7, gridEnd = 19): number {
   if (!time) return 0;
   const { hours, minutes } = parseTime(time);
   const totalMinutes = hours * 60 + minutes;

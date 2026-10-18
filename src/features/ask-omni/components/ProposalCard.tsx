@@ -28,7 +28,14 @@ export function ProposalCard({ message, lang, onOpenModal }: ProposalCardProps) 
         gap: '0.5rem',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '0.5rem',
+        }}
+      >
         <span
           style={{
             display: 'inline-flex',
@@ -53,13 +60,13 @@ export function ProposalCard({ message, lang, onOpenModal }: ProposalCardProps) 
             ? data.type === 'expense'
               ? 'Pengeluaran'
               : data.type === 'task'
-              ? 'Tugas'
-              : 'Acara'
+                ? 'Tugas'
+                : 'Acara'
             : data.type === 'expense'
-            ? 'Expense'
-            : data.type === 'task'
-            ? 'Assignment'
-            : 'Schedule Event'}
+              ? 'Expense'
+              : data.type === 'task'
+                ? 'Assignment'
+                : 'Schedule Event'}
         </span>
         {message.actionStatus === 'saved' ? (
           <span
@@ -80,16 +87,18 @@ export function ProposalCard({ message, lang, onOpenModal }: ProposalCardProps) 
               ? data.type === 'expense'
                 ? 'Keuangan'
                 : data.type === 'task'
-                ? 'Tugas'
-                : 'Jadwal'
+                  ? 'Tugas'
+                  : 'Jadwal'
               : data.type === 'expense'
-              ? 'Finance'
-              : data.type === 'task'
-              ? 'Tasks'
-              : 'Schedule'}
+                ? 'Finance'
+                : data.type === 'task'
+                  ? 'Tasks'
+                  : 'Schedule'}
           </span>
         ) : (
-          <span style={{ fontSize: '0.6875rem', color: 'var(--on-surface-variant)', fontWeight: 600 }}>
+          <span
+            style={{ fontSize: '0.6875rem', color: 'var(--on-surface-variant)', fontWeight: 600 }}
+          >
             {lang === 'id' ? 'Siap dikonfirmasi' : 'Ready to confirm'}
           </span>
         )}

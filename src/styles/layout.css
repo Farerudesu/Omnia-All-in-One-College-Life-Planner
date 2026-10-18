@@ -138,7 +138,6 @@
   gap: 0.75rem;
 }
 
-
 @media (max-width: 1023px) {
   .app-layout {
     display: block !important;
@@ -248,7 +247,9 @@
     border: none;
     color: var(--primary);
     cursor: pointer;
-    transition: transform 0.12s cubic-bezier(0.2, 0, 0, 1), opacity 0.15s ease;
+    transition:
+      transform 0.12s cubic-bezier(0.2, 0, 0, 1),
+      opacity 0.15s ease;
   }
 
   .app-mobile-header__icon-btn:active {
@@ -279,7 +280,9 @@
     font-weight: 600;
     border: none;
     cursor: pointer;
-    transition: transform 0.12s cubic-bezier(0.2, 0, 0, 1), opacity 0.15s ease;
+    transition:
+      transform 0.12s cubic-bezier(0.2, 0, 0, 1),
+      opacity 0.15s ease;
   }
 
   .app-mobile-header__avatar:active {
@@ -357,7 +360,9 @@
     color: var(--secondary);
     gap: 2px;
     -webkit-tap-highlight-color: transparent;
-    transition: transform 0.12s cubic-bezier(0.2, 0, 0, 1), color 0.15s ease;
+    transition:
+      transform 0.12s cubic-bezier(0.2, 0, 0, 1),
+      color 0.15s ease;
   }
 
   .app-bottom-nav__link:active {
@@ -384,7 +389,9 @@
     line-height: 1;
     letter-spacing: -0.01em;
     color: var(--secondary);
-    transition: color 0.15s ease, font-weight 0.15s ease;
+    transition:
+      color 0.15s ease,
+      font-weight 0.15s ease;
   }
 
   .app-bottom-nav__link--active .app-bottom-nav__label {
@@ -800,10 +807,16 @@
 
   .assignment-filter-list {
     gap: 0.5rem !important;
-      overflow-x: auto !important;
-      scrollbar-width: thin;
-      mask-image: linear-gradient(to right, transparent, black 0.75rem, black calc(100% - 1.25rem), transparent);
-    }
+    overflow-x: auto !important;
+    scrollbar-width: thin;
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      black 0.75rem,
+      black calc(100% - 1.25rem),
+      transparent
+    );
+  }
 
   .assignment-search-actions {
     flex: 1 1 100% !important;
@@ -856,7 +869,9 @@
   }
 
   .ask-omni-page {
-    height: calc(100dvh - 50px - 50px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
+    height: calc(
+      100dvh - 50px - 50px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
+    ) !important;
     min-height: 0 !important;
     display: flex !important;
     flex-direction: column !important;
@@ -913,8 +928,12 @@
   }
 
   /* ─── Visibility Utilities ─── */
-  .hidden-mobile { display: none !important; }
-  .show-mobile { display: block !important; }
+  .hidden-mobile {
+    display: none !important;
+  }
+  .show-mobile {
+    display: block !important;
+  }
 
   /* ─── Page header / content mobile overrides ─── */
   .page-header {
@@ -949,14 +968,15 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
   }
 
-/* ─── Mobile floating card modals (Full rounded & inset) ─── */
+  /* ─── Mobile floating card modals (Full rounded & inset) ─── */
   .modal-overlay {
     position: fixed !important;
     inset: 0 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    padding: calc(1rem + env(safe-area-inset-top, 0px)) 1rem calc(1.25rem + max(14px, env(safe-area-inset-bottom, 14px))) 1rem !important;
+    padding: calc(1rem + env(safe-area-inset-top, 0px)) 1rem
+      calc(1.25rem + max(14px, env(safe-area-inset-bottom, 14px))) 1rem !important;
     background: rgba(0, 0, 0, 0.65) !important;
     backdrop-filter: blur(8px) !important;
     -webkit-backdrop-filter: blur(8px) !important;
@@ -965,7 +985,13 @@
   .modal-content {
     width: 100% !important;
     max-width: min(520px, calc(100vw - 2rem)) !important;
-    max-height: min(85dvh, calc(100dvh - 3.5rem - env(safe-area-inset-top, 0px) - max(14px, env(safe-area-inset-bottom, 14px)))) !important;
+    max-height: min(
+      85dvh,
+      calc(
+        100dvh - 3.5rem - env(safe-area-inset-top, 0px) -
+          max(14px, env(safe-area-inset-bottom, 14px))
+      )
+    ) !important;
     display: flex !important;
     flex-direction: column !important;
     border-radius: 20px !important;
@@ -1032,16 +1058,22 @@
 }
 
 @media (min-width: 1024px) {
-  .show-mobile { display: none !important; }
+  .show-mobile {
+    display: none !important;
+  }
 }
 
 @media (min-width: 820px) and (max-width: 1023px) {
-  .hidden-mobile { display: none !important; }
-  .show-mobile { display: block !important; }
+  .hidden-mobile {
+    display: none !important;
+  }
+  .show-mobile {
+    display: block !important;
+  }
 }
 
 @media (max-width: 600px) {
-  input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
+  input:not([type='checkbox']):not([type='radio']):not([type='color']),
   select,
   textarea {
     font-size: 16px !important;
@@ -1210,4 +1242,3 @@
   align-items: center;
   justify-content: center;
 }
-

@@ -15,26 +15,20 @@ export interface ClassSession {
   id: string;
   courseId: string;
   daysOfWeek: number[]; // 1=Mon … 7=Sun
-  startTime: string;    // "HH:mm"
-  endTime: string;      // "HH:mm"
+  startTime: string; // "HH:mm"
+  endTime: string; // "HH:mm"
   room: string;
   type: 'lecture' | 'lab' | 'tutorial' | 'seminar';
 }
 
 // ─── Session Exceptions (one-off changes) ───
 export type ExceptionType =
-  | 'cancelled'
-  | 'moved'
-  | 'room-changed'
-  | 'online'
-  | 'extra'
-  | 'attended'
-  | 'no-class';
+  'cancelled' | 'moved' | 'room-changed' | 'online' | 'extra' | 'attended' | 'no-class';
 
 export interface SessionException {
   id: string;
   classSessionId: string;
-  date: string;         // "YYYY-MM-DD"
+  date: string; // "YYYY-MM-DD"
   type: ExceptionType;
   types?: ExceptionType[];
   isOnline?: boolean;
@@ -50,9 +44,9 @@ export type EventType = 'class' | 'exam' | 'deadline' | 'personal' | 'lab' | 'ot
 export interface CalendarEvent {
   id: string;
   title: string;
-  date: string;         // "YYYY-MM-DD"
-  startTime?: string;   // "HH:mm"
-  endTime?: string;     // "HH:mm"
+  date: string; // "YYYY-MM-DD"
+  startTime?: string; // "HH:mm"
+  endTime?: string; // "HH:mm"
   type: EventType;
   courseId?: string;
   course?: string;
@@ -74,7 +68,7 @@ export interface Assignment {
   courseId?: string;
   category?: 'classes' | 'exam' | 'deadline' | 'personal' | 'other';
   title: string;
-  dueDate: string;      // ISO datetime "YYYY-MM-DDTHH:mm"
+  dueDate: string; // ISO datetime "YYYY-MM-DDTHH:mm"
   priority: Priority;
   status: AssignmentStatus;
   notes?: string;
@@ -91,7 +85,7 @@ export interface Transaction {
   amount: number;
   merchant: string;
   category: string;
-  date: string;         // "YYYY-MM-DD"
+  date: string; // "YYYY-MM-DD"
   type: TransactionType;
   paymentMethod?: string;
   notes?: string;
@@ -105,8 +99,8 @@ export interface UserProfile {
 
 // ─── Settings ───
 export interface BreakWeek {
-  start: string;        // "YYYY-MM-DD"
-  end: string;          // "YYYY-MM-DD"
+  start: string; // "YYYY-MM-DD"
+  end: string; // "YYYY-MM-DD"
 }
 
 export interface PrefilledData {

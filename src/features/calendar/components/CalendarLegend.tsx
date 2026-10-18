@@ -34,9 +34,18 @@ export function CalendarLegend({
       <div>
         <h1 style={{ fontSize: 'clamp(1.25rem, 4vw, 1.75rem)', fontWeight: 700, margin: 0 }}>
           {viewMode === 'Month' && (lang === 'id' ? 'Kalender Akademik' : 'Academic Calendar')}
-          {viewMode === 'Week' && (lang === 'id' ? `Jadwal Mingguan (${weekStartDate ? formatDateLong(weekStartDate) : ''})` : `Weekly Overview (${weekStartDate ? formatDateLong(weekStartDate) : ''})`)}
-          {viewMode === 'Day' && (selectedDate ? formatDateLong(selectedDate) : (lang === 'id' ? 'Kegiatan Hari Ini' : 'Today’s Schedule'))}
-          {viewMode === 'Agenda' && (lang === 'id' ? 'Linimasa & Tenggat Mendatang' : 'Upcoming Timeline & Deadlines')}
+          {viewMode === 'Week' &&
+            (lang === 'id'
+              ? `Jadwal Mingguan (${weekStartDate ? formatDateLong(weekStartDate) : ''})`
+              : `Weekly Overview (${weekStartDate ? formatDateLong(weekStartDate) : ''})`)}
+          {viewMode === 'Day' &&
+            (selectedDate
+              ? formatDateLong(selectedDate)
+              : lang === 'id'
+                ? 'Kegiatan Hari Ini'
+                : 'Today’s Schedule')}
+          {viewMode === 'Agenda' &&
+            (lang === 'id' ? 'Linimasa & Tenggat Mendatang' : 'Upcoming Timeline & Deadlines')}
         </h1>
       </div>
 
@@ -67,12 +76,8 @@ export function CalendarLegend({
                 minHeight: 44,
                 padding: '0.375rem 0.75rem',
                 borderRadius: 20,
-                border: isActive
-                  ? '1px solid var(--outline-variant)'
-                  : '1px solid transparent',
-                background: isActive
-                  ? 'var(--surface-container-low)'
-                  : 'transparent',
+                border: isActive ? '1px solid var(--outline-variant)' : '1px solid transparent',
+                background: isActive ? 'var(--surface-container-low)' : 'transparent',
                 color: isActive ? 'var(--on-surface)' : 'var(--outline)',
                 opacity: isActive ? 1 : 0.55,
                 cursor: 'pointer',

@@ -155,7 +155,10 @@ export function ScheduleGrid({
           className={`schedule-grid ${viewMode === 'today' ? 'schedule-grid--today' : 'schedule-grid--week'} schedule-grid-animated`}
           style={{
             display: 'grid',
-            gridTemplateColumns: viewMode === 'today' ? '70px 1fr' : `70px repeat(${displayDays.length}, minmax(130px, 1fr))`,
+            gridTemplateColumns:
+              viewMode === 'today'
+                ? '70px 1fr'
+                : `70px repeat(${displayDays.length}, minmax(130px, 1fr))`,
             border: '1px solid var(--outline-variant)',
             borderRadius: 12,
             minWidth: viewMode === 'today' ? 0 : 70 + displayDays.length * 130,
@@ -205,7 +208,14 @@ export function ScheduleGrid({
                   borderTopRightRadius: i === dayScheduleData.length - 1 ? 11 : 0,
                 }}
               >
-                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--on-surface-variant)', letterSpacing: '0.05em' }}>
+                <div
+                  style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    color: 'var(--on-surface-variant)',
+                    letterSpacing: '0.05em',
+                  }}
+                >
                   {dayNames[dayIndex] || 'DAY'}
                 </div>
                 <div
@@ -239,7 +249,10 @@ export function ScheduleGrid({
             style={{
               gridColumn: '1 / -1',
               display: 'grid',
-              gridTemplateColumns: viewMode === 'today' ? '70px 1fr' : `70px repeat(${displayDays.length}, minmax(130px, 1fr))`,
+              gridTemplateColumns:
+                viewMode === 'today'
+                  ? '70px 1fr'
+                  : `70px repeat(${displayDays.length}, minmax(130px, 1fr))`,
               position: 'relative',
             }}
           >
@@ -261,7 +274,8 @@ export function ScheduleGrid({
                   className="tabular-nums"
                   style={{
                     height: 60,
-                    borderBottom: hIdx === hours.length - 1 ? 'none' : '1px solid var(--outline-variant)',
+                    borderBottom:
+                      hIdx === hours.length - 1 ? 'none' : '1px solid var(--outline-variant)',
                     display: 'flex',
                     alignItems: 'flex-start',
                     justifyContent: 'center',
@@ -303,63 +317,66 @@ export function ScheduleGrid({
                   ))}
 
                   {/* Current time indicator */}
-                  {isToday(date) && (() => {
-                    const now = new Date();
-                    const pos = timeToGridPosition(
-                      `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
-                      gridStart,
-                      GRID_END + 1
-                    );
-                    if (pos >= 0 && pos <= 100) {
-                      return (
-                        <div
-                          ref={currentTimeRef}
-                          style={{
-                            position: 'absolute',
-                            top: `${pos}%`,
-                            left: -5,
-                            right: 0,
-                            zIndex: 10,
-                            display: 'flex',
-                            alignItems: 'center',
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: 10,
-                              height: 10,
-                              borderRadius: '50%',
-                              background: 'var(--error)',
-                            }}
-                          />
-                          <div
-                            style={{
-                              flex: 1,
-                              height: 2,
-                              background: 'var(--error)',
-                            }}
-                          />
-                        </div>
+                  {isToday(date) &&
+                    (() => {
+                      const now = new Date();
+                      const pos = timeToGridPosition(
+                        `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
+                        gridStart,
+                        GRID_END + 1
                       );
-                    }
-                    return null;
-                  })()}
+                      if (pos >= 0 && pos <= 100) {
+                        return (
+                          <div
+                            ref={currentTimeRef}
+                            style={{
+                              position: 'absolute',
+                              top: `${pos}%`,
+                              left: -5,
+                              right: 0,
+                              zIndex: 10,
+                              display: 'flex',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: 10,
+                                height: 10,
+                                borderRadius: '50%',
+                                background: 'var(--error)',
+                              }}
+                            />
+                            <div
+                              style={{
+                                flex: 1,
+                                height: 2,
+                                background: 'var(--error)',
+                              }}
+                            />
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
 
                   {/* Timetable blocks */}
-                  {getLayoutBlocksForDay(daySessions, dayEvents, gridStart, courseMap).map((block, blockIdx) => (
-                    <ScheduleGridBlock
-                      key={block.id}
-                      block={block}
-                      blockIdx={blockIdx}
-                      date={date}
-                      isId={isId}
-                      searchQuery={searchQuery}
-                      hasDraggedRef={hasDraggedRef}
-                      firstActivityRef={isToday(date) ? firstActivityRef : { current: null }}
-                      onSelectBlock={onSelectBlock}
-                      onSelectEvent={onSelectEvent}
-                    />
-                  ))}
+                  {getLayoutBlocksForDay(daySessions, dayEvents, gridStart, courseMap).map(
+                    (block, blockIdx) => (
+                      <ScheduleGridBlock
+                        key={block.id}
+                        block={block}
+                        blockIdx={blockIdx}
+                        date={date}
+                        isId={isId}
+                        searchQuery={searchQuery}
+                        hasDraggedRef={hasDraggedRef}
+                        firstActivityRef={isToday(date) ? firstActivityRef : { current: null }}
+                        onSelectBlock={onSelectBlock}
+                        onSelectEvent={onSelectEvent}
+                      />
+                    )
+                  )}
                 </div>
               );
             })}

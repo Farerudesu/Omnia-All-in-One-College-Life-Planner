@@ -11,14 +11,11 @@ export const EXPENSE_CATEGORIES = [
   'Other Discretionary',
 ] as const;
 
-export type ExpenseCategory = typeof EXPENSE_CATEGORIES[number];
+export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
 
-export const ALL_TRANSACTION_CATEGORIES = [
-  ...EXPENSE_CATEGORIES,
-  'Income',
-] as const;
+export const ALL_TRANSACTION_CATEGORIES = [...EXPENSE_CATEGORIES, 'Income'] as const;
 
-export type TransactionCategory = typeof ALL_TRANSACTION_CATEGORIES[number];
+export type TransactionCategory = (typeof ALL_TRANSACTION_CATEGORIES)[number];
 
 export const CATEGORY_COLORS: Record<string, string> = {
   'Food & Groceries': '#4a7c59',
@@ -53,25 +50,69 @@ export function normalizeTransactionCategory(
 
   const lower = trimmed.toLowerCase();
 
-  if (/^(pulsa|paket\s*data|kuota|data|internet|wifi|telkomsel|indosat|xl|axis|smartfren|tri|phone|phone\s*&\s*internet)$/i.test(lower) || lower.includes('pulsa') || lower.includes('kuota') || lower.includes('paket data')) {
+  if (
+    /^(pulsa|paket\s*data|kuota|data|internet|wifi|telkomsel|indosat|xl|axis|smartfren|tri|phone|phone\s*&\s*internet)$/i.test(
+      lower
+    ) ||
+    lower.includes('pulsa') ||
+    lower.includes('kuota') ||
+    lower.includes('paket data')
+  ) {
     return 'Phone & Internet';
   }
-  if (/^(food|food & dining|dining & coffee|groceries|dining|makan|makanan|minum|minuman|coffee|cafe|snack|jajan)$/i.test(lower) || lower.includes('food') || lower.includes('makan') || lower.includes('dining')) {
+  if (
+    /^(food|food & dining|dining & coffee|groceries|dining|makan|makanan|minum|minuman|coffee|cafe|snack|jajan)$/i.test(
+      lower
+    ) ||
+    lower.includes('food') ||
+    lower.includes('makan') ||
+    lower.includes('dining')
+  ) {
     return 'Food & Groceries';
   }
-  if (/^(books|books & supplies|books & course packs|supplies|campus printing|buku|alat\s*tulis|fotokopi|print)$/i.test(lower) || lower.includes('book') || lower.includes('buku')) {
+  if (
+    /^(books|books & supplies|books & course packs|supplies|campus printing|buku|alat\s*tulis|fotokopi|print)$/i.test(
+      lower
+    ) ||
+    lower.includes('book') ||
+    lower.includes('buku')
+  ) {
     return 'Books & Supplies';
   }
-  if (/^(rent & utilities|rent & housing|housing & utilities|utilities|rent|housing|kost|kos|sewa|listrik|air)$/i.test(lower) || lower.includes('rent') || lower.includes('kost') || lower.includes('listrik')) {
+  if (
+    /^(rent & utilities|rent & housing|housing & utilities|utilities|rent|housing|kost|kos|sewa|listrik|air)$/i.test(
+      lower
+    ) ||
+    lower.includes('rent') ||
+    lower.includes('kost') ||
+    lower.includes('listrik')
+  ) {
     return 'Rent & Utilities';
   }
-  if (/^(transport|transportation|travel|bensin|ojol|gojek|grab|kereta|bus|angkot|taxi|subway|fuel)$/i.test(lower) || lower.includes('transport') || lower.includes('bensin') || lower.includes('ojol')) {
+  if (
+    /^(transport|transportation|travel|bensin|ojol|gojek|grab|kereta|bus|angkot|taxi|subway|fuel)$/i.test(
+      lower
+    ) ||
+    lower.includes('transport') ||
+    lower.includes('bensin') ||
+    lower.includes('ojol')
+  ) {
     return 'Transport';
   }
-  if (/^(entertainment|tech subscriptions|games|game|movie|bioskop|nonton|tiket|hiburan|spotify|netflix)$/i.test(lower) || lower.includes('entertain') || lower.includes('game')) {
+  if (
+    /^(entertainment|tech subscriptions|games|game|movie|bioskop|nonton|tiket|hiburan|spotify|netflix)$/i.test(
+      lower
+    ) ||
+    lower.includes('entertain') ||
+    lower.includes('game')
+  ) {
     return 'Entertainment';
   }
-  if (/^(health|healthcare|medical|medicine|obat|dokter|klinik|kesehatan)$/i.test(lower) || lower.includes('health') || lower.includes('obat')) {
+  if (
+    /^(health|healthcare|medical|medicine|obat|dokter|klinik|kesehatan)$/i.test(lower) ||
+    lower.includes('health') ||
+    lower.includes('obat')
+  ) {
     return 'Health';
   }
 

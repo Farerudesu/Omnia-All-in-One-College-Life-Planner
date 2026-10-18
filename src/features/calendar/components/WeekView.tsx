@@ -58,7 +58,9 @@ export function WeekView({
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--on-surface-variant)' }}>
+              <span
+                style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--on-surface-variant)' }}
+              >
                 {dayNames[i]}
               </span>
               <span
@@ -90,18 +92,35 @@ export function WeekView({
                     opacity: item.isPast ? 0.58 : 1,
                   }}
                 >
-                  <div style={{ fontWeight: 600, color: 'var(--on-surface)', marginBottom: '0.125rem' }}>
+                  <div
+                    style={{
+                      fontWeight: 600,
+                      color: 'var(--on-surface)',
+                      marginBottom: '0.125rem',
+                    }}
+                  >
                     {item.title}
                   </div>
                   {item.time && (
-                    <div className="tabular-nums" style={{ color: 'var(--on-surface-variant)', fontSize: '0.6875rem' }}>
+                    <div
+                      className="tabular-nums"
+                      style={{ color: 'var(--on-surface-variant)', fontSize: '0.6875rem' }}
+                    >
                       {formatTime12(item.time)}
                     </div>
                   )}
                 </div>
               ))}
               {items.length === 0 && (
-                <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', opacity: 0.6, marginTop: '2rem', textAlign: 'center' }}>
+                <div
+                  style={{
+                    fontSize: '0.75rem',
+                    color: 'var(--on-surface-variant)',
+                    opacity: 0.6,
+                    marginTop: '2rem',
+                    textAlign: 'center',
+                  }}
+                >
                   {isId ? 'Tidak ada kegiatan' : 'No events'}
                 </div>
               )}

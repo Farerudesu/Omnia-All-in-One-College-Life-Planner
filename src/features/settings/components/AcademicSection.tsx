@@ -34,7 +34,9 @@ export function AcademicSection({
       <h3 style={{ marginBottom: '1rem' }}>{isId ? 'Semester & Pengingat' : 'Term & reminders'}</h3>
       <div className="settings-terms-grid">
         <div>
-          <label htmlFor="term-name" className="label">{isId ? 'Nama semester' : 'Term name'}</label>
+          <label htmlFor="term-name" className="label">
+            {isId ? 'Nama semester' : 'Term name'}
+          </label>
           <input
             id="term-name"
             value={termName}
@@ -44,7 +46,9 @@ export function AcademicSection({
           />
         </div>
         <div>
-          <label htmlFor="term-start" className="label">{isId ? 'Tanggal mulai' : 'Start date'}</label>
+          <label htmlFor="term-start" className="label">
+            {isId ? 'Tanggal mulai' : 'Start date'}
+          </label>
           <input
             id="term-start"
             type="date"
@@ -54,7 +58,9 @@ export function AcademicSection({
           />
         </div>
         <div>
-          <label htmlFor="term-end" className="label">{isId ? 'Tanggal selesai' : 'End date'}</label>
+          <label htmlFor="term-end" className="label">
+            {isId ? 'Tanggal selesai' : 'End date'}
+          </label>
           <input
             id="term-end"
             type="date"
@@ -64,7 +70,9 @@ export function AcademicSection({
           />
         </div>
         <div>
-          <label htmlFor="first-day" className="label">{isId ? 'Awal minggu' : 'Week starts on'}</label>
+          <label htmlFor="first-day" className="label">
+            {isId ? 'Awal minggu' : 'Week starts on'}
+          </label>
           <select
             id="first-day"
             value={firstDayOfWeek}
@@ -76,7 +84,15 @@ export function AcademicSection({
           </select>
         </div>
       </div>
-      <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '1rem', fontSize: '0.875rem' }}>
+      <label
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          marginTop: '1rem',
+          fontSize: '0.875rem',
+        }}
+      >
         <input
           type="checkbox"
           checked={notifEnabled}

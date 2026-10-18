@@ -21,11 +21,56 @@ interface BudgetSectionProps {
 }
 
 const CURRENCY_CODES = [
-  'IDR', 'USD', 'EUR', 'GBP', 'SGD', 'MYR', 'AUD', 'CAD', 'JPY', 'CNY',
-  'INR', 'KRW', 'THB', 'PHP', 'VND', 'NZD', 'CHF', 'HKD', 'TWD', 'AED',
-  'SAR', 'BRL', 'MXN', 'ZAR', 'TRY', 'PLN', 'SEK', 'NOK', 'DKK', 'RUB',
-  'PKR', 'BDT', 'EGP', 'NGN', 'KES', 'LKR', 'NPR', 'CLP', 'COP', 'ARS',
-  'KWD', 'QAR', 'BHD', 'OMR', 'JOD', 'ILS', 'HUF', 'CZK', 'RON', 'BGN',
+  'IDR',
+  'USD',
+  'EUR',
+  'GBP',
+  'SGD',
+  'MYR',
+  'AUD',
+  'CAD',
+  'JPY',
+  'CNY',
+  'INR',
+  'KRW',
+  'THB',
+  'PHP',
+  'VND',
+  'NZD',
+  'CHF',
+  'HKD',
+  'TWD',
+  'AED',
+  'SAR',
+  'BRL',
+  'MXN',
+  'ZAR',
+  'TRY',
+  'PLN',
+  'SEK',
+  'NOK',
+  'DKK',
+  'RUB',
+  'PKR',
+  'BDT',
+  'EGP',
+  'NGN',
+  'KES',
+  'LKR',
+  'NPR',
+  'CLP',
+  'COP',
+  'ARS',
+  'KWD',
+  'QAR',
+  'BHD',
+  'OMR',
+  'JOD',
+  'ILS',
+  'HUF',
+  'CZK',
+  'RON',
+  'BGN',
 ];
 
 export function BudgetSection({
@@ -52,7 +97,14 @@ export function BudgetSection({
     <>
       {/* Monthly Budget */}
       <div className="card">
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '1rem' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '0.75rem',
+            marginBottom: '1rem',
+          }}
+        >
           <div
             style={{
               width: 40,
@@ -65,7 +117,15 @@ export function BudgetSection({
               flexShrink: 0,
             }}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
               <line x1="12" y1="1" x2="12" y2="23" />
               <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
             </svg>
@@ -79,15 +139,20 @@ export function BudgetSection({
             </p>
           </div>
         </div>
-        <div className="settings-budget-row" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '1.125rem', fontWeight: 600 }}>{getCurrencySymbol(currency)}</span>
+        <div
+          className="settings-budget-row"
+          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}
+        >
+          <span style={{ fontSize: '1.125rem', fontWeight: 600 }}>
+            {getCurrencySymbol(currency)}
+          </span>
           <label htmlFor="monthly-budget-input" className="sr-only">
             {isId ? 'Jumlah anggaran bulanan' : 'Monthly budget amount'}
           </label>
           <input
             id="monthly-budget-input"
             type="number"
-            step={String(1 / (10 ** getCurrencyFractionDigits(currency)))}
+            step={String(1 / 10 ** getCurrencyFractionDigits(currency))}
             className="tabular-nums"
             value={monthlyBudget}
             onChange={(e) => setMonthlyBudget(e.target.value)}
@@ -102,39 +167,70 @@ export function BudgetSection({
       {/* Currency */}
       <div className="card">
         <h3 style={{ marginBottom: '0.5rem' }}>{isId ? 'Mata Uang' : 'Currency'}</h3>
-        <p style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)', marginBottom: '0.75rem' }}>
+        <p
+          style={{
+            fontSize: '0.8125rem',
+            color: 'var(--on-surface-variant)',
+            marginBottom: '0.75rem',
+          }}
+        >
           {isId
             ? 'Pilih mata uang untuk anggaran dan transaksi. Mengubahnya tidak mengonversi nominal sebelumnya.'
             : 'Choose the currency used for your budget and transactions. Changing it does not convert existing amounts.'}
         </p>
-        <label htmlFor="currency-setting" className="label">{isId ? 'Mata uang' : 'Currency'}</label>
+        <label htmlFor="currency-setting" className="label">
+          {isId ? 'Mata uang' : 'Currency'}
+        </label>
         <input
           id="currency-setting"
           list="currency-code-suggestions"
           value={currency}
           maxLength={3}
-          onChange={(event) => { setCurrency(event.target.value.toUpperCase()); setCurrencyError(''); }}
+          onChange={(event) => {
+            setCurrency(event.target.value.toUpperCase());
+            setCurrencyError('');
+          }}
           placeholder="IDR"
           aria-invalid={!!currencyError}
           aria-describedby={currencyError ? 'currency-error' : undefined}
           style={{ width: '100%', textTransform: 'uppercase' }}
         />
         <datalist id="currency-code-suggestions">
-          {CURRENCY_CODES.map((code) => <option key={code} value={code} />)}
+          {CURRENCY_CODES.map((code) => (
+            <option key={code} value={code} />
+          ))}
         </datalist>
-        {currencyError && <div id="currency-error" role="alert" style={{ marginTop: '0.375rem', color: 'var(--error)', fontSize: '0.75rem' }}>{currencyError}</div>}
+        {currencyError && (
+          <div
+            id="currency-error"
+            role="alert"
+            style={{ marginTop: '0.375rem', color: 'var(--error)', fontSize: '0.75rem' }}
+          >
+            {currencyError}
+          </div>
+        )}
       </div>
 
       {/* Saldo Kas Awal (Initial Balance) */}
       <div className="card">
-        <h3 style={{ marginBottom: '0.5rem' }}>{isId ? 'Saldo Kas Awal (Opsional)' : 'Initial Cash Balance (Optional)'}</h3>
-        <p style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)', marginBottom: '0.75rem' }}>
+        <h3 style={{ marginBottom: '0.5rem' }}>
+          {isId ? 'Saldo Kas Awal (Opsional)' : 'Initial Cash Balance (Optional)'}
+        </h3>
+        <p
+          style={{
+            fontSize: '0.8125rem',
+            color: 'var(--on-surface-variant)',
+            marginBottom: '0.75rem',
+          }}
+        >
           {isId
             ? 'Catat saldo awal uang tunai, e-wallet, atau rekening bank kamu sebelum mulai mencatat pengeluaran di Omnia.'
             : 'Record starting balance across cash and accounts before logging expenses in Omnia.'}
         </p>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '1.125rem', fontWeight: 600 }}>{getCurrencySymbol(currency)}</span>
+          <span style={{ fontSize: '1.125rem', fontWeight: 600 }}>
+            {getCurrencySymbol(currency)}
+          </span>
           <label htmlFor="initial-balance-input" className="sr-only">
             {isId ? 'Saldo kas awal' : 'Initial cash balance'}
           </label>
@@ -154,7 +250,13 @@ export function BudgetSection({
       {/* Timezone */}
       <div className="card">
         <h3 style={{ marginBottom: '0.5rem' }}>{isId ? 'Zona Waktu' : 'Timezone'}</h3>
-        <p style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)', marginBottom: '0.75rem' }}>
+        <p
+          style={{
+            fontSize: '0.8125rem',
+            color: 'var(--on-surface-variant)',
+            marginBottom: '0.75rem',
+          }}
+        >
           {isId
             ? 'Pilih zona waktu untuk jadwal kuliah, tenggat tugas, dan catatan pengeluaran.'
             : 'Select your preferred timezone for schedule timeline, assignment countdowns, and transactions.'}
@@ -166,10 +268,17 @@ export function BudgetSection({
           id="timezone-setting"
           value={timeZone}
           onChange={(e) => setTimeZone(e.target.value)}
-          style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: 8, fontSize: '0.875rem' }}
+          style={{
+            width: '100%',
+            padding: '0.5rem 0.75rem',
+            borderRadius: 8,
+            fontSize: '0.875rem',
+          }}
         >
           <option value="Asia/Jakarta">WIB — Asia/Jakarta (Waktu Indonesia Barat, UTC+7)</option>
-          <option value="Asia/Makassar">WITA — Asia/Makassar (Waktu Indonesia Tengah, UTC+8)</option>
+          <option value="Asia/Makassar">
+            WITA — Asia/Makassar (Waktu Indonesia Tengah, UTC+8)
+          </option>
           <option value="Asia/Jayapura">WIT — Asia/Jayapura (Waktu Indonesia Timur, UTC+9)</option>
           <option value="UTC">UTC / GMT+0</option>
         </select>
@@ -177,7 +286,14 @@ export function BudgetSection({
 
       {/* Payment Methods Management Card */}
       <div className="card">
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '1rem' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '0.75rem',
+            marginBottom: '1rem',
+          }}
+        >
           <div
             style={{
               width: 40,
@@ -190,13 +306,23 @@ export function BudgetSection({
               flexShrink: 0,
             }}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
               <rect x="2" y="5" width="20" height="14" rx="2" />
               <line x1="2" y1="10" x2="22" y2="10" />
             </svg>
           </div>
           <div>
-            <h3 style={{ marginBottom: '0.25rem' }}>{isId ? 'Metode Pembayaran' : 'Payment Methods'}</h3>
+            <h3 style={{ marginBottom: '0.25rem' }}>
+              {isId ? 'Metode Pembayaran' : 'Payment Methods'}
+            </h3>
             <p style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)' }}>
               {isId
                 ? 'Kelola metode pembayaran yang tersedia pada formulir pencatatan pengeluaran dan Omni AI.'

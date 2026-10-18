@@ -12,7 +12,14 @@ export function LanguageSection({ language, setLangState }: LanguageSectionProps
 
   return (
     <div className="card">
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '1.25rem' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: '0.75rem',
+          marginBottom: '1.25rem',
+        }}
+      >
         <div
           style={{
             width: 40,
@@ -38,17 +45,29 @@ export function LanguageSection({ language, setLangState }: LanguageSectionProps
           onClick={() => setLangState('id')}
           style={{
             padding: '0.875rem',
-            border: language === 'id' ? '2px solid var(--primary)' : '1px solid var(--outline-variant)',
+            border:
+              language === 'id' ? '2px solid var(--primary)' : '1px solid var(--outline-variant)',
             borderRadius: 12,
-            background: language === 'id' ? 'var(--surface-container)' : 'var(--surface-container-lowest)',
+            background:
+              language === 'id' ? 'var(--surface-container)' : 'var(--surface-container-lowest)',
             cursor: 'pointer',
             textAlign: 'center',
           }}
         >
-          <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--on-surface)' }}>Bahasa Indonesia</div>
+          <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--on-surface)' }}>
+            Bahasa Indonesia
+          </div>
           {language === 'id' && (
             <div style={{ marginTop: '0.375rem' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2.5" aria-hidden="true">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="var(--primary)"
+                strokeWidth="2.5"
+                aria-hidden="true"
+              >
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </div>
@@ -60,17 +79,29 @@ export function LanguageSection({ language, setLangState }: LanguageSectionProps
           onClick={() => setLangState('en')}
           style={{
             padding: '0.875rem',
-            border: language === 'en' ? '2px solid var(--primary)' : '1px solid var(--outline-variant)',
+            border:
+              language === 'en' ? '2px solid var(--primary)' : '1px solid var(--outline-variant)',
             borderRadius: 12,
-            background: language === 'en' ? 'var(--surface-container)' : 'var(--surface-container-lowest)',
+            background:
+              language === 'en' ? 'var(--surface-container)' : 'var(--surface-container-lowest)',
             cursor: 'pointer',
             textAlign: 'center',
           }}
         >
-          <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--on-surface)' }}>English</div>
+          <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--on-surface)' }}>
+            English
+          </div>
           {language === 'en' && (
             <div style={{ marginTop: '0.375rem' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2.5" aria-hidden="true">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="var(--primary)"
+                strokeWidth="2.5"
+                aria-hidden="true"
+              >
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </div>

@@ -54,7 +54,15 @@ export function AskOmniComposer({
         flexShrink: 0,
       }}
     >
-      <div style={{ width: '100%', maxWidth: 768, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+      <div
+        style={{
+          width: '100%',
+          maxWidth: 768,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.75rem',
+        }}
+      >
         {attachment && (
           <div
             style={{
@@ -73,7 +81,9 @@ export function AskOmniComposer({
               alt="Attached preview"
               style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover' }}
             />
-            <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface)' }}>{attachment.name}</div>
+            <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface)' }}>
+              {attachment.name}
+            </div>
             <button
               type="button"
               onClick={onRemoveAttachment}

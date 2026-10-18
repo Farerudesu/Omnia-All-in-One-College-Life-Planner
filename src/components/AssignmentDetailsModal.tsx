@@ -16,7 +16,12 @@ interface AssignmentDetailsModalProps {
   openInEditMode?: boolean;
 }
 
-export function AssignmentDetailsModal({ assignment, isOpen, onClose, openInEditMode }: AssignmentDetailsModalProps) {
+export function AssignmentDetailsModal({
+  assignment,
+  isOpen,
+  onClose,
+  openInEditMode,
+}: AssignmentDetailsModalProps) {
   const lang = useLanguage();
   const courses = useData(ds.getCourses);
   const pinnedIds = useData(ds.getPinnedAssignmentIds);
@@ -37,7 +42,7 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose, openInEdit
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const uniqueCourses = useMemo(() => {
-    const map = new Map<string, typeof courses[0]>();
+    const map = new Map<string, (typeof courses)[0]>();
     for (const c of courses) {
       const key = `${c.code || ''}|${c.name}`;
       if (!map.has(key) || c.id === courseId) {
@@ -130,14 +135,20 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose, openInEdit
       setShowConfirmDelete(false);
       onClose();
       toast({
-        message: lang === 'id' ? `Tugas "${assignment.title}" berhasil dihapus` : `Task "${assignment.title}" deleted`,
+        message:
+          lang === 'id'
+            ? `Tugas "${assignment.title}" berhasil dihapus`
+            : `Task "${assignment.title}" deleted`,
         type: 'info',
         action: deleted
           ? {
               label: lang === 'id' ? 'Urungkan' : 'Undo',
               onClick: async () => {
                 await ds.restoreAssignment(deleted);
-                toast({ message: lang === 'id' ? 'Tugas berhasil dipulihkan' : 'Task restored', type: 'success' });
+                toast({
+                  message: lang === 'id' ? 'Tugas berhasil dipulihkan' : 'Task restored',
+                  type: 'success',
+                });
               },
             }
           : undefined,
@@ -163,14 +174,20 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose, openInEdit
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEditing ? (lang === 'id' ? 'Edit tugas' : 'Edit Assignment') : (lang === 'id' ? 'Detail tugas' : 'Deliverable Details')}
+      title={
+        isEditing
+          ? lang === 'id'
+            ? 'Edit tugas'
+            : 'Edit Assignment'
+          : lang === 'id'
+            ? 'Detail tugas'
+            : 'Deliverable Details'
+      }
     >
       {isEditing ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
-            <label className="label">
-              {lang === 'id' ? 'Judul tugas *' : 'Title *'}
-            </label>
+            <label className="label">{lang === 'id' ? 'Judul tugas *' : 'Title *'}</label>
             <input
               type="text"
               value={title}
@@ -180,7 +197,11 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose, openInEdit
                 setTitle(e.target.value);
                 if (titleError && e.target.value.trim()) setTitleError('');
               }}
-              placeholder={lang === 'id' ? 'Contoh: Laporan Praktikum Fisika' : 'e.g. Problem Set 4, Research Proposal'}
+              placeholder={
+                lang === 'id'
+                  ? 'Contoh: Laporan Praktikum Fisika'
+                  : 'e.g. Problem Set 4, Research Proposal'
+              }
               style={{
                 width: '100%',
                 borderColor: titleError ? 'var(--error)' : undefined,
@@ -189,7 +210,16 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose, openInEdit
               required
             />
             {titleError && (
-              <div id="edit-assignment-title-error" role="alert" style={{ color: 'var(--error)', fontSize: '0.75rem', marginTop: '0.375rem', fontWeight: 500 }}>
+              <div
+                id="edit-assignment-title-error"
+                role="alert"
+                style={{
+                  color: 'var(--error)',
+                  fontSize: '0.75rem',
+                  marginTop: '0.375rem',
+                  fontWeight: 500,
+                }}
+              >
                 {titleError}
               </div>
             )}
@@ -197,7 +227,9 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose, openInEdit
 
           <div className="modal-form-grid-2col">
             <div>
-              <label htmlFor="edit-assignment-category" className="label">{lang === 'id' ? 'Kategori' : 'Category'}</label>
+              <label htmlFor="edit-assignment-category" className="label">
+                {lang === 'id' ? 'Kategori' : 'Category'}
+              </label>
               <select
                 id="edit-assignment-category"
                 value={category}
@@ -207,12 +239,16 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose, openInEdit
                 <option value="classes">{lang === 'id' ? 'Tugas Kuliah' : 'Coursework'}</option>
                 <option value="personal">{lang === 'id' ? 'Pribadi' : 'Personal'}</option>
                 <option value="exam">{lang === 'id' ? 'Persiapan Ujian' : 'Exam Prep'}</option>
-                <option value="deadline">{lang === 'id' ? 'Tenggat Umum' : 'General Deadline'}</option>
+                <option value="deadline">
+                  {lang === 'id' ? 'Tenggat Umum' : 'General Deadline'}
+                </option>
                 <option value="other">{lang === 'id' ? 'Lainnya' : 'Other'}</option>
               </select>
             </div>
             <div>
-              <label htmlFor="edit-assignment-course" className="label">{lang === 'id' ? 'Mata Kuliah (Opsional)' : 'Course (Optional)'}</label>
+              <label htmlFor="edit-assignment-course" className="label">
+                {lang === 'id' ? 'Mata Kuliah (Opsional)' : 'Course (Optional)'}
+              </label>
               <select
                 id="edit-assignment-course"
                 value={courseId}
@@ -284,24 +320,35 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose, openInEdit
               style={{ width: '100%' }}
             >
               <option value={0}>{lang === 'id' ? 'Tidak ada pengingat' : 'No reminder'}</option>
-              <option value={15}>{lang === 'id' ? '15 menit sebelumnya' : '15 minutes before'}</option>
+              <option value={15}>
+                {lang === 'id' ? '15 menit sebelumnya' : '15 minutes before'}
+              </option>
               <option value={60}>{lang === 'id' ? '1 jam sebelumnya' : '1 hour before'}</option>
               <option value={1440}>{lang === 'id' ? '1 hari sebelumnya' : '1 day before'}</option>
             </select>
           </div>
 
           <div>
-            <label className="label">{lang === 'id' ? 'Catatan & Spesifikasi' : 'Notes & Specifications'}</label>
+            <label className="label">
+              {lang === 'id' ? 'Catatan & Spesifikasi' : 'Notes & Specifications'}
+            </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder={lang === 'id' ? 'Petunjuk pengumpulan, format berkas, catatan...' : 'Submission guidelines, file formats, grading rubric notes...'}
+              placeholder={
+                lang === 'id'
+                  ? 'Petunjuk pengumpulan, format berkas, catatan...'
+                  : 'Submission guidelines, file formats, grading rubric notes...'
+              }
               rows={3}
               style={{ width: '100%' }}
             />
           </div>
 
-          <div className="modal-actions-sticky" style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div
+            className="modal-actions-sticky"
+            style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}
+          >
             <button
               type="button"
               className="btn-outline"
@@ -315,18 +362,41 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose, openInEdit
                 gap: '0.375rem',
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <polyline points="3 6 5 6 21 6" />
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
               </svg>
               {lang === 'id' ? 'Hapus' : 'Delete'}
             </button>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button type="button" className="btn-ghost" onClick={() => setIsEditing(false)} disabled={isSubmitting}>
+              <button
+                type="button"
+                className="btn-ghost"
+                onClick={() => setIsEditing(false)}
+                disabled={isSubmitting}
+              >
                 {lang === 'id' ? 'Batal' : 'Cancel'}
               </button>
-              <button type="button" className="btn-primary" onClick={handleSave} disabled={isSubmitting}>
-                {isSubmitting ? (lang === 'id' ? 'Menyimpan…' : 'Saving…') : (lang === 'id' ? 'Simpan tugas' : 'Save Deliverable')}
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={handleSave}
+                disabled={isSubmitting}
+              >
+                {isSubmitting
+                  ? lang === 'id'
+                    ? 'Menyimpan…'
+                    : 'Saving…'
+                  : lang === 'id'
+                    ? 'Simpan tugas'
+                    : 'Save Deliverable'}
               </button>
             </div>
           </div>
@@ -335,58 +405,69 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose, openInEdit
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {/* Status + high-priority badge row — course shown only in metadata block below */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-              {assignment.priority === 'high' && (
-                <span
-                  className="badge"
-                  style={{
-                    background: 'var(--error-container)',
-                    color: 'var(--on-error-container)',
-                    fontWeight: 600,
-                    fontSize: '0.75rem',
-                  }}
-                >
-                  {lang === 'id' ? 'Prioritas Tinggi' : 'High Priority'}
-                </span>
-              )}
-              <button
-                onClick={handleToggleStatus}
-                className="badge min-touch-target"
-                aria-label={lang === 'id' ? 'Ubah status tugas' : 'Toggle task status'}
+            {assignment.priority === 'high' && (
+              <span
+                className="badge"
                 style={{
-                  cursor: 'pointer',
-                  border: '1px solid var(--outline-variant)',
-                  background:
-                    assignment.status === 'done'
-                      ? 'var(--primary-container)'
-                      : assignment.status === 'in-progress'
-                        ? '#e0f2fe'
-                        : 'var(--surface-container-high)',
-                  color:
-                    assignment.status === 'done'
-                      ? 'var(--on-primary-container)'
-                      : assignment.status === 'in-progress'
-                        ? '#0369a1'
-                        : 'var(--on-surface-variant)',
+                  background: 'var(--error-container)',
+                  color: 'var(--on-error-container)',
                   fontWeight: 600,
                   fontSize: '0.75rem',
-                  padding: '0.25rem 0.625rem',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-                  {assignment.status === 'done' ? (
-                    <><CheckCircle size={14} /> {lang === 'id' ? 'Selesai' : 'Completed'}</>
-                  ) : assignment.status === 'in-progress' ? (
-                    <><Clock size={14} /> {lang === 'id' ? 'Sedang Dikerjakan' : 'In Progress'}</>
-                  ) : (
-                    <span>{lang === 'id' ? 'Belum Dimulai' : 'Not Started'}</span>
-                  )}
-                </div>
-              </button>
+                {lang === 'id' ? 'Prioritas Tinggi' : 'High Priority'}
+              </span>
+            )}
+            <button
+              onClick={handleToggleStatus}
+              className="badge min-touch-target"
+              aria-label={lang === 'id' ? 'Ubah status tugas' : 'Toggle task status'}
+              style={{
+                cursor: 'pointer',
+                border: '1px solid var(--outline-variant)',
+                background:
+                  assignment.status === 'done'
+                    ? 'var(--primary-container)'
+                    : assignment.status === 'in-progress'
+                      ? '#e0f2fe'
+                      : 'var(--surface-container-high)',
+                color:
+                  assignment.status === 'done'
+                    ? 'var(--on-primary-container)'
+                    : assignment.status === 'in-progress'
+                      ? '#0369a1'
+                      : 'var(--on-surface-variant)',
+                fontWeight: 600,
+                fontSize: '0.75rem',
+                padding: '0.25rem 0.625rem',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                {assignment.status === 'done' ? (
+                  <>
+                    <CheckCircle size={14} /> {lang === 'id' ? 'Selesai' : 'Completed'}
+                  </>
+                ) : assignment.status === 'in-progress' ? (
+                  <>
+                    <Clock size={14} /> {lang === 'id' ? 'Sedang Dikerjakan' : 'In Progress'}
+                  </>
+                ) : (
+                  <span>{lang === 'id' ? 'Belum Dimulai' : 'Not Started'}</span>
+                )}
+              </div>
+            </button>
           </div>
 
           {/* Title */}
           <div>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--on-surface)', marginBottom: '0.25rem' }}>
+            <h2
+              style={{
+                fontSize: '1.25rem',
+                fontWeight: 700,
+                color: 'var(--on-surface)',
+                marginBottom: '0.25rem',
+              }}
+            >
               {assignment.title}
             </h2>
           </div>
@@ -404,15 +485,45 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose, openInEdit
             }}
           >
             {course && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
-                <span style={{ color: 'var(--on-surface-variant)', width: 100, flexShrink: 0 }}>{lang === 'id' ? 'Mata Kuliah:' : 'Course:'}</span>
-                <span style={{ fontWeight: 600, color: course.color }}>{course.code ? `${course.code} ${course.name}` : course.name}</span>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  fontSize: '0.875rem',
+                }}
+              >
+                <span style={{ color: 'var(--on-surface-variant)', width: 100, flexShrink: 0 }}>
+                  {lang === 'id' ? 'Mata Kuliah:' : 'Course:'}
+                </span>
+                <span style={{ fontWeight: 600, color: course.color }}>
+                  {course.code ? `${course.code} ${course.name}` : course.name}
+                </span>
               </div>
             )}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
-              <span style={{ color: 'var(--on-surface-variant)', width: 100 }}>{lang === 'id' ? 'Tenggat Waktu:' : 'Due Date:'}</span>
-              <span className="tabular-nums" style={{ fontWeight: 600, color: 'var(--on-surface)', display: 'inline-flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.375rem' }}>
-                <span>{formatDateShort(new Date(assignment.dueDate))} {assignment.dueDate.includes('T') ? `· ${formatTime12(assignment.dueDate.split('T')[1])}` : ''}</span>
+            <div
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}
+            >
+              <span style={{ color: 'var(--on-surface-variant)', width: 100 }}>
+                {lang === 'id' ? 'Tenggat Waktu:' : 'Due Date:'}
+              </span>
+              <span
+                className="tabular-nums"
+                style={{
+                  fontWeight: 600,
+                  color: 'var(--on-surface)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '0.375rem',
+                }}
+              >
+                <span>
+                  {formatDateShort(new Date(assignment.dueDate))}{' '}
+                  {assignment.dueDate.includes('T')
+                    ? `· ${formatTime12(assignment.dueDate.split('T')[1])}`
+                    : ''}
+                </span>
                 {assignment.status === 'done' ? (
                   <span
                     style={{
@@ -432,7 +543,8 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose, openInEdit
                       fontSize: '0.75rem',
                       padding: '0.125rem 0.45rem',
                       borderRadius: 4,
-                      background: formatDetailedCountdown(assignment.dueDate, new Date(), lang).isOverdue
+                      background: formatDetailedCountdown(assignment.dueDate, new Date(), lang)
+                        .isOverdue
                         ? 'var(--error-container)'
                         : formatDetailedCountdown(assignment.dueDate, new Date(), lang).isUrgent
                           ? 'var(--tertiary-container)'
@@ -451,29 +563,72 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose, openInEdit
               </span>
             </div>
             {course?.professor && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
-                <span style={{ color: 'var(--on-surface-variant)', width: 100 }}>{lang === 'id' ? 'Dosen Pengampu:' : 'Instructor:'}</span>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  fontSize: '0.875rem',
+                }}
+              >
+                <span style={{ color: 'var(--on-surface-variant)', width: 100 }}>
+                  {lang === 'id' ? 'Dosen Pengampu:' : 'Instructor:'}
+                </span>
                 <span style={{ color: 'var(--on-surface)' }}>{course.professor}</span>
               </div>
             )}
             {reminderMinutes > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
-                <span style={{ color: 'var(--on-surface-variant)', width: 100 }}>{lang === 'id' ? 'Pengingat:' : 'Reminder:'}</span>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  fontSize: '0.875rem',
+                }}
+              >
+                <span style={{ color: 'var(--on-surface-variant)', width: 100 }}>
+                  {lang === 'id' ? 'Pengingat:' : 'Reminder:'}
+                </span>
                 <span style={{ color: 'var(--primary)', fontWeight: 600 }}>
-                  {reminderMinutes === 15 ? (lang === 'id' ? '15 menit sebelumnya' : '15 min before') : reminderMinutes === 60 ? (lang === 'id' ? '1 jam sebelumnya' : '1 hour before') : (lang === 'id' ? '1 hari sebelumnya' : '1 day before')}
+                  {reminderMinutes === 15
+                    ? lang === 'id'
+                      ? '15 menit sebelumnya'
+                      : '15 min before'
+                    : reminderMinutes === 60
+                      ? lang === 'id'
+                        ? '1 jam sebelumnya'
+                        : '1 hour before'
+                      : lang === 'id'
+                        ? '1 hari sebelumnya'
+                        : '1 day before'}
                 </span>
               </div>
             )}
             {assignment.notes && (
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-                <span style={{ color: 'var(--on-surface-variant)', width: 100, flexShrink: 0 }}>{lang === 'id' ? 'Catatan:' : 'Notes:'}</span>
-                <span style={{ color: 'var(--on-surface)', whiteSpace: 'pre-wrap' }}>{assignment.notes}</span>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '0.5rem',
+                  fontSize: '0.875rem',
+                  marginTop: '0.25rem',
+                }}
+              >
+                <span style={{ color: 'var(--on-surface-variant)', width: 100, flexShrink: 0 }}>
+                  {lang === 'id' ? 'Catatan:' : 'Notes:'}
+                </span>
+                <span style={{ color: 'var(--on-surface)', whiteSpace: 'pre-wrap' }}>
+                  {assignment.notes}
+                </span>
               </div>
             )}
           </div>
 
           {/* Actions */}
-          <div className="modal-actions-sticky" style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
+          <div
+            className="modal-actions-sticky"
+            style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}
+          >
             <button
               type="button"
               className="btn-outline"
@@ -486,7 +641,14 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose, openInEdit
                 gap: '0.375rem',
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <polyline points="3 6 5 6 21 6" />
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
               </svg>
@@ -503,11 +665,22 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose, openInEdit
                   gap: '0.375rem',
                   color: pinnedIds.includes(assignment.id) ? 'var(--primary)' : 'inherit',
                   borderColor: pinnedIds.includes(assignment.id) ? 'var(--primary)' : undefined,
-                  background: pinnedIds.includes(assignment.id) ? 'color-mix(in srgb, var(--primary) 10%, transparent)' : undefined,
+                  background: pinnedIds.includes(assignment.id)
+                    ? 'color-mix(in srgb, var(--primary) 10%, transparent)'
+                    : undefined,
                 }}
               >
-                <Pin size={14} style={{ fill: pinnedIds.includes(assignment.id) ? 'currentColor' : 'none' }} />
-                {pinnedIds.includes(assignment.id) ? (lang === 'id' ? 'Lepas Sematan' : 'Unpin') : (lang === 'id' ? 'Sematkan ke Sidebar' : 'Pin to Sidebar')}
+                <Pin
+                  size={14}
+                  style={{ fill: pinnedIds.includes(assignment.id) ? 'currentColor' : 'none' }}
+                />
+                {pinnedIds.includes(assignment.id)
+                  ? lang === 'id'
+                    ? 'Lepas Sematan'
+                    : 'Unpin'
+                  : lang === 'id'
+                    ? 'Sematkan ke Sidebar'
+                    : 'Pin to Sidebar'}
               </button>
               <button type="button" className="btn-ghost" onClick={onClose}>
                 {lang === 'id' ? 'Tutup' : 'Close'}
@@ -518,7 +691,14 @@ export function AssignmentDetailsModal({ assignment, isOpen, onClose, openInEdit
                 onClick={() => setIsEditing(true)}
                 style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                 </svg>

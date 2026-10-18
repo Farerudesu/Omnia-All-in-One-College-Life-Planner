@@ -58,7 +58,15 @@ export function ConfirmModal({
               <AlertTriangle size={18} />
             </div>
           )}
-          <div style={{ flex: 1, minWidth: 0, fontSize: '0.875rem', lineHeight: 1.5, color: 'var(--on-surface-variant)' }}>
+          <div
+            style={{
+              flex: 1,
+              minWidth: 0,
+              fontSize: '0.875rem',
+              lineHeight: 1.5,
+              color: 'var(--on-surface-variant)',
+            }}
+          >
             {message}
           </div>
         </div>

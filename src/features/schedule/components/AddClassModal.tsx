@@ -25,7 +25,9 @@ export function AddClassModal({ isOpen, onClose }: { isOpen: boolean; onClose: (
   const [saveAndAdd, setSaveAndAdd] = useState(false);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
-  const isDirty = Boolean(courseName.trim() || courseCode.trim() || instructor.trim() || days.length > 0 || room.trim());
+  const isDirty = Boolean(
+    courseName.trim() || courseCode.trim() || instructor.trim() || days.length > 0 || room.trim()
+  );
 
   const handleRequestClose = () => {
     if (isDirty) {
@@ -90,22 +92,27 @@ export function AddClassModal({ isOpen, onClose }: { isOpen: boolean; onClose: (
       const keepOpen = saveAndAdd;
       const savedName = courseName.trim();
       setSaveAndAdd(false);
-      await ds.addClassSession({
-        courseId: '',
-        daysOfWeek: days,
-        startTime,
-        endTime,
-        room,
-        type,
-      }, {
-        name: savedName,
-        code: courseCode.trim(),
-        professor: instructor.trim(),
-        room,
-        color,
-      });
+      await ds.addClassSession(
+        {
+          courseId: '',
+          daysOfWeek: days,
+          startTime,
+          endTime,
+          room,
+          type,
+        },
+        {
+          name: savedName,
+          code: courseCode.trim(),
+          professor: instructor.trim(),
+          room,
+          color,
+        }
+      );
       showToast({
-        message: isId ? `Mata kuliah "${savedName}" berhasil ditambahkan` : `Class "${savedName}" added`,
+        message: isId
+          ? `Mata kuliah "${savedName}" berhasil ditambahkan`
+          : `Class "${savedName}" added`,
         type: 'success',
       });
       setCourseName('');
@@ -124,11 +131,23 @@ export function AddClassModal({ isOpen, onClose }: { isOpen: boolean; onClose: (
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleRequestClose} title={isId ? 'Tambah mata kuliah' : 'Add class'}>
+    <Modal
+      isOpen={isOpen}
+      onClose={handleRequestClose}
+      title={isId ? 'Tambah mata kuliah' : 'Add class'}
+    >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <div className="modal-form-grid-2col">
           <div>
-            <label htmlFor="class-name" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            <label
+              htmlFor="class-name"
+              style={{
+                display: 'block',
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                marginBottom: '0.375rem',
+              }}
+            >
               {isId ? 'Nama Mata Kuliah *' : 'Class name *'}
             </label>
             <input
@@ -147,8 +166,17 @@ export function AddClassModal({ isOpen, onClose }: { isOpen: boolean; onClose: (
               aria-invalid={!!nameError}
               aria-describedby={nameError ? 'class-name-error' : 'class-name-helper'}
             />
-            <div id="class-name-helper" style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', marginTop: '0.25rem' }}>
-              {isId ? 'Contoh: Biologi Sel, Algoritma Pemrograman' : 'e.g. Biology, Data Structures'}
+            <div
+              id="class-name-helper"
+              style={{
+                fontSize: '0.75rem',
+                color: 'var(--on-surface-variant)',
+                marginTop: '0.25rem',
+              }}
+            >
+              {isId
+                ? 'Contoh: Biologi Sel, Algoritma Pemrograman'
+                : 'e.g. Biology, Data Structures'}
             </div>
             {nameError && (
               <div
@@ -166,7 +194,15 @@ export function AddClassModal({ isOpen, onClose }: { isOpen: boolean; onClose: (
             )}
           </div>
           <div>
-            <label htmlFor="class-code" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            <label
+              htmlFor="class-code"
+              style={{
+                display: 'block',
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                marginBottom: '0.375rem',
+              }}
+            >
               {isId ? 'Kode MK *' : 'Course code *'}
             </label>
             <input
@@ -185,7 +221,14 @@ export function AddClassModal({ isOpen, onClose }: { isOpen: boolean; onClose: (
               aria-invalid={!!codeError}
               aria-describedby={codeError ? 'class-code-error' : 'class-code-helper'}
             />
-            <div id="class-code-helper" style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', marginTop: '0.25rem' }}>
+            <div
+              id="class-code-helper"
+              style={{
+                fontSize: '0.75rem',
+                color: 'var(--on-surface-variant)',
+                marginTop: '0.25rem',
+              }}
+            >
               {isId ? 'Contoh: BIO110, IF2110' : 'e.g. BIO110, CS101'}
             </div>
             {codeError && (
@@ -206,7 +249,15 @@ export function AddClassModal({ isOpen, onClose }: { isOpen: boolean; onClose: (
         </div>
 
         <div>
-          <label htmlFor="class-instructor" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+          <label
+            htmlFor="class-instructor"
+            style={{
+              display: 'block',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              marginBottom: '0.375rem',
+            }}
+          >
             {isId ? 'Dosen Pengampu (opsional)' : 'Instructor (optional)'}
           </label>
           <input
@@ -219,7 +270,15 @@ export function AddClassModal({ isOpen, onClose }: { isOpen: boolean; onClose: (
         </div>
 
         <div>
-          <div id="class-days-label" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+          <div
+            id="class-days-label"
+            style={{
+              display: 'block',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              marginBottom: '0.375rem',
+            }}
+          >
             {isId ? 'Hari Pertemuan *' : 'Days *'}
           </div>
           <div
@@ -271,21 +330,57 @@ export function AddClassModal({ isOpen, onClose }: { isOpen: boolean; onClose: (
 
         <div className="modal-form-grid-2col">
           <div>
-            <label htmlFor="class-start-time" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            <label
+              htmlFor="class-start-time"
+              style={{
+                display: 'block',
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                marginBottom: '0.375rem',
+              }}
+            >
               {isId ? 'Jam Mulai *' : 'Start time *'}
             </label>
-            <input id="class-start-time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} style={{ width: '100%' }} />
+            <input
+              id="class-start-time"
+              type="time"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+              style={{ width: '100%' }}
+            />
           </div>
           <div>
-            <label htmlFor="class-end-time" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            <label
+              htmlFor="class-end-time"
+              style={{
+                display: 'block',
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                marginBottom: '0.375rem',
+              }}
+            >
               {isId ? 'Jam Selesai *' : 'End time *'}
             </label>
-            <input id="class-end-time" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} style={{ width: '100%' }} />
+            <input
+              id="class-end-time"
+              type="time"
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
+              style={{ width: '100%' }}
+            />
           </div>
         </div>
 
         <div>
-          <label htmlFor="class-room" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+          <label
+            htmlFor="class-room"
+            style={{
+              display: 'block',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              marginBottom: '0.375rem',
+            }}
+          >
             {isId ? 'Ruang Kelas (opsional)' : 'Room (optional)'}
           </label>
           <input
@@ -296,26 +391,67 @@ export function AddClassModal({ isOpen, onClose }: { isOpen: boolean; onClose: (
             placeholder={isId ? 'Ruang B-204' : 'Room B-204'}
             style={{ width: '100%' }}
           />
-          <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', marginTop: '0.25rem' }}>
+          <div
+            style={{
+              fontSize: '0.75rem',
+              color: 'var(--on-surface-variant)',
+              marginTop: '0.25rem',
+            }}
+          >
             {isId ? 'Contoh: Ruang B-204, Lab Riset 2' : 'e.g. Room B-204, Lab 2'}
           </div>
         </div>
 
         <div className="modal-form-grid-2col" style={{ alignItems: 'flex-start' }}>
           <div>
-            <label htmlFor="class-color" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            <label
+              htmlFor="class-color"
+              style={{
+                display: 'block',
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                marginBottom: '0.375rem',
+              }}
+            >
               {isId ? 'Warna Penanda' : 'Color'}
             </label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <input id="class-color" type="color" value={color} onChange={(e) => setColor(e.target.value)} style={{ width: 52, height: 38, padding: '0.2rem', borderRadius: 8, cursor: 'pointer' }} />
-              <span style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>{color}</span>
+              <input
+                id="class-color"
+                type="color"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                style={{
+                  width: 52,
+                  height: 38,
+                  padding: '0.2rem',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                }}
+              />
+              <span style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>
+                {color}
+              </span>
             </div>
           </div>
           <div>
-            <label htmlFor="class-type" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            <label
+              htmlFor="class-type"
+              style={{
+                display: 'block',
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                marginBottom: '0.375rem',
+              }}
+            >
               {isId ? 'Tipe Kegiatan' : 'Type'}
             </label>
-            <select id="class-type" value={type} onChange={(e) => setType(e.target.value as typeof type)} style={{ width: '100%', height: 38 }}>
+            <select
+              id="class-type"
+              value={type}
+              onChange={(e) => setType(e.target.value as typeof type)}
+              style={{ width: '100%', height: 38 }}
+            >
               <option value="lecture">{isId ? 'Kuliah' : 'Lecture'}</option>
               <option value="lab">{isId ? 'Praktikum' : 'Lab'}</option>
               <option value="tutorial">{isId ? 'Tutorial' : 'Tutorial'}</option>
@@ -324,16 +460,45 @@ export function AddClassModal({ isOpen, onClose }: { isOpen: boolean; onClose: (
           </div>
         </div>
 
-        <div className="modal-actions-sticky" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%' }}>
+        <div
+          className="modal-actions-sticky"
+          style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%' }}
+        >
           <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
-            <button type="button" className="btn-outline min-touch-target" onClick={handleRequestClose} disabled={isSubmitting} style={{ flex: 1, minHeight: 44 }}>
+            <button
+              type="button"
+              className="btn-outline min-touch-target"
+              onClick={handleRequestClose}
+              disabled={isSubmitting}
+              style={{ flex: 1, minHeight: 44 }}
+            >
               {isId ? 'Batal' : 'Discard'}
             </button>
-            <button type="button" className="btn-primary min-touch-target" onClick={handleSave} disabled={isSubmitting} style={{ flex: 2, minHeight: 44, whiteSpace: 'nowrap' }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+            <button
+              type="button"
+              className="btn-primary min-touch-target"
+              onClick={handleSave}
+              disabled={isSubmitting}
+              style={{ flex: 2, minHeight: 44, whiteSpace: 'nowrap' }}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                aria-hidden="true"
+              >
                 <polyline points="20 6 9 17 4 12" />
               </svg>
-              {isSubmitting ? (isId ? 'Menyimpan…' : 'Saving…') : (isId ? 'Tambah Kelas' : 'Add class')}
+              {isSubmitting
+                ? isId
+                  ? 'Menyimpan…'
+                  : 'Saving…'
+                : isId
+                  ? 'Tambah Kelas'
+                  : 'Add class'}
             </button>
           </div>
           <button
@@ -344,7 +509,12 @@ export function AddClassModal({ isOpen, onClose }: { isOpen: boolean; onClose: (
               await handleSave();
             }}
             disabled={isSubmitting}
-            style={{ fontSize: '0.8125rem', padding: '0.35rem', color: 'var(--primary)', textAlign: 'center' }}
+            style={{
+              fontSize: '0.8125rem',
+              padding: '0.35rem',
+              color: 'var(--primary)',
+              textAlign: 'center',
+            }}
           >
             {isId ? '+ Simpan & tambah kelas lagi' : '+ Save & add another'}
           </button>
@@ -356,7 +526,11 @@ export function AddClassModal({ isOpen, onClose }: { isOpen: boolean; onClose: (
         onClose={() => setShowDiscardConfirm(false)}
         onConfirm={handleConfirmDiscard}
         title={isId ? 'Buang Perubahan?' : 'Discard Changes?'}
-        message={isId ? 'Informasi mata kuliah yang kamu masukkan belum disimpan. Yakin ingin membuangnya?' : 'You have unsaved changes. Are you sure you want to discard them?'}
+        message={
+          isId
+            ? 'Informasi mata kuliah yang kamu masukkan belum disimpan. Yakin ingin membuangnya?'
+            : 'You have unsaved changes. Are you sure you want to discard them?'
+        }
         confirmText={isId ? 'Buang' : 'Discard'}
         cancelText={isId ? 'Lanjut Edit' : 'Keep Editing'}
         danger

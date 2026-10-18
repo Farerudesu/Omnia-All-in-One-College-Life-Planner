@@ -27,14 +27,29 @@ export function AskOmniMessageList({
   const suggestions =
     lang === 'id'
       ? [
-          { label: 'Catat pengeluaran: 15rb beli makan siang di kantin', icon: <DollarSign size={16} /> },
-          { label: 'Jadwalkan: Belajar kelompok kalkulus besok jam 3 sore di perpus', icon: <Calendar size={16} /> },
-          { label: 'Tambah tugas: Laporan praktikum jaringan dikumpulkan Jumat jam 23:59', icon: <PlusCircle size={16} /> },
+          {
+            label: 'Catat pengeluaran: 15rb beli makan siang di kantin',
+            icon: <DollarSign size={16} />,
+          },
+          {
+            label: 'Jadwalkan: Belajar kelompok kalkulus besok jam 3 sore di perpus',
+            icon: <Calendar size={16} />,
+          },
+          {
+            label: 'Tambah tugas: Laporan praktikum jaringan dikumpulkan Jumat jam 23:59',
+            icon: <PlusCircle size={16} />,
+          },
         ]
       : [
           { label: 'Log expense: $12 for lunch at campus diner', icon: <DollarSign size={16} /> },
-          { label: 'Add event: Math study group tomorrow 3pm in Library', icon: <Calendar size={16} /> },
-          { label: 'Add task: CS101 problem set due Friday at 11:59pm', icon: <PlusCircle size={16} /> },
+          {
+            label: 'Add event: Math study group tomorrow 3pm in Library',
+            icon: <Calendar size={16} />,
+          },
+          {
+            label: 'Add task: CS101 problem set due Friday at 11:59pm',
+            icon: <PlusCircle size={16} />,
+          },
         ];
 
   return (
@@ -50,7 +65,15 @@ export function AskOmniMessageList({
         scrollPaddingBottom: '10rem',
       }}
     >
-      <div style={{ width: '100%', maxWidth: 768, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <div
+        style={{
+          width: '100%',
+          maxWidth: 768,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1rem',
+        }}
+      >
         {messages.length === 0 ? (
           <div
             style={{
@@ -108,7 +131,13 @@ export function AskOmniMessageList({
 
             <div
               className="ask-omni-suggestions"
-              style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%', maxWidth: 460 }}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.5rem',
+                width: '100%',
+                maxWidth: 460,
+              }}
             >
               {suggestions.map((s, idx) => (
                 <button
@@ -191,7 +220,15 @@ export function AskOmniMessageList({
                     >
                       <Sparkles size={12} />
                     </div>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--on-surface-variant)' }}>Omni</span>
+                    <span
+                      style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        color: 'var(--on-surface-variant)',
+                      }}
+                    >
+                      Omni
+                    </span>
                   </div>
                 )}
 
@@ -203,7 +240,8 @@ export function AskOmniMessageList({
                     borderRadius: 18,
                     borderTopLeftRadius: msg.role === 'assistant' ? 4 : 18,
                     borderBottomRightRadius: msg.role === 'user' ? 4 : 18,
-                    background: msg.role === 'user' ? 'var(--primary)' : 'var(--surface-container-lowest)',
+                    background:
+                      msg.role === 'user' ? 'var(--primary)' : 'var(--surface-container-lowest)',
                     color: msg.role === 'user' ? 'white' : 'var(--on-surface)',
                     border: msg.role === 'assistant' ? '1px solid var(--outline-variant)' : 'none',
                     boxShadow: msg.role === 'assistant' ? 'var(--shadow-xs)' : 'none',
@@ -213,7 +251,12 @@ export function AskOmniMessageList({
                     <img
                       src={msg.attachmentUrl}
                       alt="Attachment"
-                      style={{ width: '100%', maxWidth: 300, borderRadius: 12, marginBottom: msg.content ? '0.75rem' : 0 }}
+                      style={{
+                        width: '100%',
+                        maxWidth: 300,
+                        borderRadius: 12,
+                        marginBottom: msg.content ? '0.75rem' : 0,
+                      }}
                     />
                   )}
                   {msg.content &&
@@ -222,16 +265,16 @@ export function AskOmniMessageList({
                         <ReactMarkdown>{msg.content}</ReactMarkdown>
                       </div>
                     ) : (
-                      <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.5, fontSize: '0.9375rem' }}>{msg.content}</div>
+                      <div
+                        style={{ whiteSpace: 'pre-wrap', lineHeight: 1.5, fontSize: '0.9375rem' }}
+                      >
+                        {msg.content}
+                      </div>
                     ))}
                 </div>
 
                 {msg.prefilledData && (
-                  <ProposalCard
-                    message={msg}
-                    lang={lang}
-                    onOpenModal={onOpenPrefilledModal}
-                  />
+                  <ProposalCard message={msg} lang={lang} onOpenModal={onOpenPrefilledModal} />
                 )}
               </div>
             ))}
@@ -261,7 +304,15 @@ export function AskOmniMessageList({
                   >
                     <Sparkles size={12} />
                   </div>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--on-surface-variant)' }}>Omni</span>
+                  <span
+                    style={{
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      color: 'var(--on-surface-variant)',
+                    }}
+                  >
+                    Omni
+                  </span>
                 </div>
                 <div
                   style={{

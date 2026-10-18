@@ -3,11 +3,41 @@ import type { CalendarItem } from '../types';
 import { toDateString } from '@/lib/dateUtils';
 
 export const LEGEND_ITEMS = [
-  { key: 'classes', labelEn: 'Classes', labelId: 'Kelas', shape: 'square' as CategoryShape, color: 'var(--classes)' },
-  { key: 'exam', labelEn: 'Exams', labelId: 'Ujian', shape: 'diamond' as CategoryShape, color: 'var(--exams)' },
-  { key: 'deadline', labelEn: 'Deadlines', labelId: 'Tenggat', shape: 'outline-square' as CategoryShape, color: 'var(--deadlines)' },
-  { key: 'personal', labelEn: 'Personal', labelId: 'Pribadi', shape: 'circle' as CategoryShape, color: 'var(--personal)' },
-  { key: 'lab', labelEn: 'Lab', labelId: 'Praktikum', shape: 'diamond' as CategoryShape, color: 'var(--tertiary)' },
+  {
+    key: 'classes',
+    labelEn: 'Classes',
+    labelId: 'Kelas',
+    shape: 'square' as CategoryShape,
+    color: 'var(--classes)',
+  },
+  {
+    key: 'exam',
+    labelEn: 'Exams',
+    labelId: 'Ujian',
+    shape: 'diamond' as CategoryShape,
+    color: 'var(--exams)',
+  },
+  {
+    key: 'deadline',
+    labelEn: 'Deadlines',
+    labelId: 'Tenggat',
+    shape: 'outline-square' as CategoryShape,
+    color: 'var(--deadlines)',
+  },
+  {
+    key: 'personal',
+    labelEn: 'Personal',
+    labelId: 'Pribadi',
+    shape: 'circle' as CategoryShape,
+    color: 'var(--personal)',
+  },
+  {
+    key: 'lab',
+    labelEn: 'Lab',
+    labelId: 'Praktikum',
+    shape: 'diamond' as CategoryShape,
+    color: 'var(--tertiary)',
+  },
 ];
 
 export const CATEGORY_MAP: Record<string, { shape: CategoryShape; color: string }> = {
@@ -43,7 +73,9 @@ export function exportItemToICS(item: CalendarItem, date: Date) {
     'STATUS:CONFIRMED',
     'END:VEVENT',
     'END:VCALENDAR',
-  ].filter(Boolean).join('\r\n');
+  ]
+    .filter(Boolean)
+    .join('\r\n');
 
   const blob = new Blob([icsData], { type: 'text/calendar;charset=utf-8' });
   const url = URL.createObjectURL(blob);

@@ -27,7 +27,9 @@ function loadChatHistory(): Message[] {
       (message: Message) =>
         !(
           message.role === 'assistant' &&
-          /having trouble replying|unable to reach|failed to send request|try again in a moment/i.test(message.content)
+          /having trouble replying|unable to reach|failed to send request|try again in a moment/i.test(
+            message.content
+          )
         )
     );
   } catch {
@@ -86,7 +88,10 @@ export function AskOmniPage() {
     const userText = input.trim();
     setRetryText('');
 
-    const pendingMessage = messages.slice().reverse().find((m) => m.prefilledData && !m.actionStatus);
+    const pendingMessage = messages
+      .slice()
+      .reverse()
+      .find((m) => m.prefilledData && !m.actionStatus);
     if (pendingMessage?.prefilledData && isConfirmationIntent(userText)) {
       setPrefilledModal({
         data: { ...pendingMessage.prefilledData },
@@ -165,7 +170,9 @@ export function AskOmniPage() {
       setMessages((prev) => [
         ...(aiPrefilled
           ? prev.map((item) =>
-              item.prefilledData && !item.actionStatus ? { ...item, actionStatus: 'replaced' as const } : item
+              item.prefilledData && !item.actionStatus
+                ? { ...item, actionStatus: 'replaced' as const }
+                : item
             )
           : prev),
         aiMessage,
@@ -252,7 +259,9 @@ export function AskOmniPage() {
 
       setPrefilledModal(null);
     } catch (err) {
-      setPrefilledError(err instanceof Error ? err.message : 'Unable to save. Please check fields and try again.');
+      setPrefilledError(
+        err instanceof Error ? err.message : 'Unable to save. Please check fields and try again.'
+      );
     } finally {
       setIsSavingPrefilled(false);
     }
@@ -295,7 +304,11 @@ export function AskOmniPage() {
   };
 
   const handleClearHistory = () => {
-    if (window.confirm(lang === 'id' ? 'Hapus semua riwayat percakapan Omni?' : 'Clear all Omni chat history?')) {
+    if (
+      window.confirm(
+        lang === 'id' ? 'Hapus semua riwayat percakapan Omni?' : 'Clear all Omni chat history?'
+      )
+    ) {
       setMessages([]);
       ds.saveChatHistory([]);
     }

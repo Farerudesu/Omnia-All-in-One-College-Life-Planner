@@ -68,10 +68,22 @@ export function ScheduleAddEventModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={isId ? 'Tambah kegiatan ke jadwal' : 'Add event to schedule'}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={isId ? 'Tambah kegiatan ke jadwal' : 'Add event to schedule'}
+    >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <div>
-          <label htmlFor="schedule-event-title" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+          <label
+            htmlFor="schedule-event-title"
+            style={{
+              display: 'block',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              marginBottom: '0.375rem',
+            }}
+          >
             {isId ? 'Judul Kegiatan *' : 'Event Title *'}
           </label>
           <input
@@ -84,7 +96,11 @@ export function ScheduleAddEventModal({
                 setTitleError(null);
               }
             }}
-            placeholder={isId ? 'contoh: Ujian Tengah Semester, Belajar Bersama' : 'e.g. Midterm Exam, Study Session, Project Presentation'}
+            placeholder={
+              isId
+                ? 'contoh: Ujian Tengah Semester, Belajar Bersama'
+                : 'e.g. Midterm Exam, Study Session, Project Presentation'
+            }
             style={{
               width: '100%',
               borderColor: titleError ? 'var(--critical, #dc2626)' : undefined,
@@ -111,10 +127,22 @@ export function ScheduleAddEventModal({
         </div>
 
         <div>
-          <div id="schedule-event-category-label" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+          <div
+            id="schedule-event-category-label"
+            style={{
+              display: 'block',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              marginBottom: '0.375rem',
+            }}
+          >
             {isId ? 'Kategori Kegiatan' : 'Event Category'}
           </div>
-          <div role="group" aria-labelledby="schedule-event-category-label" style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap' }}>
+          <div
+            role="group"
+            aria-labelledby="schedule-event-category-label"
+            style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap' }}
+          >
             {(['exam', 'deadline', 'personal', 'other'] as EventType[]).map((t) => (
               <button
                 key={t}
@@ -122,10 +150,21 @@ export function ScheduleAddEventModal({
                 className={type === t ? 'chip active' : 'chip'}
                 onClick={() => setType(t)}
               >
-                {t === 'exam' ? (isId ? 'Ujian' : 'Exam') :
-                 t === 'deadline' ? (isId ? 'Tenggat' : 'Deadline') :
-                 t === 'personal' ? (isId ? 'Pribadi' : 'Personal') :
-                 (isId ? 'Lainnya' : 'Other')}
+                {t === 'exam'
+                  ? isId
+                    ? 'Ujian'
+                    : 'Exam'
+                  : t === 'deadline'
+                    ? isId
+                      ? 'Tenggat'
+                      : 'Deadline'
+                    : t === 'personal'
+                      ? isId
+                        ? 'Pribadi'
+                        : 'Personal'
+                      : isId
+                        ? 'Lainnya'
+                        : 'Other'}
               </button>
             ))}
           </div>
@@ -133,7 +172,15 @@ export function ScheduleAddEventModal({
 
         <div className="modal-form-grid-2col">
           <div>
-            <label htmlFor="schedule-event-date" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            <label
+              htmlFor="schedule-event-date"
+              style={{
+                display: 'block',
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                marginBottom: '0.375rem',
+              }}
+            >
               {isId ? 'Tanggal *' : 'Date *'}
             </label>
             <input
@@ -146,7 +193,15 @@ export function ScheduleAddEventModal({
             />
           </div>
           <div>
-            <label htmlFor="schedule-event-course" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            <label
+              htmlFor="schedule-event-course"
+              style={{
+                display: 'block',
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                marginBottom: '0.375rem',
+              }}
+            >
               {isId ? 'Mata Kuliah Terkait' : 'Associated Course'}
             </label>
             <select
@@ -167,7 +222,15 @@ export function ScheduleAddEventModal({
 
         <div className="modal-form-grid-2col">
           <div>
-            <label htmlFor="schedule-event-start-time" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            <label
+              htmlFor="schedule-event-start-time"
+              style={{
+                display: 'block',
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                marginBottom: '0.375rem',
+              }}
+            >
               {isId ? 'Waktu Mulai' : 'Start Time'}
             </label>
             <input
@@ -179,7 +242,15 @@ export function ScheduleAddEventModal({
             />
           </div>
           <div>
-            <label htmlFor="schedule-event-end-time" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            <label
+              htmlFor="schedule-event-end-time"
+              style={{
+                display: 'block',
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                marginBottom: '0.375rem',
+              }}
+            >
               {isId ? 'Waktu Selesai' : 'End Time'}
             </label>
             <input
@@ -193,14 +264,24 @@ export function ScheduleAddEventModal({
         </div>
 
         <div>
-          <label htmlFor="schedule-event-notes" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+          <label
+            htmlFor="schedule-event-notes"
+            style={{
+              display: 'block',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              marginBottom: '0.375rem',
+            }}
+          >
             {isId ? 'Catatan / Lokasi' : 'Notes / Location'}
           </label>
           <textarea
             id="schedule-event-notes"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder={isId ? 'Ruang kelas, materi ujian, dll.' : 'Room number, materials permitted, etc.'}
+            placeholder={
+              isId ? 'Ruang kelas, materi ujian, dll.' : 'Room number, materials permitted, etc.'
+            }
             rows={2}
             style={{ width: '100%' }}
           />
@@ -210,7 +291,12 @@ export function ScheduleAddEventModal({
           <button type="button" className="btn-outline" onClick={onClose} disabled={isSubmitting}>
             {isId ? 'Batal' : 'Cancel'}
           </button>
-          <button type="button" className="btn-primary" onClick={handleSave} disabled={isSubmitting}>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={handleSave}
+            disabled={isSubmitting}
+          >
             {isId ? 'Tambah Kegiatan' : 'Add Event'}
           </button>
         </div>

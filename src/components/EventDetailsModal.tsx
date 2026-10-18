@@ -18,12 +18,21 @@ interface EventDetailsModalProps {
   openInEditMode?: boolean;
 }
 
-export function EventDetailsModal({ event, isOpen, onClose, openInEditMode }: EventDetailsModalProps) {
+export function EventDetailsModal({
+  event,
+  isOpen,
+  onClose,
+  openInEditMode,
+}: EventDetailsModalProps) {
   const lang = useLanguage();
   const isId = lang === 'id';
   const courses = useData(ds.getCourses);
   const pinnedEventIds = useData(ds.getPinnedEventIds);
-  const uniqueCourses = courses.filter((course, index, list) => list.findIndex((item) => `${item.code}|${item.name}` === `${course.code}|${course.name}`) === index);
+  const uniqueCourses = courses.filter(
+    (course, index, list) =>
+      list.findIndex((item) => `${item.code}|${item.name}` === `${course.code}|${course.name}`) ===
+      index
+  );
   const [isEditing, setIsEditing] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -60,7 +69,8 @@ export function EventDetailsModal({ event, isOpen, onClose, openInEditMode }: Ev
   if (!event) return null;
 
   const course = courses.find((c) => c.id === (isEditing ? courseId : event.courseId));
-  const categoryKey = event.type === 'exam' ? 'exams' : event.type === 'deadline' ? 'deadlines' : 'personal';
+  const categoryKey =
+    event.type === 'exam' ? 'exams' : event.type === 'deadline' ? 'deadlines' : 'personal';
   const shape = CATEGORY_SHAPES[categoryKey] || 'circle';
   const color = CATEGORY_COLORS[categoryKey] || 'var(--personal)';
 
@@ -120,14 +130,19 @@ export function EventDetailsModal({ event, isOpen, onClose, openInEditMode }: Ev
       setShowConfirmDelete(false);
       onClose();
       toast({
-        message: isId ? `Kegiatan "${event.title}" berhasil dihapus` : `Event "${event.title}" deleted`,
+        message: isId
+          ? `Kegiatan "${event.title}" berhasil dihapus`
+          : `Event "${event.title}" deleted`,
         type: 'info',
         action: deleted
           ? {
               label: isId ? 'Urungkan' : 'Undo',
               onClick: async () => {
                 await ds.restoreEvent(deleted);
-                toast({ message: isId ? 'Kegiatan berhasil dipulihkan' : 'Event restored', type: 'success' });
+                toast({
+                  message: isId ? 'Kegiatan berhasil dipulihkan' : 'Event restored',
+                  type: 'success',
+                });
               },
             }
           : undefined,
@@ -157,7 +172,15 @@ export function EventDetailsModal({ event, isOpen, onClose, openInEditMode }: Ev
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEditing ? (isId ? 'Edit Kegiatan' : 'Edit Calendar Event') : (isId ? 'Detail Kegiatan' : 'Event Details')}
+      title={
+        isEditing
+          ? isId
+            ? 'Edit Kegiatan'
+            : 'Edit Calendar Event'
+          : isId
+            ? 'Detail Kegiatan'
+            : 'Event Details'
+      }
     >
       {isEditing ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -173,7 +196,11 @@ export function EventDetailsModal({ event, isOpen, onClose, openInEditMode }: Ev
                 setTitle(e.target.value);
                 if (titleError && e.target.value.trim()) setTitleError(null);
               }}
-              placeholder={isId ? 'contoh: Ujian Tengah Semester' : 'e.g. Midterm Exam, Office Hours, Group Meeting'}
+              placeholder={
+                isId
+                  ? 'contoh: Ujian Tengah Semester'
+                  : 'e.g. Midterm Exam, Office Hours, Group Meeting'
+              }
               style={{
                 width: '100%',
                 borderColor: titleError ? 'var(--critical, #dc2626)' : undefined,
@@ -264,7 +291,9 @@ export function EventDetailsModal({ event, isOpen, onClose, openInEditMode }: Ev
           </div>
 
           <div>
-            <label className="label">{isId ? 'Mata Kuliah Terkait (Opsional)' : 'Associated Course (Optional)'}</label>
+            <label className="label">
+              {isId ? 'Mata Kuliah Terkait (Opsional)' : 'Associated Course (Optional)'}
+            </label>
             <select
               value={courseId}
               onChange={(e) => setCourseId(e.target.value)}
@@ -284,13 +313,20 @@ export function EventDetailsModal({ event, isOpen, onClose, openInEditMode }: Ev
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder={isId ? 'Ruang kelas, tautan Zoom, materi yang diperbolehkan, dll.' : 'Room location, zoom link, exam materials permitted, etc.'}
+              placeholder={
+                isId
+                  ? 'Ruang kelas, tautan Zoom, materi yang diperbolehkan, dll.'
+                  : 'Room location, zoom link, exam materials permitted, etc.'
+              }
               rows={3}
               style={{ width: '100%' }}
             />
           </div>
 
-          <div className="modal-actions-sticky" style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div
+            className="modal-actions-sticky"
+            style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}
+          >
             <button
               type="button"
               className="btn-outline"
@@ -304,18 +340,41 @@ export function EventDetailsModal({ event, isOpen, onClose, openInEditMode }: Ev
                 gap: '0.375rem',
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <polyline points="3 6 5 6 21 6" />
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
               </svg>
               {isId ? 'Hapus' : 'Delete'}
             </button>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button type="button" className="btn-ghost" onClick={() => setIsEditing(false)} disabled={isSubmitting}>
+              <button
+                type="button"
+                className="btn-ghost"
+                onClick={() => setIsEditing(false)}
+                disabled={isSubmitting}
+              >
                 {isId ? 'Batal' : 'Cancel'}
               </button>
-              <button type="button" className="btn-primary" onClick={handleSave} disabled={isSubmitting}>
-                {isSubmitting ? (isId ? 'Menyimpan…' : 'Saving…') : (isId ? 'Simpan Perubahan' : 'Save Changes')}
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={handleSave}
+                disabled={isSubmitting}
+              >
+                {isSubmitting
+                  ? isId
+                    ? 'Menyimpan…'
+                    : 'Saving…'
+                  : isId
+                    ? 'Simpan Perubahan'
+                    : 'Save Changes'}
               </button>
             </div>
           </div>
@@ -323,9 +382,20 @@ export function EventDetailsModal({ event, isOpen, onClose, openInEditMode }: Ev
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {/* Header: Type & Course */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '1rem',
+            }}
+          >
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <CategoryIndicator shape={event.isGoogleEvent ? 'circle' : shape} color={event.isGoogleEvent ? '#4285F4' : color} size={10} />
+              <CategoryIndicator
+                shape={event.isGoogleEvent ? 'circle' : shape}
+                color={event.isGoogleEvent ? '#4285F4' : color}
+                size={10}
+              />
               <span
                 style={{
                   color: event.isGoogleEvent ? '#4285F4' : color,
@@ -368,12 +438,24 @@ export function EventDetailsModal({ event, isOpen, onClose, openInEditMode }: Ev
 
           {/* Title */}
           <div>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--on-surface)', marginBottom: '0.25rem' }}>
+            <h2
+              style={{
+                fontSize: '1.25rem',
+                fontWeight: 700,
+                color: 'var(--on-surface)',
+                marginBottom: '0.25rem',
+              }}
+            >
               {event.title}
             </h2>
             {course && (
               <div style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)' }}>
-                {course.name} · {course.professor ? `Prof. ${course.professor}` : (isId ? 'Kalender Akademik' : 'Academic Calendar')}
+                {course.name} ·{' '}
+                {course.professor
+                  ? `Prof. ${course.professor}`
+                  : isId
+                    ? 'Kalender Akademik'
+                    : 'Academic Calendar'}
               </div>
             )}
           </div>
@@ -390,43 +472,89 @@ export function EventDetailsModal({ event, isOpen, onClose, openInEditMode }: Ev
               gap: '0.5rem',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
-              <span style={{ color: 'var(--on-surface-variant)', width: 80 }}>{isId ? 'Tanggal:' : 'Date:'}</span>
+            <div
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}
+            >
+              <span style={{ color: 'var(--on-surface-variant)', width: 80 }}>
+                {isId ? 'Tanggal:' : 'Date:'}
+              </span>
               <span style={{ fontWeight: 600, color: 'var(--on-surface)' }}>
                 {formatDateShort(new Date(event.date + 'T00:00:00'))}
               </span>
             </div>
             {event.startTime && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
-                <span style={{ color: 'var(--on-surface-variant)', width: 80 }}>{isId ? 'Waktu:' : 'Time:'}</span>
-                <span className="tabular-nums" style={{ fontWeight: 600, color: 'var(--on-surface)' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  fontSize: '0.875rem',
+                }}
+              >
+                <span style={{ color: 'var(--on-surface-variant)', width: 80 }}>
+                  {isId ? 'Waktu:' : 'Time:'}
+                </span>
+                <span
+                  className="tabular-nums"
+                  style={{ fontWeight: 600, color: 'var(--on-surface)' }}
+                >
                   {formatTime12(event.startTime)}
                   {event.endTime ? ` – ${formatTime12(event.endTime)}` : ''}
                 </span>
               </div>
             )}
             {reminderMinutes > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
-                <span style={{ color: 'var(--on-surface-variant)', width: 80 }}>{isId ? 'Pengingat:' : 'Reminder:'}</span>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  fontSize: '0.875rem',
+                }}
+              >
+                <span style={{ color: 'var(--on-surface-variant)', width: 80 }}>
+                  {isId ? 'Pengingat:' : 'Reminder:'}
+                </span>
                 <span style={{ color: 'var(--primary)', fontWeight: 600 }}>
                   {reminderMinutes === 15
-                    ? (isId ? '15 menit sebelumnya' : '15 min before')
+                    ? isId
+                      ? '15 menit sebelumnya'
+                      : '15 min before'
                     : reminderMinutes === 60
-                    ? (isId ? '1 jam sebelumnya' : '1 hour before')
-                    : (isId ? '1 hari sebelumnya' : '1 day before')}
+                      ? isId
+                        ? '1 jam sebelumnya'
+                        : '1 hour before'
+                      : isId
+                        ? '1 hari sebelumnya'
+                        : '1 day before'}
                 </span>
               </div>
             )}
             {event.notes && (
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-                <span style={{ color: 'var(--on-surface-variant)', width: 80, flexShrink: 0 }}>{isId ? 'Catatan:' : 'Notes:'}</span>
-                <span style={{ color: 'var(--on-surface)', whiteSpace: 'pre-wrap' }}>{event.notes}</span>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '0.5rem',
+                  fontSize: '0.875rem',
+                  marginTop: '0.25rem',
+                }}
+              >
+                <span style={{ color: 'var(--on-surface-variant)', width: 80, flexShrink: 0 }}>
+                  {isId ? 'Catatan:' : 'Notes:'}
+                </span>
+                <span style={{ color: 'var(--on-surface)', whiteSpace: 'pre-wrap' }}>
+                  {event.notes}
+                </span>
               </div>
             )}
           </div>
 
           {/* Action buttons */}
-          <div className="modal-actions-sticky" style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
+          <div
+            className="modal-actions-sticky"
+            style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}
+          >
             <button
               type="button"
               className="btn-outline"
@@ -439,7 +567,14 @@ export function EventDetailsModal({ event, isOpen, onClose, openInEditMode }: Ev
                 gap: '0.375rem',
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <polyline points="3 6 5 6 21 6" />
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
               </svg>
@@ -456,11 +591,22 @@ export function EventDetailsModal({ event, isOpen, onClose, openInEditMode }: Ev
                   gap: '0.375rem',
                   color: pinnedEventIds.includes(event.id) ? 'var(--primary)' : 'inherit',
                   borderColor: pinnedEventIds.includes(event.id) ? 'var(--primary)' : undefined,
-                  background: pinnedEventIds.includes(event.id) ? 'color-mix(in srgb, var(--primary) 10%, transparent)' : undefined,
+                  background: pinnedEventIds.includes(event.id)
+                    ? 'color-mix(in srgb, var(--primary) 10%, transparent)'
+                    : undefined,
                 }}
               >
-                <Pin size={14} style={{ fill: pinnedEventIds.includes(event.id) ? 'currentColor' : 'none' }} />
-                {pinnedEventIds.includes(event.id) ? (isId ? 'Lepas Sematan' : 'Unpin') : (isId ? 'Sematkan ke Sidebar' : 'Pin to Sidebar')}
+                <Pin
+                  size={14}
+                  style={{ fill: pinnedEventIds.includes(event.id) ? 'currentColor' : 'none' }}
+                />
+                {pinnedEventIds.includes(event.id)
+                  ? isId
+                    ? 'Lepas Sematan'
+                    : 'Unpin'
+                  : isId
+                    ? 'Sematkan ke Sidebar'
+                    : 'Pin to Sidebar'}
               </button>
               <button type="button" className="btn-ghost" onClick={onClose}>
                 {isId ? 'Tutup' : 'Close'}
@@ -491,7 +637,14 @@ export function EventDetailsModal({ event, isOpen, onClose, openInEditMode }: Ev
                   onClick={() => setIsEditing(true)}
                   style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                   </svg>

@@ -72,7 +72,15 @@ export function CalendarAddEventModal({
     <Modal isOpen={isOpen} onClose={handleClose} title={isId ? 'Tambah acara' : 'Add event'}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <div>
-          <label htmlFor="event-title" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+          <label
+            htmlFor="event-title"
+            style={{
+              display: 'block',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              marginBottom: '0.375rem',
+            }}
+          >
             {isId ? 'Judul acara *' : 'Event Title *'}
           </label>
           <input
@@ -86,7 +94,11 @@ export function CalendarAddEventModal({
               setTitle(e.target.value);
               if (titleError && e.target.value.trim()) setTitleError('');
             }}
-            placeholder={isId ? 'Contoh: Ujian Tengah Semester, Praktikum SBD, Rapat' : 'e.g. Midterm Exam, Database Lab, Meeting'}
+            placeholder={
+              isId
+                ? 'Contoh: Ujian Tengah Semester, Praktikum SBD, Rapat'
+                : 'e.g. Midterm Exam, Database Lab, Meeting'
+            }
             style={{
               width: '100%',
               borderColor: titleError ? 'var(--error)' : undefined,
@@ -95,21 +107,47 @@ export function CalendarAddEventModal({
             required
           />
           {titleError && (
-            <div id="event-title-error" role="alert" style={{ color: 'var(--error)', fontSize: '0.75rem', marginTop: '0.375rem', fontWeight: 500 }}>
+            <div
+              id="event-title-error"
+              role="alert"
+              style={{
+                color: 'var(--error)',
+                fontSize: '0.75rem',
+                marginTop: '0.375rem',
+                fontWeight: 500,
+              }}
+            >
               {titleError}
             </div>
           )}
         </div>
 
         <div>
-          <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+          <label
+            style={{
+              display: 'block',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              marginBottom: '0.375rem',
+            }}
+          >
             {isId ? 'Kategori acara' : 'Event Category'}
           </label>
           <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap' }}>
             {(['class', 'exam', 'deadline', 'personal', 'lab', 'other'] as EventType[]).map((t) => {
               const chipLabel = isId
-                ? (t === 'class' ? 'Kelas' : t === 'exam' ? 'Ujian' : t === 'deadline' ? 'Tenggat' : t === 'personal' ? 'Pribadi' : t === 'lab' ? 'Praktikum' : 'Lainnya')
-                : (t.charAt(0).toUpperCase() + t.slice(1));
+                ? t === 'class'
+                  ? 'Kelas'
+                  : t === 'exam'
+                    ? 'Ujian'
+                    : t === 'deadline'
+                      ? 'Tenggat'
+                      : t === 'personal'
+                        ? 'Pribadi'
+                        : t === 'lab'
+                          ? 'Praktikum'
+                          : 'Lainnya'
+                : t.charAt(0).toUpperCase() + t.slice(1);
               return (
                 <button
                   key={t}
@@ -125,7 +163,15 @@ export function CalendarAddEventModal({
         </div>
 
         <div>
-          <label htmlFor="event-date" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+          <label
+            htmlFor="event-date"
+            style={{
+              display: 'block',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              marginBottom: '0.375rem',
+            }}
+          >
             {isId ? 'Tanggal *' : 'Date *'}
           </label>
           <input
@@ -140,7 +186,15 @@ export function CalendarAddEventModal({
 
         <div className="modal-form-grid-2col">
           <div>
-            <label htmlFor="event-start-time" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            <label
+              htmlFor="event-start-time"
+              style={{
+                display: 'block',
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                marginBottom: '0.375rem',
+              }}
+            >
               {isId ? 'Waktu Mulai' : 'Start Time'}
             </label>
             <input
@@ -152,7 +206,15 @@ export function CalendarAddEventModal({
             />
           </div>
           <div>
-            <label htmlFor="event-end-time" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            <label
+              htmlFor="event-end-time"
+              style={{
+                display: 'block',
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                marginBottom: '0.375rem',
+              }}
+            >
               {isId ? 'Waktu Selesai' : 'End Time'}
             </label>
             <input
@@ -166,7 +228,15 @@ export function CalendarAddEventModal({
         </div>
 
         <div>
-          <label htmlFor="event-location" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+          <label
+            htmlFor="event-location"
+            style={{
+              display: 'block',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              marginBottom: '0.375rem',
+            }}
+          >
             {isId ? 'Lokasi / Ruangan' : 'Location / Room'}
           </label>
           <input
@@ -174,16 +244,31 @@ export function CalendarAddEventModal({
             type="text"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            placeholder={isId ? 'contoh: D303, Lab Jarkom, Ruang Seminar' : 'e.g. Room D303, Lab 2, Hall B'}
+            placeholder={
+              isId ? 'contoh: D303, Lab Jarkom, Ruang Seminar' : 'e.g. Room D303, Lab 2, Hall B'
+            }
             style={{ width: '100%' }}
           />
         </div>
 
         <div>
-          <label htmlFor="event-course" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+          <label
+            htmlFor="event-course"
+            style={{
+              display: 'block',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              marginBottom: '0.375rem',
+            }}
+          >
             {isId ? 'Mata Kuliah Terkait (Opsional)' : 'Associated Course (Optional)'}
           </label>
-          <select id="event-course" value={courseId} onChange={(e) => setCourseId(e.target.value)} style={{ width: '100%' }}>
+          <select
+            id="event-course"
+            value={courseId}
+            onChange={(e) => setCourseId(e.target.value)}
+            style={{ width: '100%' }}
+          >
             <option value="">{isId ? 'Tidak Ada / Umum' : 'None / General'}</option>
             {courses.map((c) => (
               <option key={c.id} value={c.id}>
@@ -194,28 +279,58 @@ export function CalendarAddEventModal({
         </div>
 
         <div>
-          <label htmlFor="event-notes" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+          <label
+            htmlFor="event-notes"
+            style={{
+              display: 'block',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              marginBottom: '0.375rem',
+            }}
+          >
             {isId ? 'Catatan' : 'Notes'}
           </label>
           <textarea
             id="event-notes"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder={isId ? 'Materi persiapan, perlengkapan yang dibawa, catatan…' : 'Preparation materials, notes…'}
+            placeholder={
+              isId
+                ? 'Materi persiapan, perlengkapan yang dibawa, catatan…'
+                : 'Preparation materials, notes…'
+            }
             rows={3}
             style={{ width: '100%', resize: 'vertical' }}
           />
         </div>
 
         <div className="modal-actions-sticky">
-          <button type="button" className="btn-outline" onClick={handleClose} disabled={isSubmitting}>
+          <button
+            type="button"
+            className="btn-outline"
+            onClick={handleClose}
+            disabled={isSubmitting}
+          >
             {isId ? 'Batal' : 'Cancel'}
           </button>
-          <button type="button" className="btn-primary" onClick={handleSave} disabled={isSubmitting}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={handleSave}
+            disabled={isSubmitting}
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              aria-hidden="true"
+            >
               <polyline points="20 6 9 17 4 12" />
             </svg>
-            {isSubmitting ? (isId ? 'Menyimpan…' : 'Saving…') : (isId ? 'Simpan' : 'Save Event')}
+            {isSubmitting ? (isId ? 'Menyimpan…' : 'Saving…') : isId ? 'Simpan' : 'Save Event'}
           </button>
         </div>
       </div>

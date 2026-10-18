@@ -43,8 +43,12 @@ export function ScheduleControlsBar({
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
         <h2 className="schedule-title tabular-nums" style={{ fontSize: '1.375rem', margin: 0 }}>
           {viewMode === 'today'
-            ? (isId ? `Jadwal Hari Ini – ${formatDateShort(currentDate)}` : `Today's Schedule – ${formatDateShort(currentDate)}`)
-            : (isId ? `Minggu ${formatDateShort(mondayDate || currentDate)}` : `Week of ${mondayDate ? getMonthName(mondayDate.getMonth(), true) : ''} ${mondayDate ? mondayDate.getDate() : ''}, ${mondayDate ? mondayDate.getFullYear() : ''}`)}
+            ? isId
+              ? `Jadwal Hari Ini – ${formatDateShort(currentDate)}`
+              : `Today's Schedule – ${formatDateShort(currentDate)}`
+            : isId
+              ? `Minggu ${formatDateShort(mondayDate || currentDate)}`
+              : `Week of ${mondayDate ? getMonthName(mondayDate.getMonth(), true) : ''} ${mondayDate ? mondayDate.getDate() : ''}, ${mondayDate ? mondayDate.getFullYear() : ''}`}
         </h2>
         <div
           style={{
@@ -106,7 +110,15 @@ export function ScheduleControlsBar({
             }}
             title={isId ? 'Gulir ke garis waktu saat ini' : 'Scroll to current time indicator'}
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              aria-hidden="true"
+            >
               <circle cx="12" cy="12" r="10" />
               <polyline points="12 6 12 12 16 14" />
             </svg>
@@ -115,7 +127,10 @@ export function ScheduleControlsBar({
         </div>
       </div>
 
-      <div className="schedule-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+      <div
+        className="schedule-actions"
+        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+      >
         <button
           type="button"
           className="btn-outline"
@@ -131,13 +146,29 @@ export function ScheduleControlsBar({
           onClick={onOpenAddEvent}
           style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            aria-hidden="true"
+          >
             <path d="M12 5v14M5 12h14" />
           </svg>
           {isId ? 'Tambah acara' : 'Add event'}
         </button>
         <button type="button" className="btn-primary" onClick={onOpenAddClass}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            aria-hidden="true"
+          >
             <path d="M12 5v14M5 12h14" />
           </svg>
           {isId ? 'Tambah kelas' : 'Add class'}

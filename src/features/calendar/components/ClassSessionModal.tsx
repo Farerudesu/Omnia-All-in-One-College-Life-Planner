@@ -56,10 +56,23 @@ export function ClassSessionModal({
             }}
           />
           <div>
-            <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: course.color || 'var(--primary)' }}>
+            <div
+              style={{
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                color: course.color || 'var(--primary)',
+              }}
+            >
               {course.code}
             </div>
-            <h2 style={{ fontSize: '1.125rem', fontWeight: 700, margin: 0, color: 'var(--on-surface)' }}>
+            <h2
+              style={{
+                fontSize: '1.125rem',
+                fontWeight: 700,
+                margin: 0,
+                color: 'var(--on-surface)',
+              }}
+            >
               {course.name}
             </h2>
           </div>
@@ -78,24 +91,32 @@ export function ClassSessionModal({
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ color: 'var(--on-surface-variant)' }}>{lang === 'id' ? 'Tanggal:' : 'Date:'}</span>
+            <span style={{ color: 'var(--on-surface-variant)' }}>
+              {lang === 'id' ? 'Tanggal:' : 'Date:'}
+            </span>
             <span style={{ fontWeight: 600 }}>{formatDateLong(date)}</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ color: 'var(--on-surface-variant)' }}>{lang === 'id' ? 'Waktu Kuliah:' : 'Time:'}</span>
+            <span style={{ color: 'var(--on-surface-variant)' }}>
+              {lang === 'id' ? 'Waktu Kuliah:' : 'Time:'}
+            </span>
             <span className="tabular-nums" style={{ fontWeight: 600 }}>
               {formatTime12(session.startTime)} – {formatTime12(session.endTime)}
             </span>
           </div>
           {(session.room || course.room) && (
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--on-surface-variant)' }}>{lang === 'id' ? 'Ruangan:' : 'Room:'}</span>
+              <span style={{ color: 'var(--on-surface-variant)' }}>
+                {lang === 'id' ? 'Ruangan:' : 'Room:'}
+              </span>
               <span style={{ fontWeight: 600 }}>{session.room || course.room}</span>
             </div>
           )}
           {course.professor && (
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--on-surface-variant)' }}>{lang === 'id' ? 'Dosen:' : 'Instructor:'}</span>
+              <span style={{ color: 'var(--on-surface-variant)' }}>
+                {lang === 'id' ? 'Dosen:' : 'Instructor:'}
+              </span>
               <span style={{ fontWeight: 600 }}>{course.professor}</span>
             </div>
           )}

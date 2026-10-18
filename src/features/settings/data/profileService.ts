@@ -32,12 +32,17 @@ export async function updateProfile(data: UserProfile) {
   if (!activeUserId) throw new Error('Sign in before saving profile.');
   setTableStatus('profiles', { loading: true, error: null });
   try {
-    const { error } = await getClient().from('profiles').upsert({
-      id: activeUserId,
-      full_name: data.fullName,
-      university_email: data.universityEmail,
-      avatar_url: data.avatarUrl || null,
-    }, { onConflict: 'id' });
+    const { error } = await getClient()
+      .from('profiles')
+      .upsert(
+        {
+          id: activeUserId,
+          full_name: data.fullName,
+          university_email: data.universityEmail,
+          avatar_url: data.avatarUrl || null,
+        },
+        { onConflict: 'id' }
+      );
     if (error) throw error;
     await refreshTable('profiles');
   } catch (error) {
@@ -119,7 +124,10 @@ export function updateSettings(data: Partial<UserSettings>): void {
   };
   void mutateTable('user_settings', async () => {
     const client = getClient();
-    const { data: existing, error } = await client.from('user_settings').select('user_id').maybeSingle();
+    const { data: existing, error } = await client
+      .from('user_settings')
+      .select('user_id')
+      .maybeSingle();
     if (error) return { error };
     return existing
       ? client.from('user_settings').update(row).eq('user_id', activeUserId)
@@ -170,7 +178,11 @@ export function saveChatHistory(history: ChatMessage[]): void {
   if (chatSyncTimeout) clearTimeout(chatSyncTimeout);
   chatSyncTimeout = setTimeout(() => {
     const client = getClient();
-    client.from('user_settings').update({ chat_history: trimmed }).eq('user_id', activeUserId).then(() => {});
+    client
+      .from('user_settings')
+      .update({ chat_history: trimmed })
+      .eq('user_id', activeUserId)
+      .then(() => {});
   }, 1000);
 }
 
@@ -291,7 +303,14 @@ export function getNotifications(): AppNotification[] {
               ? `Kelas segera dimulai: ${course?.name || session.startTime}`
               : `Class starting soon: ${course?.name || session.startTime}`,
             message: `${course?.code || ''} · ${session.startTime}–${session.endTime} (${session.room || course?.room || 'TBA'})`,
-            time: diff > 0 ? (isId ? `dalam ${diff} mnt` : `in ${diff} min`) : (isId ? 'sedang berlangsung' : 'now'),
+            time:
+              diff > 0
+                ? isId
+                  ? `dalam ${diff} mnt`
+                  : `in ${diff} min`
+                : isId
+                  ? 'sedang berlangsung'
+                  : 'now',
             read: readIds.has(id),
             type: 'academic',
             link: '/schedule',
@@ -306,13 +325,19 @@ export function getNotifications(): AppNotification[] {
   for (const a of assignments) {
     if (a.status !== 'done' && a.dueDate) {
       const due = new Date(a.dueDate);
-      if (!isNaN(due.getTime()) && due >= new Date(now.getTime() - 24 * 60 * 60 * 1000) && due <= in48Hours) {
+      if (
+        !isNaN(due.getTime()) &&
+        due >= new Date(now.getTime() - 24 * 60 * 60 * 1000) &&
+        due <= in48Hours
+      ) {
         const id = `assignment-${a.id}`;
         const cd = formatDetailedCountdown(a.dueDate, now, isId ? 'id' : 'en');
         result.push({
           id,
           title: isId ? `Tenggat tugas: ${a.title}` : `Deliverable due: ${a.title}`,
-          message: isId ? `Batas waktu pengumpulan: ${a.dueDate.replace('T', ' ')}` : `Submission deadline: ${a.dueDate.replace('T', ' ')}`,
+          message: isId
+            ? `Batas waktu pengumpulan: ${a.dueDate.replace('T', ' ')}`
+            : `Submission deadline: ${a.dueDate.replace('T', ' ')}`,
           time: cd.text,
           read: readIds.has(id),
           type: 'deadline',
@@ -347,7 +372,9 @@ export function getNotifications(): AppNotification[] {
       result.push({
         id,
         title: isId ? `Pengingat: ${rem.title}` : `Reminder: ${rem.title}`,
-        message: isId ? `Pengingat terjadwal (${rem.minutesBefore} menit sebelum waktu acara)` : `Scheduled reminder (${rem.minutesBefore}m before)`,
+        message: isId
+          ? `Pengingat terjadwal (${rem.minutesBefore} menit sebelum waktu acara)`
+          : `Scheduled reminder (${rem.minutesBefore}m before)`,
         time: isId ? 'Waktunya tiba' : 'Triggered',
         read: readIds.has(id),
         type: rem.itemType === 'assignment' ? 'deadline' : 'alert',

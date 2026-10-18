@@ -46,7 +46,9 @@ export function updateCourse(id: string, data: Partial<Course>): void {
   if (data.professor !== undefined) row.instructor = data.professor;
   if (data.room !== undefined) row.ruangan = data.room;
   if (data.color !== undefined) row.warna = data.color;
-  void mutateTable('classes', () => getClient().from('classes').update(row).eq('id', id).eq('user_id', activeUserId));
+  void mutateTable('classes', () =>
+    getClient().from('classes').update(row).eq('id', id).eq('user_id', activeUserId)
+  );
 }
 
 export async function deleteCourse(id: string): Promise<boolean> {
@@ -98,7 +100,11 @@ export function addClassSession(
     setTableStatus('classes', { loading: false, error: 'Choose a class before adding a meeting.' });
     return { ...session, id: genId() };
   }
-  void mutateTable('classes', () => getClient().from('classes').insert(session.daysOfWeek.map((day) => ownedRow(classRow(course, session, day)))));
+  void mutateTable('classes', () =>
+    getClient()
+      .from('classes')
+      .insert(session.daysOfWeek.map((day) => ownedRow(classRow(course, session, day))))
+  );
   return { ...session, id: genId() };
 }
 
@@ -108,12 +114,19 @@ export function updateClassSession(id: string, data: Partial<ClassSession>): voi
   if (data.startTime !== undefined) row.jam_mulai = data.startTime;
   if (data.endTime !== undefined) row.jam_selesai = data.endTime;
   if (data.type !== undefined) row.tipe = data.type;
-  if (data.daysOfWeek?.length) row.hari = ['', 'senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu'][data.daysOfWeek[0]];
-  void mutateTable('classes', () => getClient().from('classes').update(row).eq('id', id).eq('user_id', activeUserId));
+  if (data.daysOfWeek?.length)
+    row.hari = ['', 'senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu'][
+      data.daysOfWeek[0]
+    ];
+  void mutateTable('classes', () =>
+    getClient().from('classes').update(row).eq('id', id).eq('user_id', activeUserId)
+  );
 }
 
 export function deleteClassSession(id: string): void {
-  void mutateTable('classes', () => getClient().from('classes').delete().eq('id', id).eq('user_id', activeUserId));
+  void mutateTable('classes', () =>
+    getClient().from('classes').delete().eq('id', id).eq('user_id', activeUserId)
+  );
 }
 
 // ─── Session Exceptions ───
@@ -126,12 +139,12 @@ export function getExceptionsForSession(sessionId: string): SessionException[] {
 }
 
 export function getExceptionForDate(sessionId: string, date: string): SessionException | undefined {
-  return sessionExceptions.find(
-    (e) => e.classSessionId === sessionId && e.date === date
-  );
+  return sessionExceptions.find((e) => e.classSessionId === sessionId && e.date === date);
 }
 
-export async function addSessionException(exc: Omit<SessionException, 'id'>): Promise<SessionException> {
+export async function addSessionException(
+  exc: Omit<SessionException, 'id'>
+): Promise<SessionException> {
   const existingIndex = sessionExceptions.findIndex(
     (e) => e.classSessionId === exc.classSessionId && e.date === exc.date
   );
@@ -154,9 +167,7 @@ export async function addSessionException(exc: Omit<SessionException, 'id'>): Pr
 }
 
 export function updateSessionException(id: string, data: Partial<SessionException>): void {
-  setSessionExceptions(
-    sessionExceptions.map((e) => (e.id === id ? { ...e, ...data } : e))
-  );
+  setSessionExceptions(sessionExceptions.map((e) => (e.id === id ? { ...e, ...data } : e)));
   const updated = sessionExceptions.find((e) => e.id === id);
   if (updated) persistSessionException(updated);
   notify();
@@ -175,7 +186,9 @@ export function getEvents(): CalendarEvent[] {
 
 export async function addEvent(event: Omit<CalendarEvent, 'id'>): Promise<CalendarEvent> {
   const newEvent = { ...event, id: genId() };
-  const { error } = await getClient().from('events').insert(ownedRow(eventRow(event)));
+  const { error } = await getClient()
+    .from('events')
+    .insert(ownedRow(eventRow(event)));
   if (error) throw error;
   await refreshTable('events');
   return newEvent;
@@ -184,7 +197,9 @@ export async function addEvent(event: Omit<CalendarEvent, 'id'>): Promise<Calend
 export async function createEvent(event: Omit<CalendarEvent, 'id'>): Promise<CalendarEvent> {
   setTableStatus('events', { loading: true, error: null });
   try {
-    const { error } = await getClient().from('events').insert(ownedRow(eventRow(event)));
+    const { error } = await getClient()
+      .from('events')
+      .insert(ownedRow(eventRow(event)));
     if (error) throw error;
     await refreshTable('events');
     return { ...event, id: genId() };
@@ -195,7 +210,9 @@ export async function createEvent(event: Omit<CalendarEvent, 'id'>): Promise<Cal
 }
 
 export function updateEvent(id: string, data: Partial<CalendarEvent>): void {
-  void mutateTable('events', () => getClient().from('events').update(eventRow(data)).eq('id', id).eq('user_id', activeUserId));
+  void mutateTable('events', () =>
+    getClient().from('events').update(eventRow(data)).eq('id', id).eq('user_id', activeUserId)
+  );
 }
 
 export async function deleteEvent(id: string): Promise<CalendarEvent | null> {
@@ -230,7 +247,9 @@ export async function restoreEvent(event: CalendarEvent): Promise<CalendarEvent>
     setEvents([...events, event]);
     notify();
   }
-  const { error } = await getClient().from('events').insert(ownedRow(eventRow(event)));
+  const { error } = await getClient()
+    .from('events')
+    .insert(ownedRow(eventRow(event)));
   if (error) {
     setEvents(events.filter((e) => e.id !== event.id));
     notify();
@@ -341,7 +360,9 @@ export async function createShareCode(): Promise<string> {
 }
 
 export async function previewShareCode(code: string): Promise<SharePreview> {
-  const { data, error } = await getClient().rpc('preview_share_code', { p_code: code.trim().toUpperCase() });
+  const { data, error } = await getClient().rpc('preview_share_code', {
+    p_code: code.trim().toUpperCase(),
+  });
   if (error) throw shareCodeError(error);
   if (!data || typeof data !== 'object') throw new Error('Invalid or expired code.');
   const preview = data as SharePreview;
@@ -352,7 +373,9 @@ export async function previewShareCode(code: string): Promise<SharePreview> {
 }
 
 export async function redeemShareCode(code: string): Promise<SharePreview> {
-  const { data, error } = await getClient().rpc('redeem_share_code', { p_code: code.trim().toUpperCase() });
+  const { data, error } = await getClient().rpc('redeem_share_code', {
+    p_code: code.trim().toUpperCase(),
+  });
   if (error) throw shareCodeError(error);
   if (!data || typeof data !== 'object') throw new Error('Unable to import this schedule.');
   const imported = data as SharePreview;

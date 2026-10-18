@@ -32,7 +32,15 @@ export function ScheduleMobileHeader({
 
   return (
     <div className="show-mobile schedule-mobile-header">
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.625rem' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '0.5rem',
+          marginBottom: '0.625rem',
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', minWidth: 0 }}>
           <button
             type="button"
@@ -41,17 +49,33 @@ export function ScheduleMobileHeader({
             aria-label={viewMode === 'today' ? 'Previous day' : 'Previous week'}
             style={{ width: 30, height: 30, padding: 0 }}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              aria-hidden="true"
+            >
               <polyline points="15 18 9 12 15 6" />
             </svg>
           </button>
           <span
             className="tabular-nums"
-            style={{ fontSize: '0.875rem', fontWeight: 700, padding: '0 0.125rem', whiteSpace: 'nowrap', color: 'var(--on-surface)' }}
+            style={{
+              fontSize: '0.875rem',
+              fontWeight: 700,
+              padding: '0 0.125rem',
+              whiteSpace: 'nowrap',
+              color: 'var(--on-surface)',
+            }}
           >
             {viewMode === 'today'
               ? `${currentDate.getDate()} ${getMonthName(currentDate.getMonth(), true)}`
-              : (mondayDate ? `${mondayDate.getDate()} ${getMonthName(mondayDate.getMonth(), true)}` : '')}
+              : mondayDate
+                ? `${mondayDate.getDate()} ${getMonthName(mondayDate.getMonth(), true)}`
+                : ''}
           </span>
           <button
             type="button"
@@ -60,7 +84,15 @@ export function ScheduleMobileHeader({
             aria-label={viewMode === 'today' ? 'Next day' : 'Next week'}
             style={{ width: 30, height: 30, padding: 0 }}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              aria-hidden="true"
+            >
               <polyline points="9 18 15 12 9 6" />
             </svg>
           </button>
@@ -69,14 +101,30 @@ export function ScheduleMobileHeader({
               type="button"
               className="chip"
               onClick={goToToday}
-              style={{ fontSize: '0.6875rem', padding: '0.125rem 0.375rem', marginLeft: '0.125rem', height: 'auto', flexShrink: 0 }}
+              style={{
+                fontSize: '0.6875rem',
+                padding: '0.125rem 0.375rem',
+                marginLeft: '0.125rem',
+                height: 'auto',
+                flexShrink: 0,
+              }}
             >
               {t.common.today}
             </button>
           )}
           <div style={{ marginLeft: '0.375rem', minWidth: 0 }}>
-            <div style={{ fontSize: '0.8125rem', fontWeight: 700, margin: 0, color: 'var(--on-surface)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {viewMode === 'today' ? getDayName(currentDate) : (isId ? 'Mingguan' : 'Weekly')}
+            <div
+              style={{
+                fontSize: '0.8125rem',
+                fontWeight: 700,
+                margin: 0,
+                color: 'var(--on-surface)',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {viewMode === 'today' ? getDayName(currentDate) : isId ? 'Mingguan' : 'Weekly'}
             </div>
           </div>
         </div>
@@ -135,9 +183,24 @@ export function ScheduleMobileHeader({
           type="button"
           className="btn-primary"
           onClick={onOpenAddClass}
-          style={{ flex: 1, justifyContent: 'center', fontSize: '0.8125rem', padding: '0.45rem 0.5rem', minHeight: 36, borderRadius: 10 }}
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            fontSize: '0.8125rem',
+            padding: '0.45rem 0.5rem',
+            minHeight: 36,
+            borderRadius: 10,
+          }}
         >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+          <svg
+            width="13"
+            height="13"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            aria-hidden="true"
+          >
             <path d="M12 5v14M5 12h14" />
           </svg>
           {isId ? 'Tambah kelas' : 'Add class'}
@@ -145,10 +208,27 @@ export function ScheduleMobileHeader({
         <button
           type="button"
           className="btn-outline"
-          onClick={() => window.dispatchEvent(new CustomEvent('open-quick-add', { detail: 'event' }))}
-          style={{ flex: 1, justifyContent: 'center', fontSize: '0.8125rem', padding: '0.45rem 0.5rem', minHeight: 36, borderRadius: 10 }}
+          onClick={() =>
+            window.dispatchEvent(new CustomEvent('open-quick-add', { detail: 'event' }))
+          }
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            fontSize: '0.8125rem',
+            padding: '0.45rem 0.5rem',
+            minHeight: 36,
+            borderRadius: 10,
+          }}
         >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+          <svg
+            width="13"
+            height="13"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            aria-hidden="true"
+          >
             <path d="M12 5v14M5 12h14" />
           </svg>
           {isId ? 'Tambah acara' : 'Add event'}
@@ -158,7 +238,14 @@ export function ScheduleMobileHeader({
           className="btn-outline"
           onClick={onOpenShare}
           aria-label="Share schedule"
-          style={{ padding: '0.45rem 0.625rem', minHeight: 36, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          style={{
+            padding: '0.45rem 0.625rem',
+            minHeight: 36,
+            borderRadius: 10,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
         >
           <Share2 size={15} aria-hidden="true" />
         </button>

@@ -21,12 +21,22 @@ export function getTransactions(): Transaction[] {
 
 export function addTransaction(txn: Omit<Transaction, 'id'>): Transaction {
   const newTxn = { ...txn, id: genId() };
-  void mutateTable('transactions', () => getClient().from('transactions').insert(ownedRow(transactionRow(txn))));
+  void mutateTable('transactions', () =>
+    getClient()
+      .from('transactions')
+      .insert(ownedRow(transactionRow(txn)))
+  );
   return newTxn;
 }
 
 export function updateTransaction(id: string, data: Partial<Transaction>): void {
-  void mutateTable('transactions', () => getClient().from('transactions').update(transactionRow(data)).eq('id', id).eq('user_id', activeUserId));
+  void mutateTable('transactions', () =>
+    getClient()
+      .from('transactions')
+      .update(transactionRow(data))
+      .eq('id', id)
+      .eq('user_id', activeUserId)
+  );
 }
 
 export async function deleteTransaction(id: string): Promise<Transaction | null> {
@@ -60,7 +70,9 @@ export async function restoreTransaction(transaction: Transaction): Promise<Tran
     setTransactions([transaction, ...transactions]);
     notify();
   }
-  const { error } = await getClient().from('transactions').insert(ownedRow(transactionRow(transaction)));
+  const { error } = await getClient()
+    .from('transactions')
+    .insert(ownedRow(transactionRow(transaction)));
   if (error) {
     setTransactions(transactions.filter((t) => t.id !== transaction.id));
     notify();
@@ -101,7 +113,10 @@ export function savePaymentMethods(methods: string[]): void {
   notify();
   void mutateTable('user_settings', async () => {
     const client = getClient();
-    return client.from('user_settings').update({ payment_methods: filtered }).eq('user_id', activeUserId);
+    return client
+      .from('user_settings')
+      .update({ payment_methods: filtered })
+      .eq('user_id', activeUserId);
   });
 }
 

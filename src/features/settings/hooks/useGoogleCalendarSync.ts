@@ -6,7 +6,9 @@ import * as ds from '@/lib/dataService';
 
 export function useGoogleCalendarSync(settings: UserSettings, language: Language) {
   const [isGcalConnected, setIsGcalConnected] = useState(() => gcal.isGoogleCalendarConnected());
-  const [gcalEmail, setGcalEmail] = useState(() => gcal.getConnectedGoogleEmail() || settings.googleAccountEmail || '');
+  const [gcalEmail, setGcalEmail] = useState(
+    () => gcal.getConnectedGoogleEmail() || settings.googleAccountEmail || ''
+  );
   const [isGcalConnecting, setIsGcalConnecting] = useState(false);
   const [isGcalSyncing, setIsGcalSyncing] = useState(false);
   const [gcalSyncResult, setGcalSyncResult] = useState<string | null>(null);
@@ -40,7 +42,12 @@ export function useGoogleCalendarSync(settings: UserSettings, language: Language
       );
     } catch (err: unknown) {
       console.error('Google Calendar connect error:', err);
-      const message = err instanceof Error ? err.message : (language === 'id' ? 'Gagal menghubungkan Google Calendar.' : 'Failed to connect to Google Calendar.');
+      const message =
+        err instanceof Error
+          ? err.message
+          : language === 'id'
+            ? 'Gagal menghubungkan Google Calendar.'
+            : 'Failed to connect to Google Calendar.';
       setGcalError(message);
     } finally {
       setIsGcalConnecting(false);
@@ -73,14 +80,22 @@ export function useGoogleCalendarSync(settings: UserSettings, language: Language
       );
     } catch (err: unknown) {
       console.error('Google Calendar sync error:', err);
-      const message = err instanceof Error ? err.message : (language === 'id' ? 'Gagal menyinkronkan data.' : 'Failed to sync data with Google Calendar.');
+      const message =
+        err instanceof Error
+          ? err.message
+          : language === 'id'
+            ? 'Gagal menyinkronkan data.'
+            : 'Failed to sync data with Google Calendar.';
       setGcalError(message);
     } finally {
       setIsGcalSyncing(false);
     }
   };
 
-  const handleToggleOption = async (key: 'classes' | 'assignments' | 'events' | 'import', value: boolean) => {
+  const handleToggleOption = async (
+    key: 'classes' | 'assignments' | 'events' | 'import',
+    value: boolean
+  ) => {
     if (key === 'classes') {
       setSyncClasses(value);
       await ds.updateSettings({ googleSyncClasses: value });

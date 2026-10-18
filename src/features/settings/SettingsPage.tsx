@@ -26,17 +26,26 @@ export function SettingsPage() {
   const settings = useData(ds.getSettings);
   const courses = useData(ds.getCourses);
   const profile = useData(ds.getProfile);
-  const metadataName = typeof user?.user_metadata?.full_name === 'string' ? user.user_metadata.full_name : '';
-  const accountName = profile?.fullName.trim() || metadataName || user?.email?.split('@')[0] || 'Omnia account';
+  const metadataName =
+    typeof user?.user_metadata?.full_name === 'string' ? user.user_metadata.full_name : '';
+  const accountName =
+    profile?.fullName.trim() || metadataName || user?.email?.split('@')[0] || 'Omnia account';
   const accountEmail = profile?.universityEmail || user?.email || '';
-  const accountInitials = accountName.split(/\s+/).map((part) => part[0]).slice(0, 2).join('').toUpperCase();
+  const accountInitials = accountName
+    .split(/\s+/)
+    .map((part) => part[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
 
   const [language, setLangState] = useState<Language>(getLanguage());
   const [monthlyBudget, setMonthlyBudget] = useState(String(settings.monthlyBudget));
   const [currency, setCurrency] = useState(settings.currency);
   const [currencyError, setCurrencyError] = useState('');
   const [timeZone, setTimeZone] = useState(settings.timeZone || getUserTimezone());
-  const [initialBalance, setInitialBalance] = useState(settings.initialBalance !== undefined ? String(settings.initialBalance) : '');
+  const [initialBalance, setInitialBalance] = useState(
+    settings.initialBalance !== undefined ? String(settings.initialBalance) : ''
+  );
   const [theme, setTheme] = useState(settings.theme);
   const [termName, setTermName] = useState(settings.termName || '');
   const [termStartDate, setTermStartDate] = useState(settings.semesterStart);
@@ -122,7 +131,8 @@ export function SettingsPage() {
     firstDayOfWeek !== (settings.firstDayOfWeek || 'monday') ||
     notifEnabled !== (settings.notifEnabled ?? true) ||
     timeZone !== (settings.timeZone || getUserTimezone()) ||
-    initialBalance.trim() !== (settings.initialBalance !== undefined ? String(settings.initialBalance) : '');
+    initialBalance.trim() !==
+      (settings.initialBalance !== undefined ? String(settings.initialBalance) : '');
 
   const handleReset = () => {
     setLangState(settings.language || 'id');
@@ -196,15 +206,17 @@ export function SettingsPage() {
       'CALSCALE:GREGORIAN',
       'METHOD:PUBLISH',
       'X-WR-CALNAME:Omnia Academic Schedule',
-      ...courses.map((c, idx) => [
-        'BEGIN:VEVENT',
-        `UID:omnia-course-${c.id}-${idx}@academic.local`,
-        `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
-        `SUMMARY:${c.code} - ${c.name}`,
-        `DESCRIPTION:Professor: ${c.professor || 'TBA'} | Credits: ${c.credits}`,
-        `LOCATION:${c.room || 'Campus'}`,
-        'END:VEVENT',
-      ].join('\r\n')),
+      ...courses.map((c, idx) =>
+        [
+          'BEGIN:VEVENT',
+          `UID:omnia-course-${c.id}-${idx}@academic.local`,
+          `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
+          `SUMMARY:${c.code} - ${c.name}`,
+          `DESCRIPTION:Professor: ${c.professor || 'TBA'} | Credits: ${c.credits}`,
+          `LOCATION:${c.room || 'Campus'}`,
+          'END:VEVENT',
+        ].join('\r\n')
+      ),
       'END:VCALENDAR',
     ];
     const blob = new Blob([icsLines.join('\r\n')], { type: 'text/calendar;charset=utf-8;' });
@@ -223,7 +235,15 @@ export function SettingsPage() {
   return (
     <div className="settings-page-container">
       <div className="page-header">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '0.75rem',
+          }}
+        >
           <div>
             <h1 style={{ margin: 0 }}>{t.settings.title}</h1>
           </div>
@@ -235,7 +255,15 @@ export function SettingsPage() {
                 onClick={handleReset}
                 style={{ gap: '0.375rem' }}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  aria-hidden="true"
+                >
                   <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
                   <path d="M3 3v5h5" />
                 </svg>
@@ -250,14 +278,30 @@ export function SettingsPage() {
             >
               {saved ? (
                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    aria-hidden="true"
+                  >
                     <polyline points="20 6 9 17 4 12" />
                   </svg>
                   {language === 'id' ? 'Tersimpan!' : 'Saved!'}
                 </span>
               ) : (
                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    aria-hidden="true"
+                  >
                     <polyline points="20 6 9 17 4 12" />
                   </svg>
                   {language === 'id' ? 'Simpan preferensi' : 'Save preferences'}

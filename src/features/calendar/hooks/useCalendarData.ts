@@ -3,12 +3,7 @@ import { useData } from '@/lib/useData';
 import * as ds from '@/lib/dataService';
 import * as gcal from '@/lib/googleCalendarService';
 import { useToast } from '@/components/Toast';
-import {
-  getMonthGrid,
-  toDateString,
-  getISODay,
-  getWeekDates,
-} from '@/lib/dateUtils';
+import { getMonthGrid, toDateString, getISODay, getWeekDates } from '@/lib/dateUtils';
 import type { CalendarEvent, Course } from '@/types';
 import type { CalendarItem, CalendarSearchResult, ViewMode } from '../types';
 import { CATEGORY_MAP } from '../utils/calendarUtils';
@@ -39,7 +34,9 @@ export function useCalendarData({
   const assignments = useData(ds.getAssignments);
   const categoryVisibility = useData(ds.getCategoryVisibility);
 
-  const [googleEvents, setGoogleEvents] = useState<CalendarEvent[]>(() => gcal.getImportedGoogleEvents());
+  const [googleEvents, setGoogleEvents] = useState<CalendarEvent[]>(() =>
+    gcal.getImportedGoogleEvents()
+  );
   const [isGcalSyncing, setIsGcalSyncing] = useState(false);
   const [isGcalConnected, setIsGcalConnected] = useState(() => gcal.isGoogleCalendarConnected());
 
@@ -55,20 +52,34 @@ export function useCalendarData({
     setIsGcalSyncing(true);
     try {
       if (!gcal.isGoogleCalendarConnected()) {
-        showToast({ message: lang === 'id' ? 'Menghubungkan ke Google Calendar…' : 'Connecting to Google Calendar…', type: 'info' });
+        showToast({
+          message:
+            lang === 'id' ? 'Menghubungkan ke Google Calendar…' : 'Connecting to Google Calendar…',
+          type: 'info',
+        });
         await gcal.connectGoogleCalendar();
       }
-      showToast({ message: lang === 'id' ? 'Menyinkronkan dengan Google Calendar…' : 'Syncing with Google Calendar…', type: 'info' });
+      showToast({
+        message:
+          lang === 'id' ? 'Menyinkronkan dengan Google Calendar…' : 'Syncing with Google Calendar…',
+        type: 'info',
+      });
       const result = await gcal.syncTwoWay();
       showToast({
-        message: lang === 'id'
-          ? `Sukses! ${result.classesCount} kuliah, ${result.assignmentsCount} tugas, ${result.eventsCount} kegiatan terkirim ke Google Calendar.`
-          : `Synced! ${result.classesCount} classes, ${result.assignmentsCount} tasks, ${result.eventsCount} events pushed to Google Calendar.`,
+        message:
+          lang === 'id'
+            ? `Sukses! ${result.classesCount} kuliah, ${result.assignmentsCount} tugas, ${result.eventsCount} kegiatan terkirim ke Google Calendar.`
+            : `Synced! ${result.classesCount} classes, ${result.assignmentsCount} tasks, ${result.eventsCount} events pushed to Google Calendar.`,
         type: 'success',
       });
     } catch (err: unknown) {
       console.error('Google calendar sync failed:', err);
-      const message = err instanceof Error ? err.message : (lang === 'id' ? 'Gagal sinkronisasi Google Calendar' : 'Failed to sync Google Calendar');
+      const message =
+        err instanceof Error
+          ? err.message
+          : lang === 'id'
+            ? 'Gagal sinkronisasi Google Calendar'
+            : 'Failed to sync Google Calendar';
       showToast({ message, type: 'error' });
     } finally {
       setIsGcalSyncing(false);
@@ -99,7 +110,13 @@ export function useCalendarData({
 
     const hasPassed = (item: { time?: string; endTime?: string }) => {
       const [hours, minutes] = (item.endTime || item.time || '23:59').split(':').map(Number);
-      const endsAt = new Date(date.getFullYear(), date.getMonth(), date.getDate(), hours || 0, minutes || 0);
+      const endsAt = new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+        hours || 0,
+        minutes || 0
+      );
       return endsAt.getTime() < Date.now();
     };
 
@@ -291,7 +308,9 @@ export function useCalendarData({
   };
 
   const toggleFilter = (key: string) => {
-    const catKey = (key === 'exam' ? 'exams' : key === 'deadline' ? 'deadlines' : key) as ds.CategoryKey;
+    const catKey = (
+      key === 'exam' ? 'exams' : key === 'deadline' ? 'deadlines' : key
+    ) as ds.CategoryKey;
     ds.toggleCategoryVisibility(catKey);
   };
 

@@ -30,7 +30,9 @@ export function TransactionModal({ transaction, isOpen, onClose }: TransactionMo
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState<string>(EXPENSE_CATEGORIES[0]);
   const [type, setType] = useState<TransactionType>('expense');
-  const [date, setDate] = useState(() => getTodayDateString(settings.timeZone || getUserTimezone()));
+  const [date, setDate] = useState(() =>
+    getTodayDateString(settings.timeZone || getUserTimezone())
+  );
   const [notes, setNotes] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('QRIS');
   const [customPaymentMethod, setCustomPaymentMethod] = useState('');
@@ -96,7 +98,10 @@ export function TransactionModal({ transaction, isOpen, onClose }: TransactionMo
     try {
       await ds.deleteTransaction(toDelete.id);
       showToast({
-        message: lang === 'id' ? `Transaksi "${toDelete.merchant}" dihapus` : `Transaction "${toDelete.merchant}" deleted`,
+        message:
+          lang === 'id'
+            ? `Transaksi "${toDelete.merchant}" dihapus`
+            : `Transaction "${toDelete.merchant}" deleted`,
         action: {
           label: lang === 'id' ? 'Urungkan' : 'Undo',
           onClick: async () => {
@@ -114,8 +119,12 @@ export function TransactionModal({ transaction, isOpen, onClose }: TransactionMo
     if (!merchant.trim()) {
       setMerchantError(
         lang === 'id'
-          ? (type === 'income' ? 'Sumber pemasukan tidak boleh kosong' : 'Nama pengeluaran tidak boleh kosong')
-          : (type === 'income' ? 'Source is required' : 'Merchant description is required')
+          ? type === 'income'
+            ? 'Sumber pemasukan tidak boleh kosong'
+            : 'Nama pengeluaran tidak boleh kosong'
+          : type === 'income'
+            ? 'Source is required'
+            : 'Merchant description is required'
       );
       hasError = true;
     }
@@ -124,7 +133,9 @@ export function TransactionModal({ transaction, isOpen, onClose }: TransactionMo
     if (!amount.trim() || isNaN(parsedAmount) || parsedAmount <= 0) {
       setAmountError(
         lang === 'id'
-          ? (currency === 'IDR' ? 'Nominal harus lebih dari Rp0' : `Nominal harus lebih dari ${getCurrencySymbol(currency)}0`)
+          ? currency === 'IDR'
+            ? 'Nominal harus lebih dari Rp0'
+            : `Nominal harus lebih dari ${getCurrencySymbol(currency)}0`
           : `Amount must be greater than ${getCurrencySymbol(currency)}0`
       );
       hasError = true;
@@ -135,11 +146,12 @@ export function TransactionModal({ transaction, isOpen, onClose }: TransactionMo
 
     setIsSubmitting(true);
     try {
-      const resolvedPaymentMethod = paymentMethod === 'custom' ? customPaymentMethod.trim() : paymentMethod;
+      const resolvedPaymentMethod =
+        paymentMethod === 'custom' ? customPaymentMethod.trim() : paymentMethod;
       if (paymentMethod === 'custom' && customPaymentMethod.trim()) {
         ds.addPaymentMethod(customPaymentMethod.trim());
       }
-      const finalCategory = type === 'income' ? 'Income' : (category || EXPENSE_CATEGORIES[0]);
+      const finalCategory = type === 'income' ? 'Income' : category || EXPENSE_CATEGORIES[0];
       if (transaction) {
         ds.updateTransaction(transaction.id, {
           merchant: merchant.trim(),
@@ -162,9 +174,18 @@ export function TransactionModal({ transaction, isOpen, onClose }: TransactionMo
         });
       }
       showToast({
-        message: lang === 'id'
-          ? (isEditing ? 'Perubahan transaksi disimpan' : type === 'expense' ? 'Pengeluaran dicatat' : 'Pemasukan dicatat')
-          : (isEditing ? 'Changes saved' : type === 'expense' ? 'Expense recorded' : 'Income recorded'),
+        message:
+          lang === 'id'
+            ? isEditing
+              ? 'Perubahan transaksi disimpan'
+              : type === 'expense'
+                ? 'Pengeluaran dicatat'
+                : 'Pemasukan dicatat'
+            : isEditing
+              ? 'Changes saved'
+              : type === 'expense'
+                ? 'Expense recorded'
+                : 'Income recorded',
       });
       handleClose();
     } catch {
@@ -176,10 +197,22 @@ export function TransactionModal({ transaction, isOpen, onClose }: TransactionMo
     <Modal
       isOpen={isOpen}
       onClose={handleRequestClose}
-      title={isEditing ? (lang === 'id' ? 'Ubah Catatan Keuangan' : 'Edit Ledger Entry') : (lang === 'id' ? 'Tambah Catatan Keuangan' : 'Add Ledger Entry')}
+      title={
+        isEditing
+          ? lang === 'id'
+            ? 'Ubah Catatan Keuangan'
+            : 'Edit Ledger Entry'
+          : lang === 'id'
+            ? 'Tambah Catatan Keuangan'
+            : 'Add Ledger Entry'
+      }
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <div role="group" aria-label="Transaction type" style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.25rem' }}>
+        <div
+          role="group"
+          aria-label="Transaction type"
+          style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.25rem' }}
+        >
           <button
             type="button"
             className="chip"
@@ -187,7 +220,8 @@ export function TransactionModal({ transaction, isOpen, onClose }: TransactionMo
             style={{
               flex: 1,
               justifyContent: 'center',
-              background: type === 'expense' ? 'var(--error-container)' : 'var(--surface-container)',
+              background:
+                type === 'expense' ? 'var(--error-container)' : 'var(--surface-container)',
               color: type === 'expense' ? 'var(--on-error-container)' : 'var(--on-surface-variant)',
               fontWeight: 600,
             }}
@@ -202,8 +236,10 @@ export function TransactionModal({ transaction, isOpen, onClose }: TransactionMo
             style={{
               flex: 1,
               justifyContent: 'center',
-              background: type === 'income' ? 'var(--primary-container)' : 'var(--surface-container)',
-              color: type === 'income' ? 'var(--on-primary-container)' : 'var(--on-surface-variant)',
+              background:
+                type === 'income' ? 'var(--primary-container)' : 'var(--surface-container)',
+              color:
+                type === 'income' ? 'var(--on-primary-container)' : 'var(--on-surface-variant)',
               fontWeight: 600,
             }}
             onClick={() => setType('income')}
@@ -215,7 +251,13 @@ export function TransactionModal({ transaction, isOpen, onClose }: TransactionMo
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '0.75rem' }}>
           <div>
             <label className="label">
-              {type === 'income' ? (lang === 'id' ? 'Sumber dana *' : 'Source *') : (lang === 'id' ? 'Tempat / Pengeluaran *' : 'Merchant / Source *')}
+              {type === 'income'
+                ? lang === 'id'
+                  ? 'Sumber dana *'
+                  : 'Source *'
+                : lang === 'id'
+                  ? 'Tempat / Pengeluaran *'
+                  : 'Merchant / Source *'}
             </label>
             <input
               type="text"
@@ -226,7 +268,15 @@ export function TransactionModal({ transaction, isOpen, onClose }: TransactionMo
                 setMerchant(e.target.value);
                 if (merchantError && e.target.value.trim()) setMerchantError('');
               }}
-              placeholder={type === 'income' ? (lang === 'id' ? 'Contoh: Beasiswa, Gaji' : 'e.g. Stipend, Paycheck') : (lang === 'id' ? 'Contoh: Kantin, Buku, Kopi' : 'e.g. Campus Dining, Bookstore')}
+              placeholder={
+                type === 'income'
+                  ? lang === 'id'
+                    ? 'Contoh: Beasiswa, Gaji'
+                    : 'e.g. Stipend, Paycheck'
+                  : lang === 'id'
+                    ? 'Contoh: Kantin, Buku, Kopi'
+                    : 'e.g. Campus Dining, Bookstore'
+              }
               style={{
                 width: '100%',
                 borderColor: merchantError ? 'var(--error)' : undefined,
@@ -235,18 +285,29 @@ export function TransactionModal({ transaction, isOpen, onClose }: TransactionMo
               required
             />
             {merchantError && (
-              <div id="edit-tx-merchant-error" role="alert" style={{ color: 'var(--error)', fontSize: '0.75rem', marginTop: '0.375rem', fontWeight: 500 }}>
+              <div
+                id="edit-tx-merchant-error"
+                role="alert"
+                style={{
+                  color: 'var(--error)',
+                  fontSize: '0.75rem',
+                  marginTop: '0.375rem',
+                  fontWeight: 500,
+                }}
+              >
                 {merchantError}
               </div>
             )}
           </div>
           <div>
             <label className="label">
-              {lang === 'id' ? `Nominal (${getCurrencySymbol(currency)}) *` : `Amount (${getCurrencySymbol(currency)}) *`}
+              {lang === 'id'
+                ? `Nominal (${getCurrencySymbol(currency)}) *`
+                : `Amount (${getCurrencySymbol(currency)}) *`}
             </label>
             <input
               type="number"
-              step={String(1 / (10 ** currencyDigits))}
+              step={String(1 / 10 ** currencyDigits)}
               value={amount}
               aria-invalid={amountError ? 'true' : 'false'}
               aria-describedby={amountError ? 'edit-tx-amount-error' : undefined}
@@ -263,7 +324,16 @@ export function TransactionModal({ transaction, isOpen, onClose }: TransactionMo
               required
             />
             {amountError && (
-              <div id="edit-tx-amount-error" role="alert" style={{ color: 'var(--error)', fontSize: '0.75rem', marginTop: '0.375rem', fontWeight: 500 }}>
+              <div
+                id="edit-tx-amount-error"
+                role="alert"
+                style={{
+                  color: 'var(--error)',
+                  fontSize: '0.75rem',
+                  marginTop: '0.375rem',
+                  fontWeight: 500,
+                }}
+              >
                 {amountError}
               </div>
             )}
@@ -272,9 +342,7 @@ export function TransactionModal({ transaction, isOpen, onClose }: TransactionMo
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
           <div>
-            <label className="label">
-              {lang === 'id' ? 'Kategori' : 'Category'}
-            </label>
+            <label className="label">{lang === 'id' ? 'Kategori' : 'Category'}</label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
@@ -285,16 +353,14 @@ export function TransactionModal({ transaction, isOpen, onClose }: TransactionMo
               ) : (
                 EXPENSE_CATEGORIES.map((cat) => (
                   <option key={cat} value={cat}>
-                    {lang === 'id' ? (CATEGORY_NAMES_ID[cat] || cat) : cat}
+                    {lang === 'id' ? CATEGORY_NAMES_ID[cat] || cat : cat}
                   </option>
                 ))
               )}
             </select>
           </div>
           <div>
-            <label className="label">
-              {lang === 'id' ? 'Tanggal *' : 'Date *'}
-            </label>
+            <label className="label">{lang === 'id' ? 'Tanggal *' : 'Date *'}</label>
             <input
               type="date"
               value={date}
@@ -306,9 +372,7 @@ export function TransactionModal({ transaction, isOpen, onClose }: TransactionMo
         </div>
 
         <div>
-          <label className="label">
-            {lang === 'id' ? 'Metode Pembayaran' : 'Payment Method'}
-          </label>
+          <label className="label">{lang === 'id' ? 'Metode Pembayaran' : 'Payment Method'}</label>
           <select
             value={paymentMethod}
             onChange={(e) => setPaymentMethod(e.target.value)}
@@ -326,7 +390,9 @@ export function TransactionModal({ transaction, isOpen, onClose }: TransactionMo
               type="text"
               value={customPaymentMethod}
               onChange={(e) => setCustomPaymentMethod(e.target.value)}
-              placeholder={lang === 'id' ? 'Masukkan nama metode pembayaran' : 'Enter payment method name'}
+              placeholder={
+                lang === 'id' ? 'Masukkan nama metode pembayaran' : 'Enter payment method name'
+              }
               style={{ width: '100%' }}
               autoFocus
             />
@@ -340,13 +406,20 @@ export function TransactionModal({ transaction, isOpen, onClose }: TransactionMo
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder={lang === 'id' ? 'Catatan struk, nomor referensi...' : 'Receipt info, split with roommates, etc.'}
+            placeholder={
+              lang === 'id'
+                ? 'Catatan struk, nomor referensi...'
+                : 'Receipt info, split with roommates, etc.'
+            }
             rows={2}
             style={{ width: '100%' }}
           />
         </div>
 
-        <div className="modal-actions-sticky" style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
+        <div
+          className="modal-actions-sticky"
+          style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}
+        >
           {isEditing ? (
             <button
               type="button"
@@ -362,15 +435,31 @@ export function TransactionModal({ transaction, isOpen, onClose }: TransactionMo
           )}
 
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <button type="button" className="btn-ghost" onClick={handleRequestClose} disabled={isSubmitting}>
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={handleRequestClose}
+              disabled={isSubmitting}
+            >
               {lang === 'id' ? 'Batal' : 'Cancel'}
             </button>
-            <button type="button" className="btn-primary" onClick={handleSave} disabled={isSubmitting}>
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={handleSave}
+              disabled={isSubmitting}
+            >
               {isSubmitting
-                ? (lang === 'id' ? 'Menyimpan…' : 'Saving…')
+                ? lang === 'id'
+                  ? 'Menyimpan…'
+                  : 'Saving…'
                 : isEditing
-                  ? (lang === 'id' ? 'Simpan Perubahan' : 'Save Changes')
-                  : (lang === 'id' ? 'Catat Transaksi' : 'Record Transaction')}
+                  ? lang === 'id'
+                    ? 'Simpan Perubahan'
+                    : 'Save Changes'
+                  : lang === 'id'
+                    ? 'Catat Transaksi'
+                    : 'Record Transaction'}
             </button>
           </div>
         </div>
@@ -381,7 +470,11 @@ export function TransactionModal({ transaction, isOpen, onClose }: TransactionMo
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={handleConfirmDelete}
         title={lang === 'id' ? 'Hapus transaksi?' : 'Delete transaction?'}
-        message={lang === 'id' ? `Apakah kamu yakin ingin menghapus catatan transaksi "${merchant || transaction?.merchant}"? Tindakan ini dapat diurungkan.` : `Are you sure you want to delete "${merchant || transaction?.merchant}"? You can undo this action.`}
+        message={
+          lang === 'id'
+            ? `Apakah kamu yakin ingin menghapus catatan transaksi "${merchant || transaction?.merchant}"? Tindakan ini dapat diurungkan.`
+            : `Are you sure you want to delete "${merchant || transaction?.merchant}"? You can undo this action.`
+        }
         confirmText={lang === 'id' ? 'Hapus transaksi' : 'Delete transaction'}
         cancelText={lang === 'id' ? 'Batal' : 'Cancel'}
         variant="danger"
@@ -392,7 +485,11 @@ export function TransactionModal({ transaction, isOpen, onClose }: TransactionMo
         onClose={() => setShowDiscardConfirm(false)}
         onConfirm={handleConfirmDiscard}
         title={lang === 'id' ? 'Buang perubahan?' : 'Discard changes?'}
-        message={lang === 'id' ? 'Perubahan yang kamu buat belum disimpan dan akan hilang jika ditutup.' : 'You have unsaved changes that will be lost if you close now.'}
+        message={
+          lang === 'id'
+            ? 'Perubahan yang kamu buat belum disimpan dan akan hilang jika ditutup.'
+            : 'You have unsaved changes that will be lost if you close now.'
+        }
         confirmText={lang === 'id' ? 'Buang' : 'Discard'}
         cancelText={lang === 'id' ? 'Lanjut mengedit' : 'Keep editing'}
         variant="danger"

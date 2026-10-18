@@ -194,7 +194,9 @@ export function ProposalFields({
             </label>
             <select
               value={data.courseId || ''}
-              onChange={(e) => onChangeData((prev) => ({ ...prev, courseId: e.target.value || undefined }))}
+              onChange={(e) =>
+                onChangeData((prev) => ({ ...prev, courseId: e.target.value || undefined }))
+              }
               style={{ width: '100%', boxSizing: 'border-box' }}
             >
               <option value="">General (No Course)</option>
@@ -219,7 +221,9 @@ export function ProposalFields({
             </label>
             <select
               value={data.priority || 'medium'}
-              onChange={(e) => onChangeData((prev) => ({ ...prev, priority: e.target.value as Priority }))}
+              onChange={(e) =>
+                onChangeData((prev) => ({ ...prev, priority: e.target.value as Priority }))
+              }
               style={{ width: '100%', boxSizing: 'border-box' }}
             >
               <option value="low">Low</option>
@@ -245,7 +249,10 @@ export function ProposalFields({
             <select
               value={data.category || 'Food & Groceries'}
               onChange={(e) =>
-                onChangeData((prev) => ({ ...prev, category: e.target.value as PrefilledData['category'] }))
+                onChangeData((prev) => ({
+                  ...prev,
+                  category: e.target.value as PrefilledData['category'],
+                }))
               }
               style={{ width: '100%', boxSizing: 'border-box' }}
             >
@@ -296,7 +303,9 @@ export function ProposalFields({
           </label>
           <select
             value={data.eventType || 'personal'}
-            onChange={(e) => onChangeData((prev) => ({ ...prev, eventType: e.target.value as EventType }))}
+            onChange={(e) =>
+              onChangeData((prev) => ({ ...prev, eventType: e.target.value as EventType }))
+            }
             style={{ width: '100%', boxSizing: 'border-box' }}
           >
             <option value="personal">Personal</option>

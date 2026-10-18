@@ -36,7 +36,14 @@ export function CalendarDetailPanel({
         background: 'var(--surface-container-lowest)',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '1rem',
+        }}
+      >
         <h3 style={{ fontSize: '1.0625rem' }}>{formatDateLong(selectedDate)}</h3>
         <button
           onClick={() => setSelectedDate(null)}
@@ -63,14 +70,28 @@ export function CalendarDetailPanel({
             marginTop: '1rem',
           }}
         >
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--outline)" strokeWidth="1.5">
+          <svg
+            width="32"
+            height="32"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="var(--outline)"
+            strokeWidth="1.5"
+          >
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
             <line x1="16" y1="2" x2="16" y2="6" />
             <line x1="8" y1="2" x2="8" y2="6" />
             <line x1="3" y1="10" x2="21" y2="10" />
           </svg>
           <div>
-            <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--on-surface)', marginBottom: '0.25rem' }}>
+            <div
+              style={{
+                fontWeight: 600,
+                fontSize: '0.9375rem',
+                color: 'var(--on-surface)',
+                marginBottom: '0.25rem',
+              }}
+            >
               {isId ? 'Hari bebas!' : 'A free day!'}
             </div>
             <div style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)' }}>
@@ -98,7 +119,14 @@ export function CalendarDetailPanel({
                 opacity: item.isPast ? 0.58 : 1,
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.375rem' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  marginBottom: '0.375rem',
+                }}
+              >
                 <CategoryIndicator shape={item.shape} color={item.color} size={8} />
                 {item.type !== 'classes' && item.type !== 'class' && (
                   <span
@@ -111,26 +139,51 @@ export function CalendarDetailPanel({
                     }}
                   >
                     {item.type === 'exam'
-                      ? (isId ? 'Ujian' : 'Exam')
+                      ? isId
+                        ? 'Ujian'
+                        : 'Exam'
                       : item.type === 'deadline'
-                        ? (isId ? 'Tenggat' : 'Deadline')
+                        ? isId
+                          ? 'Tenggat'
+                          : 'Deadline'
                         : item.type === 'personal'
-                          ? (isId ? 'Pribadi' : 'Personal')
+                          ? isId
+                            ? 'Pribadi'
+                            : 'Personal'
                           : item.type === 'lab'
-                            ? (isId ? 'Praktikum' : 'Lab')
+                            ? isId
+                              ? 'Praktikum'
+                              : 'Lab'
                             : item.type}
                   </span>
                 )}
               </div>
-              <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--on-surface)' }}>{item.title}</div>
+              <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--on-surface)' }}>
+                {item.title}
+              </div>
               {item.time && (
-                <div className="tabular-nums" style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface)', marginTop: '0.375rem' }}>
+                <div
+                  className="tabular-nums"
+                  style={{
+                    fontSize: '0.8125rem',
+                    fontWeight: 600,
+                    color: 'var(--on-surface)',
+                    marginTop: '0.375rem',
+                  }}
+                >
                   {formatTime12(item.time)}
                   {item.endTime ? ` – ${formatTime12(item.endTime)}` : ''}
                 </div>
               )}
               {item.notes && (
-                <div style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)', marginTop: '0.25rem', lineHeight: 1.4 }}>
+                <div
+                  style={{
+                    fontSize: '0.8125rem',
+                    color: 'var(--on-surface-variant)',
+                    marginTop: '0.25rem',
+                    lineHeight: 1.4,
+                  }}
+                >
                   {item.notes}
                 </div>
               )}

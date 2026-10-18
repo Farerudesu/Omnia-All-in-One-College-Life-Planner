@@ -74,12 +74,13 @@ export function MobileHeader() {
 
   const displayName = profile?.fullName || user?.email?.split('@')[0] || 'Omnia Student';
   const displayEmail = profile?.universityEmail || user?.email || '';
-  const initials = displayName
-    .split(/\s+/)
-    .map((p) => p[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase() || 'OM';
+  const initials =
+    displayName
+      .split(/\s+/)
+      .map((p) => p[0])
+      .slice(0, 2)
+      .join('')
+      .toUpperCase() || 'OM';
 
   // Trigger universal command palette search
   const openSearch = () => {
@@ -102,7 +103,10 @@ export function MobileHeader() {
         priority: 'medium',
         category: 'classes',
       });
-      showToast({ message: lang === 'id' ? 'Tugas berhasil ditambahkan' : 'Task created successfully', type: 'success' });
+      showToast({
+        message: lang === 'id' ? 'Tugas berhasil ditambahkan' : 'Task created successfully',
+        type: 'success',
+      });
       setTaskTitle('');
       setShowQuickAddModal(false);
       setQuickAddType('menu');
@@ -123,7 +127,10 @@ export function MobileHeader() {
         type: eventType,
         location: 'Campus',
       });
-      showToast({ message: lang === 'id' ? 'Acara berhasil ditambahkan' : 'Event created successfully', type: 'success' });
+      showToast({
+        message: lang === 'id' ? 'Acara berhasil ditambahkan' : 'Event created successfully',
+        type: 'success',
+      });
       setEventTitle('');
       setShowQuickAddModal(false);
       setQuickAddType('menu');
@@ -144,7 +151,10 @@ export function MobileHeader() {
         category: expenseCategory,
         date: getTodayDateString(settings.timeZone),
       });
-      showToast({ message: lang === 'id' ? 'Pengeluaran berhasil dicatat' : 'Expense recorded successfully', type: 'success' });
+      showToast({
+        message: lang === 'id' ? 'Pengeluaran berhasil dicatat' : 'Expense recorded successfully',
+        type: 'success',
+      });
       setExpenseTitle('');
       setExpenseAmount('');
       setShowQuickAddModal(false);
@@ -208,7 +218,11 @@ export function MobileHeader() {
               style={{ overflow: 'hidden' }}
             >
               {profile?.avatarUrl ? (
-                <img src={profile.avatarUrl} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                <img
+                  src={profile.avatarUrl}
+                  alt=""
+                  style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                />
               ) : (
                 <span>{initials}</span>
               )}
@@ -226,12 +240,20 @@ export function MobileHeader() {
         }}
         title={
           quickAddType === 'menu'
-            ? (lang === 'id' ? 'Tindakan Cepat' : 'Quick Action')
+            ? lang === 'id'
+              ? 'Tindakan Cepat'
+              : 'Quick Action'
             : quickAddType === 'task'
-            ? (lang === 'id' ? 'Tambah Tugas' : 'New Task')
-            : quickAddType === 'event'
-            ? (lang === 'id' ? 'Tambah Acara' : 'New Event')
-            : (lang === 'id' ? 'Tambah Pengeluaran' : 'New Expense')
+              ? lang === 'id'
+                ? 'Tambah Tugas'
+                : 'New Task'
+              : quickAddType === 'event'
+                ? lang === 'id'
+                  ? 'Tambah Acara'
+                  : 'New Event'
+                : lang === 'id'
+                  ? 'Tambah Pengeluaran'
+                  : 'New Expense'
         }
       >
         {quickAddType === 'menu' && (
@@ -244,12 +266,17 @@ export function MobileHeader() {
                 setShowAddTaskModal(true);
               }}
             >
-              <div className="mobile-quick-add-tile__icon" style={{ background: 'var(--surface-container-high)', color: 'var(--on-surface)' }}>
+              <div
+                className="mobile-quick-add-tile__icon"
+                style={{ background: 'var(--surface-container-high)', color: 'var(--on-surface)' }}
+              >
                 <CheckSquare size={20} />
               </div>
               <div className="mobile-quick-add-tile__info">
                 <strong>{lang === 'id' ? 'Tambah Tugas' : 'Add Task'}</strong>
-                <span>{lang === 'id' ? 'PR, tugas kuliah, bacaan' : 'Homework, deliverable, reading'}</span>
+                <span>
+                  {lang === 'id' ? 'PR, tugas kuliah, bacaan' : 'Homework, deliverable, reading'}
+                </span>
               </div>
             </button>
 
@@ -261,12 +288,19 @@ export function MobileHeader() {
                 setQuickAddType('event');
               }}
             >
-              <div className="mobile-quick-add-tile__icon" style={{ background: 'var(--surface-container-high)', color: 'var(--on-surface)' }}>
+              <div
+                className="mobile-quick-add-tile__icon"
+                style={{ background: 'var(--surface-container-high)', color: 'var(--on-surface)' }}
+              >
                 <CalendarIcon size={20} />
               </div>
               <div className="mobile-quick-add-tile__info">
                 <strong>{lang === 'id' ? 'Tambah Acara' : 'Add Event'}</strong>
-                <span>{lang === 'id' ? 'Ujian, belajar bersama, pribadi' : 'Exam, study session, personal'}</span>
+                <span>
+                  {lang === 'id'
+                    ? 'Ujian, belajar bersama, pribadi'
+                    : 'Exam, study session, personal'}
+                </span>
               </div>
             </button>
 
@@ -278,12 +312,19 @@ export function MobileHeader() {
                 setShowAddExpenseModal(true);
               }}
             >
-              <div className="mobile-quick-add-tile__icon" style={{ background: 'var(--surface-container-high)', color: 'var(--on-surface)' }}>
+              <div
+                className="mobile-quick-add-tile__icon"
+                style={{ background: 'var(--surface-container-high)', color: 'var(--on-surface)' }}
+              >
                 <DollarSign size={20} />
               </div>
               <div className="mobile-quick-add-tile__info">
                 <strong>{lang === 'id' ? 'Catat Pengeluaran' : 'Log Expense'}</strong>
-                <span>{lang === 'id' ? 'Makanan, buku, transportasi' : 'Food, books, transport, supplies'}</span>
+                <span>
+                  {lang === 'id'
+                    ? 'Makanan, buku, transportasi'
+                    : 'Food, books, transport, supplies'}
+                </span>
               </div>
             </button>
 
@@ -295,12 +336,17 @@ export function MobileHeader() {
                 navigate('/ask-omni');
               }}
             >
-              <div className="mobile-quick-add-tile__icon" style={{ background: 'var(--surface-container-high)', color: 'var(--on-surface)' }}>
+              <div
+                className="mobile-quick-add-tile__icon"
+                style={{ background: 'var(--surface-container-high)', color: 'var(--on-surface)' }}
+              >
                 <Clock size={20} />
               </div>
               <div className="mobile-quick-add-tile__info">
                 <strong>{lang === 'id' ? 'Tanya Omni AI' : 'Ask Omni AI'}</strong>
-                <span>{lang === 'id' ? 'Jadwal & asisten bahasa alami' : 'Natural language scheduling'}</span>
+                <span>
+                  {lang === 'id' ? 'Jadwal & asisten bahasa alami' : 'Natural language scheduling'}
+                </span>
               </div>
             </button>
           </div>
@@ -308,30 +354,61 @@ export function MobileHeader() {
 
         {/* Quick Add Task Form */}
         {quickAddType === 'task' && (
-          <form onSubmit={handleCreateTask} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <form
+            onSubmit={handleCreateTask}
+            style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
+          >
             <div>
-              <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                  marginBottom: '0.375rem',
+                }}
+              >
                 {lang === 'id' ? 'Judul Tugas *' : 'Task Title *'}
               </label>
               <input
                 type="text"
                 required
                 autoFocus
-                placeholder={lang === 'id' ? 'Contoh: Tugas Mandiri 3, Bab 5' : 'e.g., Problem Set 3, Reading ch. 5'}
+                placeholder={
+                  lang === 'id'
+                    ? 'Contoh: Tugas Mandiri 3, Bab 5'
+                    : 'e.g., Problem Set 3, Reading ch. 5'
+                }
                 value={taskTitle}
                 onChange={(e) => setTaskTitle(e.target.value)}
-                style={{ width: '100%', padding: '0.625rem 0.75rem', borderRadius: 8, fontSize: '0.9375rem' }}
+                style={{
+                  width: '100%',
+                  padding: '0.625rem 0.75rem',
+                  borderRadius: 8,
+                  fontSize: '0.9375rem',
+                }}
               />
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                  marginBottom: '0.375rem',
+                }}
+              >
                 {lang === 'id' ? 'Mata Kuliah' : 'Course'}
               </label>
               <select
                 value={taskCourseId}
                 onChange={(e) => setTaskCourseId(e.target.value)}
-                style={{ width: '100%', padding: '0.625rem 0.75rem', borderRadius: 8, fontSize: '0.9375rem' }}
+                style={{
+                  width: '100%',
+                  padding: '0.625rem 0.75rem',
+                  borderRadius: 8,
+                  fontSize: '0.9375rem',
+                }}
               >
                 {courses.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -342,14 +419,26 @@ export function MobileHeader() {
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                  marginBottom: '0.375rem',
+                }}
+              >
                 {lang === 'id' ? 'Tenggat Waktu' : 'Due Date'}
               </label>
               <input
                 type="date"
                 value={taskDueDate}
                 onChange={(e) => setTaskDueDate(e.target.value)}
-                style={{ width: '100%', padding: '0.625rem 0.75rem', borderRadius: 8, fontSize: '0.9375rem' }}
+                style={{
+                  width: '100%',
+                  padding: '0.625rem 0.75rem',
+                  borderRadius: 8,
+                  fontSize: '0.9375rem',
+                }}
               />
             </div>
 
@@ -362,11 +451,7 @@ export function MobileHeader() {
               >
                 {lang === 'id' ? 'Kembali' : 'Back'}
               </button>
-              <button
-                type="submit"
-                className="btn-primary"
-                style={{ flex: 1, minHeight: 44 }}
-              >
+              <button type="submit" className="btn-primary" style={{ flex: 1, minHeight: 44 }}>
                 {lang === 'id' ? 'Simpan' : 'Create Task'}
               </button>
             </div>
@@ -375,31 +460,60 @@ export function MobileHeader() {
 
         {/* Quick Add Event Form */}
         {quickAddType === 'event' && (
-          <form onSubmit={handleCreateEvent} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <form
+            onSubmit={handleCreateEvent}
+            style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
+          >
             <div>
-              <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                  marginBottom: '0.375rem',
+                }}
+              >
                 {lang === 'id' ? 'Judul Acara *' : 'Event Title *'}
               </label>
               <input
                 type="text"
                 required
                 autoFocus
-                placeholder={lang === 'id' ? 'Contoh: UTS, Belajar Bersama' : 'e.g., Midterm Exam, Group Study'}
+                placeholder={
+                  lang === 'id' ? 'Contoh: UTS, Belajar Bersama' : 'e.g., Midterm Exam, Group Study'
+                }
                 value={eventTitle}
                 onChange={(e) => setEventTitle(e.target.value)}
-                style={{ width: '100%', padding: '0.625rem 0.75rem', borderRadius: 8, fontSize: '0.9375rem' }}
+                style={{
+                  width: '100%',
+                  padding: '0.625rem 0.75rem',
+                  borderRadius: 8,
+                  fontSize: '0.9375rem',
+                }}
               />
             </div>
 
             <div className="modal-form-grid-2col">
               <div>
-                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '0.8125rem',
+                    fontWeight: 600,
+                    marginBottom: '0.375rem',
+                  }}
+                >
                   {lang === 'id' ? 'Kategori' : 'Category'}
                 </label>
                 <select
                   value={eventType}
                   onChange={(e) => setEventType(e.target.value as EventType)}
-                  style={{ width: '100%', padding: '0.625rem 0.75rem', borderRadius: 8, fontSize: '0.9375rem' }}
+                  style={{
+                    width: '100%',
+                    padding: '0.625rem 0.75rem',
+                    borderRadius: 8,
+                    fontSize: '0.9375rem',
+                  }}
                 >
                   <option value="exam">{lang === 'id' ? 'Ujian' : 'Exam'}</option>
                   <option value="deadline">{lang === 'id' ? 'Tenggat' : 'Deadline'}</option>
@@ -409,39 +523,75 @@ export function MobileHeader() {
                 </select>
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '0.8125rem',
+                    fontWeight: 600,
+                    marginBottom: '0.375rem',
+                  }}
+                >
                   {lang === 'id' ? 'Tanggal' : 'Date'}
                 </label>
                 <input
                   type="date"
                   value={eventDate}
                   onChange={(e) => setEventDate(e.target.value)}
-                  style={{ width: '100%', padding: '0.625rem 0.75rem', borderRadius: 8, fontSize: '0.9375rem' }}
+                  style={{
+                    width: '100%',
+                    padding: '0.625rem 0.75rem',
+                    borderRadius: 8,
+                    fontSize: '0.9375rem',
+                  }}
                 />
               </div>
             </div>
 
             <div className="modal-form-grid-2col">
               <div>
-                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '0.8125rem',
+                    fontWeight: 600,
+                    marginBottom: '0.375rem',
+                  }}
+                >
                   {lang === 'id' ? 'Waktu Mulai' : 'Start Time'}
                 </label>
                 <input
                   type="time"
                   value={eventStartTime}
                   onChange={(e) => setEventStartTime(e.target.value)}
-                  style={{ width: '100%', padding: '0.625rem 0.75rem', borderRadius: 8, fontSize: '0.9375rem' }}
+                  style={{
+                    width: '100%',
+                    padding: '0.625rem 0.75rem',
+                    borderRadius: 8,
+                    fontSize: '0.9375rem',
+                  }}
                 />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '0.8125rem',
+                    fontWeight: 600,
+                    marginBottom: '0.375rem',
+                  }}
+                >
                   {lang === 'id' ? 'Waktu Selesai' : 'End Time'}
                 </label>
                 <input
                   type="time"
                   value={eventEndTime}
                   onChange={(e) => setEventEndTime(e.target.value)}
-                  style={{ width: '100%', padding: '0.625rem 0.75rem', borderRadius: 8, fontSize: '0.9375rem' }}
+                  style={{
+                    width: '100%',
+                    padding: '0.625rem 0.75rem',
+                    borderRadius: 8,
+                    fontSize: '0.9375rem',
+                  }}
                 />
               </div>
             </div>
@@ -455,11 +605,7 @@ export function MobileHeader() {
               >
                 {lang === 'id' ? 'Kembali' : 'Back'}
               </button>
-              <button
-                type="submit"
-                className="btn-primary"
-                style={{ flex: 1, minHeight: 44 }}
-              >
+              <button type="submit" className="btn-primary" style={{ flex: 1, minHeight: 44 }}>
                 {lang === 'id' ? 'Simpan' : 'Create Event'}
               </button>
             </div>
@@ -468,25 +614,51 @@ export function MobileHeader() {
 
         {/* Quick Add Expense Form */}
         {quickAddType === 'expense' && (
-          <form onSubmit={handleCreateExpense} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <form
+            onSubmit={handleCreateExpense}
+            style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
+          >
             <div>
-              <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                  marginBottom: '0.375rem',
+                }}
+              >
                 {lang === 'id' ? 'Keterangan *' : 'Description *'}
               </label>
               <input
                 type="text"
                 required
                 autoFocus
-                placeholder={lang === 'id' ? 'Contoh: Kantin kampus, Buku teks, Fotokopi' : 'e.g., Campus Cafe, Textbooks, Coffee'}
+                placeholder={
+                  lang === 'id'
+                    ? 'Contoh: Kantin kampus, Buku teks, Fotokopi'
+                    : 'e.g., Campus Cafe, Textbooks, Coffee'
+                }
                 value={expenseTitle}
                 onChange={(e) => setExpenseTitle(e.target.value)}
-                style={{ width: '100%', padding: '0.625rem 0.75rem', borderRadius: 8, fontSize: '0.9375rem' }}
+                style={{
+                  width: '100%',
+                  padding: '0.625rem 0.75rem',
+                  borderRadius: 8,
+                  fontSize: '0.9375rem',
+                }}
               />
             </div>
 
             <div className="modal-form-grid-2col">
               <div>
-                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '0.8125rem',
+                    fontWeight: 600,
+                    marginBottom: '0.375rem',
+                  }}
+                >
                   {lang === 'id' ? 'Nominal (Rp) *' : 'Amount (Rp) *'}
                 </label>
                 <input
@@ -496,17 +668,34 @@ export function MobileHeader() {
                   placeholder="0.00"
                   value={expenseAmount}
                   onChange={(e) => setExpenseAmount(e.target.value)}
-                  style={{ width: '100%', padding: '0.625rem 0.75rem', borderRadius: 8, fontSize: '0.9375rem' }}
+                  style={{
+                    width: '100%',
+                    padding: '0.625rem 0.75rem',
+                    borderRadius: 8,
+                    fontSize: '0.9375rem',
+                  }}
                 />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '0.8125rem',
+                    fontWeight: 600,
+                    marginBottom: '0.375rem',
+                  }}
+                >
                   {lang === 'id' ? 'Kategori' : 'Category'}
                 </label>
                 <select
                   value={expenseCategory}
                   onChange={(e) => setExpenseCategory(e.target.value as ExpenseCategory)}
-                  style={{ width: '100%', padding: '0.625rem 0.75rem', borderRadius: 8, fontSize: '0.9375rem' }}
+                  style={{
+                    width: '100%',
+                    padding: '0.625rem 0.75rem',
+                    borderRadius: 8,
+                    fontSize: '0.9375rem',
+                  }}
                 >
                   {EXPENSE_CATEGORIES.map((cat) => (
                     <option key={cat} value={cat}>
@@ -526,11 +715,7 @@ export function MobileHeader() {
               >
                 {lang === 'id' ? 'Kembali' : 'Back'}
               </button>
-              <button
-                type="submit"
-                className="btn-primary"
-                style={{ flex: 1, minHeight: 44 }}
-              >
+              <button type="submit" className="btn-primary" style={{ flex: 1, minHeight: 44 }}>
                 {lang === 'id' ? 'Simpan' : 'Log Expense'}
               </button>
             </div>
@@ -549,7 +734,11 @@ export function MobileHeader() {
           <div className="mobile-profile-badge">
             <div className="mobile-profile-badge__avatar" style={{ overflow: 'hidden' }}>
               {profile?.avatarUrl ? (
-                <img src={profile.avatarUrl} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                <img
+                  src={profile.avatarUrl}
+                  alt=""
+                  style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                />
               ) : (
                 initials
               )}
@@ -557,7 +746,15 @@ export function MobileHeader() {
             <div className="mobile-profile-badge__info">
               <h4 className="mobile-profile-badge__name">{displayName}</h4>
               <p className="mobile-profile-badge__email">{displayEmail}</p>
-              <span className="badge" style={{ background: 'var(--primary-container)', color: 'var(--primary)', marginTop: '0.375rem', width: 'fit-content' }}>
+              <span
+                className="badge"
+                style={{
+                  background: 'var(--primary-container)',
+                  color: 'var(--primary)',
+                  marginTop: '0.375rem',
+                  width: 'fit-content',
+                }}
+              >
                 Fall Semester 2026
               </span>
             </div>
@@ -565,7 +762,9 @@ export function MobileHeader() {
 
           {/* Theme Quick Switcher */}
           <div className="mobile-profile-section">
-            <div className="mobile-profile-section__title">{lang === 'id' ? 'Tema Tampilan' : 'Display Theme'}</div>
+            <div className="mobile-profile-section__title">
+              {lang === 'id' ? 'Tema Tampilan' : 'Display Theme'}
+            </div>
             <div className="mobile-theme-selector">
               <button
                 type="button"
@@ -596,7 +795,9 @@ export function MobileHeader() {
 
           {/* Quick Links */}
           <div className="mobile-profile-section">
-            <div className="mobile-profile-section__title">{lang === 'id' ? 'Preferensi & Alat' : 'Preferences & Tools'}</div>
+            <div className="mobile-profile-section__title">
+              {lang === 'id' ? 'Preferensi & Alat' : 'Preferences & Tools'}
+            </div>
             <div className="mobile-profile-links">
               <button
                 type="button"
@@ -608,7 +809,11 @@ export function MobileHeader() {
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                   <SettingsIcon size={18} color="var(--on-surface-variant)" />
-                  <span>{lang === 'id' ? 'Pengaturan Akun & Kurikulum' : 'Account & Curriculum Settings'}</span>
+                  <span>
+                    {lang === 'id'
+                      ? 'Pengaturan Akun & Kurikulum'
+                      : 'Account & Curriculum Settings'}
+                  </span>
                 </div>
                 <span style={{ color: 'var(--on-surface-variant)', fontSize: '1.25rem' }}>›</span>
               </button>
@@ -616,7 +821,13 @@ export function MobileHeader() {
           </div>
 
           {/* Sign Out Action */}
-          <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--outline-variant)' }}>
+          <div
+            style={{
+              marginTop: '1.5rem',
+              paddingTop: '1rem',
+              borderTop: '1px solid var(--outline-variant)',
+            }}
+          >
             <button
               type="button"
               className="btn-outline min-touch-target"
@@ -639,10 +850,7 @@ export function MobileHeader() {
         </div>
       </Modal>
 
-      <AddAssignmentModal
-        isOpen={showAddTaskModal}
-        onClose={() => setShowAddTaskModal(false)}
-      />
+      <AddAssignmentModal isOpen={showAddTaskModal} onClose={() => setShowAddTaskModal(false)} />
 
       <AddTransactionModal
         isOpen={showAddExpenseModal}

@@ -117,9 +117,13 @@ export interface RawApiResult {
 export async function askOmni(request: AskOmniRequest): Promise<AskOmniResponse> {
   if (!supabase) {
     if (!supabaseUrl) {
-      throw new Error('Environment variable VITE_SUPABASE_URL is missing. Please set it in your .env file.');
+      throw new Error(
+        'Environment variable VITE_SUPABASE_URL is missing. Please set it in your .env file.'
+      );
     }
-    throw new Error('Environment variable VITE_SUPABASE_ANON_KEY is missing. Please set it in your .env file.');
+    throw new Error(
+      'Environment variable VITE_SUPABASE_ANON_KEY is missing. Please set it in your .env file.'
+    );
   }
 
   const isId = localStorage.getItem('omnia_language') === 'id';
@@ -127,7 +131,13 @@ export async function askOmni(request: AskOmniRequest): Promise<AskOmniResponse>
 
   const timeoutPromise = new Promise<never>((_, reject) => {
     setTimeout(() => {
-      reject(new Error(isId ? 'Omni lagi lambat, coba lagi ya' : 'Omni is taking too long to respond. Please try again.'));
+      reject(
+        new Error(
+          isId
+            ? 'Omni lagi lambat, coba lagi ya'
+            : 'Omni is taking too long to respond. Please try again.'
+        )
+      );
     }, timeoutMs);
   });
 
@@ -137,7 +147,10 @@ export async function askOmni(request: AskOmniRequest): Promise<AskOmniResponse>
       timeoutPromise,
     ]);
 
-    if (result.error && /failed to send request|fetch|network|502|503/i.test(result.error.message || '')) {
+    if (
+      result.error &&
+      /failed to send request|fetch|network|502|503/i.test(result.error.message || '')
+    ) {
       await new Promise((resolve) => setTimeout(resolve, 800));
       result = await Promise.race([
         supabase.functions.invoke<AskOmniResponse>('ask-omni', { body: request }),
@@ -148,15 +161,32 @@ export async function askOmni(request: AskOmniRequest): Promise<AskOmniResponse>
     const { data, error } = result;
     if (error) {
       const debug = [error.name, error.message].filter(Boolean).join(': ');
-      throw new Error(`${isId ? 'Omni tidak bisa dihubungi. Tekan Coba lagi.' : 'Omni could not be reached. Press Try again.'} [${debug}]`);
+      throw new Error(
+        `${isId ? 'Omni tidak bisa dihubungi. Tekan Coba lagi.' : 'Omni could not be reached. Press Try again.'} [${debug}]`
+      );
     }
-    if (!data || typeof data.reply !== 'string') throw new Error(isId ? 'Omni memberikan respons yang tidak terduga.' : 'Omni returned an unexpected response.');
-    
-    if (data.error || /having trouble replying|unable to reach|failed to send request|try again in a moment/i.test(data.reply)) {
-      const detail = data.error
-        || (data.diagnostics?.attempts?.map((a) => `${a.provider}:${a.model}(${a.status || a.error})`).join('; '))
-        || 'Edge Function returned fallback response';
-      throw new Error(`${isId ? 'Omni sedang bermasalah. Tekan Coba lagi.' : 'Omni is having trouble. Press Try again.'} [${detail}]`);
+    if (!data || typeof data.reply !== 'string')
+      throw new Error(
+        isId
+          ? 'Omni memberikan respons yang tidak terduga.'
+          : 'Omni returned an unexpected response.'
+      );
+
+    if (
+      data.error ||
+      /having trouble replying|unable to reach|failed to send request|try again in a moment/i.test(
+        data.reply
+      )
+    ) {
+      const detail =
+        data.error ||
+        data.diagnostics?.attempts
+          ?.map((a) => `${a.provider}:${a.model}(${a.status || a.error})`)
+          .join('; ') ||
+        'Edge Function returned fallback response';
+      throw new Error(
+        `${isId ? 'Omni sedang bermasalah. Tekan Coba lagi.' : 'Omni is having trouble. Press Try again.'} [${detail}]`
+      );
     }
     return data;
   } catch (err: unknown) {
@@ -164,7 +194,10 @@ export async function askOmni(request: AskOmniRequest): Promise<AskOmniResponse>
     if (errorObj.message?.includes('Omni lagi lambat')) {
       throw errorObj;
     }
-    throw new Error(errorObj.message || (isId ? 'Omni lagi lambat, coba lagi ya' : 'Unable to reach Omni. Try again.'));
+    throw new Error(
+      errorObj.message ||
+        (isId ? 'Omni lagi lambat, coba lagi ya' : 'Unable to reach Omni. Try again.')
+    );
   }
 }
 
@@ -175,7 +208,9 @@ function maskHeaderValue(val: string): string {
 
 export async function testAskOmniRaw(payload: Record<string, unknown>): Promise<RawApiResult> {
   if (!supabaseUrl) {
-    throw new Error('Environment variable VITE_SUPABASE_URL is missing. Please set it in your .env file.');
+    throw new Error(
+      'Environment variable VITE_SUPABASE_URL is missing. Please set it in your .env file.'
+    );
   }
   const currentAnonKey = anonKey || '';
   const endpoint = `${supabaseUrl}/functions/v1/ask-omni`;
@@ -198,8 +233,8 @@ export async function testAskOmniRaw(payload: Record<string, unknown>): Promise<
       durationMs: 0,
       requestHeaders: {
         'Content-Type': 'application/json',
-        'apikey': maskHeaderValue(currentAnonKey),
-        'Authorization': '',
+        apikey: maskHeaderValue(currentAnonKey),
+        Authorization: '',
       },
       requestBody: payload,
       responseHeaders: {},
@@ -211,14 +246,14 @@ export async function testAskOmniRaw(payload: Record<string, unknown>): Promise<
 
   const actualHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
-    'apikey': currentAnonKey,
-    'Authorization': `Bearer ${token}`,
+    apikey: currentAnonKey,
+    Authorization: `Bearer ${token}`,
   };
 
   const maskedHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
-    'apikey': maskHeaderValue(currentAnonKey),
-    'Authorization': `Bearer ${maskHeaderValue(token)}`,
+    apikey: maskHeaderValue(currentAnonKey),
+    Authorization: `Bearer ${maskHeaderValue(token)}`,
   };
 
   const startTime = Date.now();

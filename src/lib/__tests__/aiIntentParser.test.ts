@@ -11,7 +11,8 @@ import type { AskOmniResponse } from '../askOmni';
 describe('aiIntentParser Unit Tests', () => {
   // 1. ISO Date parsing
   it('case 1: parseProposalFromText parses ISO date (YYYY-MM-DD)', () => {
-    const text = 'Proposal event: Title: Seminar Skripsi Date: 2026-11-20 Start: 13:00 End: 15:00 Location: Lab Komputer';
+    const text =
+      'Proposal event: Title: Seminar Skripsi Date: 2026-11-20 Start: 13:00 End: 15:00 Location: Lab Komputer';
     const result = parseProposalFromText(text);
     expect(result).not.toBeNull();
     expect(result?.title).toBe('Seminar Skripsi');
@@ -23,7 +24,8 @@ describe('aiIntentParser Unit Tests', () => {
 
   // 2. English date parsing
   it('case 2: parseProposalFromText parses English formatted date', () => {
-    const text = 'Proposal calendar event: Title: Team Meeting Date: Tuesday, October 6, 2026 Start: 09:30 End: 10:30 Location: Room 302';
+    const text =
+      'Proposal calendar event: Title: Team Meeting Date: Tuesday, October 6, 2026 Start: 09:30 End: 10:30 Location: Room 302';
     const result = parseProposalFromText(text);
     expect(result).not.toBeNull();
     expect(result?.title).toBe('Team Meeting');
@@ -35,7 +37,8 @@ describe('aiIntentParser Unit Tests', () => {
 
   // 3. Indonesian date parsing
   it('case 3: parseProposalFromText parses Indonesian formatted date', () => {
-    const text = 'Jadwal diusulkan: Judul: Ujian Algoritma Tanggal: 6 Oktober 2026 Jam: 08:00 Selesai: 10:00 Lokasi: Gedung A';
+    const text =
+      'Jadwal diusulkan: Judul: Ujian Algoritma Tanggal: 6 Oktober 2026 Jam: 08:00 Selesai: 10:00 Lokasi: Gedung A';
     const result = parseProposalFromText(text);
     expect(result).not.toBeNull();
     expect(result?.title).toBe('Ujian Algoritma');
@@ -109,7 +112,10 @@ describe('aiIntentParser Unit Tests', () => {
     ];
 
     const findPending = (msgs: ChatMessage[]) =>
-      msgs.slice().reverse().find((m) => m.prefilledData && !m.actionStatus);
+      msgs
+        .slice()
+        .reverse()
+        .find((m) => m.prefilledData && !m.actionStatus);
 
     const userInput = 'gas';
 

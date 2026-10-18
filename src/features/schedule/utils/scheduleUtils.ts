@@ -1,9 +1,4 @@
-import {
-  parseTime,
-  toDateString,
-  getDayName,
-  timeToGridPosition,
-} from '@/lib/dateUtils';
+import { parseTime, toDateString, getDayName, timeToGridPosition } from '@/lib/dateUtils';
 import type { ClassSession, Course, SessionException, CalendarEvent } from '@/types';
 import type { DayScheduleBlock } from '../types';
 

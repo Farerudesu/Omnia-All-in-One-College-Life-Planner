@@ -36,7 +36,9 @@ export function CalendarPage() {
   const [showAddEvent, setShowAddEvent] = useState(false);
   const [selectedEventForModal, setSelectedEventForModal] = useState<CalendarEvent | null>(null);
   const [openEventInEditMode, setOpenEventInEditMode] = useState(false);
-  const [selectedAssignmentForModal, setSelectedAssignmentForModal] = useState<Assignment | null>(null);
+  const [selectedAssignmentForModal, setSelectedAssignmentForModal] = useState<Assignment | null>(
+    null
+  );
   const [openAssignmentInEditMode, setOpenAssignmentInEditMode] = useState(false);
   const [selectedClassSessionForModal, setSelectedClassSessionForModal] = useState<{
     course: Course;
@@ -216,11 +218,7 @@ export function CalendarPage() {
           )}
 
           {viewMode === 'Agenda' && (
-            <AgendaView
-              lang={lang}
-              agendaDates={agendaDates}
-              handleItemClick={handleItemClick}
-            />
+            <AgendaView lang={lang} agendaDates={agendaDates} handleItemClick={handleItemClick} />
           )}
         </div>
 

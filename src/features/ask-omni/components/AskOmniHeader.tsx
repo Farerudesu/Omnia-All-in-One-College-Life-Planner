@@ -38,7 +38,9 @@ export function AskOmniHeader({ lang, hasMessages, onClearHistory }: AskOmniHead
           <Sparkles size={20} />
         </div>
         <div>
-          <h1 style={{ fontSize: '1.375rem', fontWeight: 700, color: 'var(--on-surface)', margin: 0 }}>
+          <h1
+            style={{ fontSize: '1.375rem', fontWeight: 700, color: 'var(--on-surface)', margin: 0 }}
+          >
             {lang === 'id' ? 'Tanya Omni' : 'Ask Omni'}
           </h1>
           <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--on-surface-variant)' }}>

@@ -72,12 +72,37 @@ export function AgendaView({ lang, agendaDates, handleItemClick }: AgendaViewPro
                 }}
               >
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--on-surface)' }}>
+                  <div
+                    style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--on-surface)' }}
+                  >
                     {item.title}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <span>{item.time ? formatTime12(item.time) : (isId ? 'Sepanjang hari' : 'All day')}</span>
-                    {item.room && <span style={{ background: 'var(--surface-container)', padding: '0.1rem 0.35rem', borderRadius: 4, fontWeight: 500 }}>{item.room}</span>}
+                  <div
+                    style={{
+                      fontSize: '0.75rem',
+                      color: 'var(--on-surface-variant)',
+                      marginTop: '0.25rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    <span>
+                      {item.time ? formatTime12(item.time) : isId ? 'Sepanjang hari' : 'All day'}
+                    </span>
+                    {item.room && (
+                      <span
+                        style={{
+                          background: 'var(--surface-container)',
+                          padding: '0.1rem 0.35rem',
+                          borderRadius: 4,
+                          fontWeight: 500,
+                        }}
+                      >
+                        {item.room}
+                      </span>
+                    )}
                     {item.notes && <span>{item.notes}</span>}
                   </div>
                 </div>
@@ -94,13 +119,21 @@ export function AgendaView({ lang, agendaDates, handleItemClick }: AgendaViewPro
                     }}
                   >
                     {item.type === 'exam'
-                      ? (isId ? 'Ujian' : 'Exam')
+                      ? isId
+                        ? 'Ujian'
+                        : 'Exam'
                       : item.type === 'deadline'
-                        ? (isId ? 'Tenggat' : 'Deadline')
+                        ? isId
+                          ? 'Tenggat'
+                          : 'Deadline'
                         : item.type === 'personal'
-                          ? (isId ? 'Pribadi' : 'Personal')
+                          ? isId
+                            ? 'Pribadi'
+                            : 'Personal'
                           : item.type === 'lab'
-                            ? (isId ? 'Praktikum' : 'Lab')
+                            ? isId
+                              ? 'Praktikum'
+                              : 'Lab'
                             : item.type}
                   </span>
                 )}

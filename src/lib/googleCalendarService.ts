@@ -36,7 +36,8 @@ const CLIENT_ID =
   import.meta.env.VITE_GOOGLE_CLIENT_ID ||
   '662779762345-s1vc2c67ls6po36ebht8dlgj989lshje.apps.googleusercontent.com';
 
-const SCOPES = 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar';
+const SCOPES =
+  'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar';
 const CALENDAR_NAME = 'Omnia College Life';
 
 interface MemoryAuth {
@@ -163,7 +164,9 @@ export function isGoogleCalendarConnected(): boolean {
     return true;
   }
   try {
-    return typeof localStorage !== 'undefined' && localStorage.getItem('omnia_gcal_connected') === 'true';
+    return (
+      typeof localStorage !== 'undefined' && localStorage.getItem('omnia_gcal_connected') === 'true'
+    );
   } catch {
     return false;
   }
@@ -194,7 +197,9 @@ export async function getValidAccessToken(forceConsent = false): Promise<string>
         scope: SCOPES,
         callback: async (resp: GoogleTokenResponse) => {
           if (resp.error) {
-            reject(new Error(resp.error_description || resp.error || 'Google authorization failed'));
+            reject(
+              new Error(resp.error_description || resp.error || 'Google authorization failed')
+            );
             return;
           }
 
@@ -325,7 +330,8 @@ export async function getOrCreateOmniaCalendar(token: string): Promise<string> {
 
   const data = await res.json();
   const existing = (data.items || []).find(
-    (c: { summary?: string; deleted?: boolean; id?: string }) => c.summary === CALENDAR_NAME && !c.deleted
+    (c: { summary?: string; deleted?: boolean; id?: string }) =>
+      c.summary === CALENDAR_NAME && !c.deleted
   );
 
   if (existing) {
@@ -334,9 +340,7 @@ export async function getOrCreateOmniaCalendar(token: string): Promise<string> {
 
   // Create new secondary calendar
   const timeZone =
-    typeof Intl !== 'undefined'
-      ? Intl.DateTimeFormat().resolvedOptions().timeZone
-      : 'Asia/Jakarta';
+    typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'Asia/Jakarta';
 
   const createRes = await fetch('https://www.googleapis.com/calendar/v3/calendars', {
     method: 'POST',
@@ -346,7 +350,8 @@ export async function getOrCreateOmniaCalendar(token: string): Promise<string> {
     },
     body: JSON.stringify({
       summary: CALENDAR_NAME,
-      description: 'Classes, assignments, exams, and schedule synced from Omnia College Life Planner',
+      description:
+        'Classes, assignments, exams, and schedule synced from Omnia College Life Planner',
       timeZone,
     }),
   });
@@ -407,10 +412,7 @@ export async function pushOmniaToGoogleCalendar(options?: {
 
   // Use user's preferred calendar or 'primary'
   const calendarId =
-    options?.targetCalendarId ||
-    settings.googleCalendarId ||
-    authState?.calendarId ||
-    'primary';
+    options?.targetCalendarId || settings.googleCalendarId || authState?.calendarId || 'primary';
 
   const courses = ds.getCourses();
   const sessions = ds.getClassSessions();
@@ -454,7 +456,9 @@ export async function pushOmniaToGoogleCalendar(options?: {
 
   const timeZone =
     settings.timeZone ||
-    (typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'Asia/Jakarta');
+    (typeof Intl !== 'undefined'
+      ? Intl.DateTimeFormat().resolvedOptions().timeZone
+      : 'Asia/Jakarta');
 
   // Semester boundaries
   let untilDate = new Date();
@@ -471,7 +475,9 @@ export async function pushOmniaToGoogleCalendar(options?: {
     for (const s of sessions) {
       if (!s.daysOfWeek || s.daysOfWeek.length === 0) continue;
       const course = courseMap.get(s.courseId);
-      const title = course ? `${course.code ? `[${course.code}] ` : ''}${course.name}` : 'Class Session';
+      const title = course
+        ? `${course.code ? `[${course.code}] ` : ''}${course.name}`
+        : 'Class Session';
       const omniaId = `class-${s.id}`;
 
       const firstDay = s.daysOfWeek[0];
@@ -479,13 +485,28 @@ export async function pushOmniaToGoogleCalendar(options?: {
       const [startH, startM] = (s.startTime || '08:00').split(':').map(Number);
       const [endH, endM] = (s.endTime || '10:00').split(':').map(Number);
 
-      const startDate = new Date(nextDate.getFullYear(), nextDate.getMonth(), nextDate.getDate(), startH, startM);
-      let endDate = new Date(nextDate.getFullYear(), nextDate.getMonth(), nextDate.getDate(), endH, endM);
+      const startDate = new Date(
+        nextDate.getFullYear(),
+        nextDate.getMonth(),
+        nextDate.getDate(),
+        startH,
+        startM
+      );
+      let endDate = new Date(
+        nextDate.getFullYear(),
+        nextDate.getMonth(),
+        nextDate.getDate(),
+        endH,
+        endM
+      );
       if (endDate.getTime() <= startDate.getTime()) {
         endDate = new Date(startDate.getTime() + 90 * 60000);
       }
 
-      const byDayStr = s.daysOfWeek.map((d) => DAY_MAP_RFC[d]).filter(Boolean).join(',');
+      const byDayStr = s.daysOfWeek
+        .map((d) => DAY_MAP_RFC[d])
+        .filter(Boolean)
+        .join(',');
       const rrule = `RRULE:FREQ=WEEKLY;BYDAY=${byDayStr};UNTIL=${untilRFC}`;
 
       const payload = {
@@ -646,7 +667,7 @@ export async function pushOmniaToGoogleCalendar(options?: {
         let endObj: Date;
         if (ev.endTime && ev.endTime !== ev.startTime) {
           const [endH, endM] = ev.endTime.split(':').map(Number);
-          endObj = new Date(y, m - 1, d, endH || (startH + 1), endM || 0, 0);
+          endObj = new Date(y, m - 1, d, endH || startH + 1, endM || 0, 0);
           if (endObj.getTime() <= startObj.getTime()) {
             endObj = new Date(startObj.getTime() + 60 * 60000);
           }

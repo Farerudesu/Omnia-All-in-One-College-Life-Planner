@@ -1,11 +1,4 @@
-import {
-  Sparkles,
-  Calendar,
-  Check,
-  DollarSign,
-  CheckSquare,
-  AlertCircle,
-} from 'lucide-react';
+import { Sparkles, Calendar, Check, DollarSign, CheckSquare, AlertCircle } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import type { Language } from '@/lib/i18n';
 import type { Course, PrefilledData } from '@/types';
@@ -45,8 +38,8 @@ export function PrefilledProposalModal({
       prefilledModal.data.type === 'expense'
         ? 'Catat pengeluaran kampus'
         : prefilledModal.data.type === 'task'
-        ? 'Tambah tugas kuliah'
-        : 'Tambah acara ke jadwal';
+          ? 'Tambah tugas kuliah'
+          : 'Tambah acara ke jadwal';
     const total = receiptSavedAmounts.length + receiptQueue.length + 1;
     if (total > 1) {
       const current = receiptSavedAmounts.length + 1;
@@ -126,10 +119,12 @@ export function PrefilledProposalModal({
                   fontWeight: 600,
                   border: 'none',
                   cursor: 'pointer',
-                  background: data.type === tab.id ? 'var(--surface-container-lowest)' : 'transparent',
+                  background:
+                    data.type === tab.id ? 'var(--surface-container-lowest)' : 'transparent',
                   color: data.type === tab.id ? 'var(--primary)' : 'var(--on-surface-variant)',
                   boxShadow: data.type === tab.id ? 'var(--shadow-xs)' : 'none',
-                  transition: 'background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease',
+                  transition:
+                    'background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease',
                 }}
               >
                 {tab.icon}
@@ -191,7 +186,13 @@ export function PrefilledProposalModal({
             }}
           >
             <Check size={16} aria-hidden="true" />
-            {isSavingPrefilled ? (lang === 'id' ? 'Menyimpan…' : 'Saving…') : lang === 'id' ? 'Simpan' : 'Okay'}
+            {isSavingPrefilled
+              ? lang === 'id'
+                ? 'Menyimpan…'
+                : 'Saving…'
+              : lang === 'id'
+                ? 'Simpan'
+                : 'Okay'}
           </button>
         </div>
       </div>

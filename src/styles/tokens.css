@@ -1,12 +1,20 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @keyframes omnia-skeleton {
-  0%, 100% { opacity: 0.55; }
-  50% { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; }
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
 
 .omni-markdown {
@@ -15,22 +23,51 @@
   line-height: 1.6;
 }
 
-.omni-markdown > :first-child { margin-top: 0; }
-.omni-markdown > :last-child { margin-bottom: 0; }
-.omni-markdown p { margin: 0 0 0.75rem; }
+.omni-markdown > :first-child {
+  margin-top: 0;
+}
+.omni-markdown > :last-child {
+  margin-bottom: 0;
+}
+.omni-markdown p {
+  margin: 0 0 0.75rem;
+}
 .omni-markdown h1,
 .omni-markdown h2,
 .omni-markdown h3,
-.omni-markdown h4 { margin: 1rem 0 0.5rem; }
-.omni-markdown h1 { font-size: 1.25rem; }
-.omni-markdown h2 { font-size: 1.125rem; }
+.omni-markdown h4 {
+  margin: 1rem 0 0.5rem;
+}
+.omni-markdown h1 {
+  font-size: 1.25rem;
+}
+.omni-markdown h2 {
+  font-size: 1.125rem;
+}
 .omni-markdown h3,
-.omni-markdown h4 { font-size: 1rem; }
+.omni-markdown h4 {
+  font-size: 1rem;
+}
 .omni-markdown ul,
-.omni-markdown ol { margin: 0.5rem 0 0.75rem; padding-left: 1.5rem; }
-.omni-markdown li { margin: 0.25rem 0; }
-.omni-markdown hr { margin: 1rem 0; border: 0; border-top: 1px solid var(--outline-variant); }
-.omni-markdown code { padding: 0.1rem 0.3rem; border-radius: 4px; background: var(--surface-container-low); font-family: var(--font-mono); font-size: 0.875em; }
+.omni-markdown ol {
+  margin: 0.5rem 0 0.75rem;
+  padding-left: 1.5rem;
+}
+.omni-markdown li {
+  margin: 0.25rem 0;
+}
+.omni-markdown hr {
+  margin: 1rem 0;
+  border: 0;
+  border-top: 1px solid var(--outline-variant);
+}
+.omni-markdown code {
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  background: var(--surface-container-low);
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+}
 
 /* ─── Design Tokens: Editorial Scholar (Original Palette preserved) ─── */
 @theme {
@@ -70,8 +107,10 @@
   --color-deadlines: #8a5a00;
   --color-personal: #475569;
 
-  --font-heading: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
-  --font-body: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', sans-serif;
+  --font-heading:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
+  --font-body:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', sans-serif;
   --font-mono: ui-monospace, 'SF Mono', Menlo, Monaco, monospace;
 }
 
@@ -106,8 +145,10 @@
   --deadlines: #8a5a00;
   --personal: #475569;
 
-  --font-heading: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
-  --font-body: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', sans-serif;
+  --font-heading:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
+  --font-body:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', sans-serif;
   --font-mono: ui-monospace, 'SF Mono', Menlo, Monaco, monospace;
 
   --sidebar-width: 256px;
@@ -128,7 +169,7 @@
 
 /* ─── Dark theme tokens (Obsidian / High Contrast) ─── */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
+  :root:not([data-theme='light']) {
     --surface: #0a0b0d;
     --surface-dim: #0a0b0d;
     --surface-container-lowest: #050607;
@@ -169,7 +210,7 @@
   }
 }
 
-[data-theme="dark"] {
+[data-theme='dark'] {
   --surface: #0a0b0d;
   --surface-dim: #0a0b0d;
   --surface-container-lowest: #050607;
@@ -209,7 +250,7 @@
   --mobile-dock-shadow: 0 -0.5px 0 rgba(255, 255, 255, 0.1), 0 -4px 20px -2px rgba(0, 0, 0, 0.6);
 }
 
-[data-theme="light"] {
+[data-theme='light'] {
   --surface: #fbfbfa;
   --surface-dim: #f4f4f2;
   --surface-container-lowest: #ffffff;
@@ -291,7 +332,12 @@ body {
   overflow-x: clip;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-heading);
   font-weight: 600;
   color: var(--on-surface);
@@ -301,12 +347,30 @@ h1, h2, h3, h4, h5, h6 {
   overflow-wrap: break-word;
 }
 
-h1 { font-size: 1.75rem; font-weight: 700; line-height: 1.15; letter-spacing: -0.025em; }
-h2 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; }
-h3 { font-size: 1.125rem; font-weight: 600; letter-spacing: -0.015em; }
-h4 { font-size: 1rem; font-weight: 600; }
+h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+}
+h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+h4 {
+  font-size: 1rem;
+  font-weight: 600;
+}
 
-p, span, div {
+p,
+span,
+div {
   text-wrap: pretty;
 }
 
@@ -319,7 +383,9 @@ button {
   color: inherit;
 }
 
-input, select, textarea {
+input,
+select,
+textarea {
   font-family: var(--font-body);
   font-size: 0.9375rem;
   color: var(--on-surface);
@@ -327,17 +393,21 @@ input, select, textarea {
   border: 1px solid var(--outline-variant);
   border-radius: var(--radius-md);
   padding: 0.5625rem 0.8125rem;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
-input:focus-visible, select:focus-visible, textarea:focus-visible {
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
   border-color: var(--primary);
   box-shadow: 0 0 0 2px rgba(27, 67, 50, 0.15);
 }
 
-[data-theme="dark"] input:focus-visible,
-[data-theme="dark"] select:focus-visible,
-[data-theme="dark"] textarea:focus-visible {
+[data-theme='dark'] input:focus-visible,
+[data-theme='dark'] select:focus-visible,
+[data-theme='dark'] textarea:focus-visible {
   box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.25);
 }
 
@@ -356,4 +426,3 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--outline);
 }
-

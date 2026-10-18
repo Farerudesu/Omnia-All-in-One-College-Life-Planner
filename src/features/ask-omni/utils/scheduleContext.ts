@@ -62,9 +62,7 @@ export function getScheduleContext() {
       return [...classes, ...events];
     })
     .sort(
-      (a, b) =>
-        a.date.localeCompare(b.date) ||
-        (a.startTime || '').localeCompare(b.startTime || '')
+      (a, b) => a.date.localeCompare(b.date) || (a.startTime || '').localeCompare(b.startTime || '')
     );
 
   // Include assignments (tasks) context

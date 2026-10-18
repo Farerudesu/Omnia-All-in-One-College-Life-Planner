@@ -21,7 +21,11 @@ function isDeepEqual(a: unknown, b: unknown, depth = 0): boolean {
   for (const key of keysA) {
     if (
       !Object.prototype.hasOwnProperty.call(b, key) ||
-      !isDeepEqual((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key], depth + 1)
+      !isDeepEqual(
+        (a as Record<string, unknown>)[key],
+        (b as Record<string, unknown>)[key],
+        depth + 1
+      )
     ) {
       return false;
     }
@@ -38,12 +42,12 @@ export function useData<T>(selector: () => T): T {
   const selectorRef = useRef(selector);
   selectorRef.current = selector;
 
-  const cacheRef = useRef<{ value: T; hasValue: boolean }>({ value: undefined as unknown as T, hasValue: false });
+  const cacheRef = useRef<{ value: T; hasValue: boolean }>({
+    value: undefined as unknown as T,
+    hasValue: false,
+  });
 
-  const subscribe = useCallback(
-    (onStoreChange: () => void) => ds.subscribe(onStoreChange),
-    []
-  );
+  const subscribe = useCallback((onStoreChange: () => void) => ds.subscribe(onStoreChange), []);
 
   const getSnapshot = useCallback(() => {
     const nextValue = selectorRef.current();
@@ -60,9 +64,6 @@ export function useData<T>(selector: () => T): T {
 }
 
 export function useDataStatus() {
-  const subscribe = useCallback(
-    (onStoreChange: () => void) => ds.subscribe(onStoreChange),
-    []
-  );
+  const subscribe = useCallback((onStoreChange: () => void) => ds.subscribe(onStoreChange), []);
   return useSyncExternalStore(subscribe, ds.getDataStatus, ds.getDataStatus);
 }

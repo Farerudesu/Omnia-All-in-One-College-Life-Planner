@@ -1,6 +1,20 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CalendarDays, Calendar, ClipboardList, CreditCard, Settings, Plus, Pin, Clipboard, GraduationCap, AlertTriangle, Hourglass, DollarSign, Search } from 'lucide-react';
+import {
+  CalendarDays,
+  Calendar,
+  ClipboardList,
+  CreditCard,
+  Settings,
+  Plus,
+  Pin,
+  Clipboard,
+  GraduationCap,
+  AlertTriangle,
+  Hourglass,
+  DollarSign,
+  Search,
+} from 'lucide-react';
 import * as ds from '../lib/dataService';
 import { useData } from '../lib/useData';
 import { formatCurrency } from '../lib/currency';
@@ -62,7 +76,10 @@ export function CommandPalette({
         title: 'Timetable & Schedule',
         subtitle: 'View weekly grid, class locations and study gaps',
         icon: <CalendarDays size={18} />,
-        action: () => { navigate('/schedule'); onClose(); },
+        action: () => {
+          navigate('/schedule');
+          onClose();
+        },
       },
       {
         id: 'nav-calendar',
@@ -70,7 +87,10 @@ export function CommandPalette({
         title: 'Academic Calendar',
         subtitle: 'Monthly overview, exam dates and deadlines',
         icon: <Calendar size={18} />,
-        action: () => { navigate('/calendar'); onClose(); },
+        action: () => {
+          navigate('/calendar');
+          onClose();
+        },
       },
       {
         id: 'nav-assignments',
@@ -78,7 +98,10 @@ export function CommandPalette({
         title: 'Assignments & Deliverables',
         subtitle: 'Problem sets, projects, and submission tracker',
         icon: <ClipboardList size={18} />,
-        action: () => { navigate('/assignments'); onClose(); },
+        action: () => {
+          navigate('/assignments');
+          onClose();
+        },
       },
       {
         id: 'nav-finance',
@@ -86,7 +109,10 @@ export function CommandPalette({
         title: 'Finance & Ledger',
         subtitle: 'Student budget pacing and expenses',
         icon: <CreditCard size={18} />,
-        action: () => { navigate('/finance'); onClose(); },
+        action: () => {
+          navigate('/finance');
+          onClose();
+        },
       },
       {
         id: 'nav-settings',
@@ -94,7 +120,10 @@ export function CommandPalette({
         title: 'Settings & Curriculum',
         subtitle: 'Account preferences, themes, data export',
         icon: <Settings size={18} />,
-        action: () => { navigate('/settings'); onClose(); },
+        action: () => {
+          navigate('/settings');
+          onClose();
+        },
       },
     ];
 
@@ -164,7 +193,10 @@ export function CommandPalette({
           title: `${c.code} – ${c.name}`,
           subtitle: `Prof. ${c.professor || 'Staff'} · Room ${c.room || 'TBA'} · ${c.credits} Credits`,
           icon: <GraduationCap size={18} />,
-          action: () => { navigate('/schedule'); onClose(); },
+          action: () => {
+            navigate('/schedule');
+            onClose();
+          },
         });
       }
     });
@@ -178,7 +210,10 @@ export function CommandPalette({
           title: a.title,
           subtitle: `Due ${new Date(a.dueDate).toLocaleDateString()} · ${a.priority} priority · ${a.status}`,
           icon: <ClipboardList size={18} />,
-          action: () => { navigate('/assignments'); onClose(); },
+          action: () => {
+            navigate('/assignments');
+            onClose();
+          },
         });
       }
     });
@@ -191,8 +226,18 @@ export function CommandPalette({
           category: 'Events',
           title: ev.title,
           subtitle: `${ev.date} ${ev.startTime ? `at ${ev.startTime}` : ''} · ${ev.type.toUpperCase()}`,
-          icon: ev.type === 'exam' ? <AlertTriangle size={18} /> : ev.type === 'deadline' ? <Hourglass size={18} /> : <CalendarDays size={18} />,
-          action: () => { navigate('/calendar'); onClose(); },
+          icon:
+            ev.type === 'exam' ? (
+              <AlertTriangle size={18} />
+            ) : ev.type === 'deadline' ? (
+              <Hourglass size={18} />
+            ) : (
+              <CalendarDays size={18} />
+            ),
+          action: () => {
+            navigate('/calendar');
+            onClose();
+          },
         });
       }
     });
@@ -210,7 +255,10 @@ export function CommandPalette({
           title: `${t.merchant} (${formatCurrency(t.amount, settings.currency)})`,
           subtitle: `${t.category} · ${t.date} ${t.notes ? `· ${t.notes}` : ''}`,
           icon: <DollarSign size={18} />,
-          action: () => { navigate('/finance'); onClose(); },
+          action: () => {
+            navigate('/finance');
+            onClose();
+          },
         });
       }
     });
@@ -223,7 +271,19 @@ export function CommandPalette({
     });
 
     return result;
-  }, [query, courses, assignments, events, transactions, settings.currency, navigate, onClose, onOpenAddClass, onOpenAddEvent, onOpenAddAssignment]);
+  }, [
+    query,
+    courses,
+    assignments,
+    events,
+    transactions,
+    settings.currency,
+    navigate,
+    onClose,
+    onOpenAddClass,
+    onOpenAddEvent,
+    onOpenAddAssignment,
+  ]);
 
   useEffect(() => {
     setSelectedIndex(0);
@@ -312,7 +372,11 @@ export function CommandPalette({
           <input
             ref={inputRef}
             type="text"
-            placeholder={lang === 'id' ? 'Cari kelas, tugas, kegiatan, keuangan...' : 'Search courses, tasks, events, ledger...'}
+            placeholder={
+              lang === 'id'
+                ? 'Cari kelas, tugas, kegiatan, keuangan...'
+                : 'Search courses, tasks, events, ledger...'
+            }
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             style={{
@@ -367,7 +431,16 @@ export function CommandPalette({
               flexShrink: 0,
             }}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
           </button>
@@ -389,7 +462,16 @@ export function CommandPalette({
                 color: 'var(--on-surface-variant)',
               }}
             >
-              <div style={{ marginBottom: '0.5rem', display: 'flex', justifyContent: 'center', color: 'var(--on-surface-variant)' }}><Search size={32} /></div>
+              <div
+                style={{
+                  marginBottom: '0.5rem',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  color: 'var(--on-surface-variant)',
+                }}
+              >
+                <Search size={32} />
+              </div>
               <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--on-surface)' }}>
                 No results found for &ldquo;{query}&rdquo;
               </div>
@@ -413,9 +495,7 @@ export function CommandPalette({
                       padding: '0.625rem 0.875rem',
                       borderRadius: 8,
                       cursor: 'pointer',
-                      background: isSelected
-                        ? 'var(--surface-container-high)'
-                        : 'transparent',
+                      background: isSelected ? 'var(--surface-container-high)' : 'transparent',
                       transition: 'background 0.1s',
                     }}
                   >

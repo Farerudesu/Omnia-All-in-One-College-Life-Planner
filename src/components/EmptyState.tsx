@@ -62,7 +62,9 @@ export function EmptyState({
           {title}
         </div>
         {description && (
-          <div style={{ fontSize: '0.8125rem', lineHeight: 1.45, color: 'var(--on-surface-variant)' }}>
+          <div
+            style={{ fontSize: '0.8125rem', lineHeight: 1.45, color: 'var(--on-surface-variant)' }}
+          >
             {description}
           </div>
         )}

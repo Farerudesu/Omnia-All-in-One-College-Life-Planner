@@ -19,7 +19,9 @@ export function getAssignments(): Assignment[] {
 
 export async function addAssignment(assignment: Omit<Assignment, 'id'>): Promise<Assignment> {
   const newAssignment = { ...assignment, id: genId() };
-  const { error } = await getClient().from('assignments').insert(ownedRow(assignmentRow(assignment)));
+  const { error } = await getClient()
+    .from('assignments')
+    .insert(ownedRow(assignmentRow(assignment)));
   if (error) throw error;
   await refreshTable('assignments');
   return newAssignment;
@@ -45,7 +47,13 @@ export function updateAssignment(id: string, data: Partial<Assignment>): void {
     })
   );
   notify();
-  void mutateTable('assignments', () => getClient().from('assignments').update(assignmentRow(data)).eq('id', id).eq('user_id', activeUserId));
+  void mutateTable('assignments', () =>
+    getClient()
+      .from('assignments')
+      .update(assignmentRow(data))
+      .eq('id', id)
+      .eq('user_id', activeUserId)
+  );
 }
 
 export async function deleteAssignment(id: string): Promise<Assignment | null> {
@@ -80,7 +88,9 @@ export async function restoreAssignment(assignment: Assignment): Promise<Assignm
     setAssignments([...assignments, assignment]);
     notify();
   }
-  const { error } = await getClient().from('assignments').insert(ownedRow(assignmentRow(assignment)));
+  const { error } = await getClient()
+    .from('assignments')
+    .insert(ownedRow(assignmentRow(assignment)));
   if (error) {
     setAssignments(assignments.filter((a) => a.id !== assignment.id));
     notify();
@@ -170,7 +180,9 @@ export function getPinnedAssignments(): { assignment: Assignment; isManual: bool
   }
 
   const dismissed = dismissedAutoPins;
-  const sorted = [...activeAssignments].sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+  const sorted = [...activeAssignments].sort(
+    (a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+  );
   const autoCandidate = sorted.find((a) => !dismissed.includes(a.id));
 
   if (autoCandidate) {

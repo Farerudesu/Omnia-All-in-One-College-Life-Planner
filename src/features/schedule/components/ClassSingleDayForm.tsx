@@ -44,9 +44,19 @@ export function ClassSingleDayForm({
   setNote,
 }: ClassSingleDayFormProps) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', marginBottom: '1rem' }}>
+    <div
+      style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', marginBottom: '1rem' }}
+    >
       <div>
-        <label htmlFor="class-instructor-edit" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.25rem' }}>
+        <label
+          htmlFor="class-instructor-edit"
+          style={{
+            display: 'block',
+            fontSize: '0.8125rem',
+            fontWeight: 600,
+            marginBottom: '0.25rem',
+          }}
+        >
           {isId ? 'Dosen Pengampu' : 'Instructor'}
         </label>
         <input
@@ -59,15 +69,31 @@ export function ClassSingleDayForm({
       </div>
 
       <div>
-        <div style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          marginBottom: '0.5rem',
-        }}>
-          <span style={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '0.6875rem', letterSpacing: '0.05em' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.5rem',
+          }}
+        >
+          <span
+            style={{
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              fontSize: '0.6875rem',
+              letterSpacing: '0.05em',
+            }}
+          >
             {isId ? 'Status Pertemuan Hari Ini' : 'Single-day exceptions'}
           </span>
-          <span className="tabular-nums" style={{ fontSize: '0.6875rem', color: 'var(--on-surface-variant)' }}>
-            {isId ? `Hanya untuk ${dateStr}` : `Apply to ${getMonthName(date.getMonth(), true)} ${date.getDate()} only`}
+          <span
+            className="tabular-nums"
+            style={{ fontSize: '0.6875rem', color: 'var(--on-surface-variant)' }}
+          >
+            {isId
+              ? `Hanya untuk ${dateStr}`
+              : `Apply to ${getMonthName(date.getMonth(), true)} ${date.getDate()} only`}
           </span>
         </div>
         <ClassExceptionsPicker
@@ -85,7 +111,15 @@ export function ClassSingleDayForm({
       {(excType === 'moved' || excType === 'extra') && (
         <div className="modal-form-grid-2col">
           <div>
-            <label htmlFor="new-start-time-input" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.25rem' }}>
+            <label
+              htmlFor="new-start-time-input"
+              style={{
+                display: 'block',
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                marginBottom: '0.25rem',
+              }}
+            >
               {isId ? 'Mulai baru' : 'New start'}
             </label>
             <input
@@ -101,7 +135,15 @@ export function ClassSingleDayForm({
             />
           </div>
           <div>
-            <label htmlFor="new-end-time-input" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.25rem' }}>
+            <label
+              htmlFor="new-end-time-input"
+              style={{
+                display: 'block',
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                marginBottom: '0.25rem',
+              }}
+            >
               {isId ? 'Selesai baru' : 'New end'}
             </label>
             <input
@@ -121,7 +163,15 @@ export function ClassSingleDayForm({
 
       {(excType === 'room-changed' || excType === 'moved' || !isOnline) && (
         <div>
-          <label htmlFor="new-room-input" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.25rem' }}>
+          <label
+            htmlFor="new-room-input"
+            style={{
+              display: 'block',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              marginBottom: '0.25rem',
+            }}
+          >
             {isId ? 'Ruangan hari ini' : 'Room for today'}
           </label>
           <input
@@ -147,7 +197,11 @@ export function ClassSingleDayForm({
           id="class-note-input"
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder={isId ? 'contoh: Bawa laptop, kuis di awal jam...' : 'e.g., Bring laptop, quiz at start...'}
+          placeholder={
+            isId
+              ? 'contoh: Bawa laptop, kuis di awal jam...'
+              : 'e.g., Bring laptop, quiz at start...'
+          }
           rows={3}
           style={{ width: '100%', resize: 'vertical' }}
         />

@@ -74,11 +74,7 @@ export function ScheduleRightPanel({
       className="hidden-mobile"
     >
       {nextClass && (
-        <NextClassHeroCard
-          nextClass={nextClass}
-          lang={lang}
-          onSelectBlock={onSelectBlock}
-        />
+        <NextClassHeroCard nextClass={nextClass} lang={lang} onSelectBlock={onSelectBlock} />
       )}
 
       {/* Today's Schedule */}
@@ -92,9 +88,21 @@ export function ScheduleRightPanel({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--on-surface)" strokeWidth="2" aria-hidden="true">
-              <line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" />
-              <line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" />
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="var(--on-surface)"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
+              <line x1="8" y1="6" x2="21" y2="6" />
+              <line x1="8" y1="12" x2="21" y2="12" />
+              <line x1="8" y1="18" x2="21" y2="18" />
+              <line x1="3" y1="6" x2="3.01" y2="6" />
+              <line x1="3" y1="12" x2="3.01" y2="12" />
+              <line x1="3" y1="18" x2="3.01" y2="18" />
             </svg>
             <h3 style={{ fontSize: '0.9375rem', fontWeight: 600 }}>Jadwal hari ini</h3>
           </div>
@@ -153,7 +161,14 @@ export function ScheduleRightPanel({
                 }
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: '0.25rem',
+                }}
+              >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
                   <CategoryIndicator shape="square" color={course.color} size={8} />
                   <span
@@ -167,11 +182,20 @@ export function ScheduleRightPanel({
                   >
                     {course.code}
                   </span>
-                  <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface)' }}>
+                  <span
+                    style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface)' }}
+                  >
                     {course.name}
                   </span>
                 </div>
-                <span className="tabular-nums" style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--on-surface-variant)' }}>
+                <span
+                  className="tabular-nums"
+                  style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    color: 'var(--on-surface-variant)',
+                  }}
+                >
                   {formatTime12(startTime)}
                 </span>
               </div>
@@ -193,7 +217,14 @@ export function ScheduleRightPanel({
                 const badges = getClassBadges(session, course, exception, isId);
                 if (badges.length === 0) return null;
                 return (
-                  <div style={{ marginTop: '0.375rem', display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                  <div
+                    style={{
+                      marginTop: '0.375rem',
+                      display: 'flex',
+                      gap: '0.35rem',
+                      flexWrap: 'wrap',
+                    }}
+                  >
                     {badges.map((b) => (
                       <span
                         key={b.key}
@@ -220,7 +251,13 @@ export function ScheduleRightPanel({
 
         {todayEvents.map((ev) => {
           const shape: CategoryShape =
-            ev.type === 'class' ? 'square' : ev.type === 'personal' ? 'circle' : ev.type === 'exam' ? 'diamond' : 'outline-square';
+            ev.type === 'class'
+              ? 'square'
+              : ev.type === 'personal'
+                ? 'circle'
+                : ev.type === 'exam'
+                  ? 'diamond'
+                  : 'outline-square';
           const color =
             ev.color ||
             (ev.type === 'class'
@@ -255,7 +292,14 @@ export function ScheduleRightPanel({
                 filter: isPast ? 'grayscale(1)' : undefined,
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: '0.25rem',
+                }}
+              >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
                   <CategoryIndicator shape={shape} color={color} size={8} />
                   <span
@@ -270,12 +314,21 @@ export function ScheduleRightPanel({
                   >
                     {ev.type}
                   </span>
-                  <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface)' }}>
+                  <span
+                    style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface)' }}
+                  >
                     {ev.title}
                   </span>
                 </div>
                 {ev.startTime && (
-                  <span className="tabular-nums" style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--on-surface-variant)' }}>
+                  <span
+                    className="tabular-nums"
+                    style={{
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      color: 'var(--on-surface-variant)',
+                    }}
+                  >
                     {formatTime12(ev.startTime)}
                     {ev.endTime ? ` – ${formatTime12(ev.endTime)}` : ''}
                   </span>
@@ -313,14 +366,26 @@ export function ScheduleRightPanel({
               justifyContent: 'center',
             }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--on-surface-variant)" strokeWidth="2" aria-hidden="true">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="var(--on-surface-variant)"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
               <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
             </svg>
           </div>
           <div>
             <h4 style={{ fontSize: '0.9375rem' }}>Ringkasan beban mingguan</h4>
-            <p className="tabular-nums" style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>
-              {weeklyLoad.hours.toFixed(1)} jam kuliah · {weeklyLoad.pace === 'Balanced pace' ? 'Beban seimbang' : 'Beban tinggi'}
+            <p
+              className="tabular-nums"
+              style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}
+            >
+              {weeklyLoad.hours.toFixed(1)} jam kuliah ·{' '}
+              {weeklyLoad.pace === 'Balanced pace' ? 'Beban seimbang' : 'Beban tinggi'}
             </p>
           </div>
         </div>

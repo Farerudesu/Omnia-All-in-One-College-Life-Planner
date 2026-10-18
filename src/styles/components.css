@@ -5,7 +5,10 @@
   border-radius: var(--radius-lg);
   padding: 1.25rem;
   box-shadow: var(--shadow-xs);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.12s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @media (hover: hover) {
@@ -24,7 +27,9 @@
   border-radius: var(--radius-lg);
   padding: 1.25rem;
   box-shadow: var(--shadow-sm);
-  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  transition:
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .card-nested {
@@ -46,7 +51,10 @@
   font-size: 0.875rem;
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-xs);
-  transition: background-color 0.15s ease, transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    transform 0.12s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.15s ease;
   user-select: none;
 }
 
@@ -74,7 +82,11 @@
   font-size: 0.875rem;
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-xs);
-  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.12s cubic-bezier(0.16, 1, 0.3, 1),
+    color 0.15s ease;
   user-select: none;
 }
 
@@ -100,7 +112,10 @@
   font-weight: 500;
   font-size: 0.875rem;
   border-radius: var(--radius-md);
-  transition: background-color 0.15s ease, color 0.15s ease, transform 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.12s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
 }
 
@@ -168,7 +183,11 @@ textarea:focus-visible {
   background: var(--surface-container-lowest);
   color: var(--on-surface-variant);
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.12s cubic-bezier(0.16, 1, 0.3, 1);
   white-space: nowrap;
   user-select: none;
 }
@@ -238,8 +257,12 @@ textarea:focus-visible {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
@@ -254,9 +277,18 @@ textarea:focus-visible {
 }
 
 @keyframes blink {
-  0% { opacity: 0.2; transform: scale(0.8); }
-  20% { opacity: 1; transform: scale(1.1); }
-  100% { opacity: 0.2; transform: scale(0.8); }
+  0% {
+    opacity: 0.2;
+    transform: scale(0.8);
+  }
+  20% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 0.2;
+    transform: scale(0.8);
+  }
 }
 
 /* ─── Image outline (better-ui: 1px hue-tinted outline for depth) ─── */
@@ -265,12 +297,12 @@ textarea:focus-visible {
   outline-offset: -1px;
 }
 
-[data-theme="dark"] .image-outline {
+[data-theme='dark'] .image-outline {
   outline-color: oklch(1 0 0 / 0.1);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .image-outline {
+  :root:not([data-theme='light']) .image-outline {
     outline-color: oklch(1 0 0 / 0.1);
   }
 }
@@ -346,10 +378,11 @@ textarea:focus-visible {
   background: #ffffff;
   border-radius: 50%;
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15), 0 1px 1px rgba(0, 0, 0, 0.16);
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.15),
+    0 1px 1px rgba(0, 0, 0, 0.16);
 }
 
 .toggle-switch.active::after {
   transform: translateX(20px);
 }
-

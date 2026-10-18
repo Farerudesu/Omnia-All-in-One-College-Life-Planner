@@ -24,8 +24,9 @@ export function formatPrefilledSummary(data: PrefilledData): string {
 export function isConfirmationIntent(text: string): boolean {
   const t = text.trim().toLowerCase();
   return (
-    /^(tambahkan|tambah|add|oke|ok|yes|ya|simpan|save|confirm|deal|lanjut|gas|yep|iya|setuju|bisa)$/i.test(t) ||
-    /^(tambahkan\s+(ini|itu|jadwal|acara|event)|add\s+(this|it|event))$/i.test(t)
+    /^(tambahkan|tambah|add|oke|ok|yes|ya|simpan|save|confirm|deal|lanjut|gas|yep|iya|setuju|bisa)$/i.test(
+      t
+    ) || /^(tambahkan\s+(ini|itu|jadwal|acara|event)|add\s+(this|it|event))$/i.test(t)
   );
 }
 
@@ -50,11 +51,7 @@ export function validateProposal(
   }
   const [y, m, d] = data.date.split('-').map(Number);
   const dateObj = new Date(y, m - 1, d);
-  if (
-    dateObj.getFullYear() !== y ||
-    dateObj.getMonth() !== m - 1 ||
-    dateObj.getDate() !== d
-  ) {
+  if (dateObj.getFullYear() !== y || dateObj.getMonth() !== m - 1 || dateObj.getDate() !== d) {
     return { valid: false, error: t.invalidDateFormat };
   }
 
@@ -75,11 +72,7 @@ export function validateProposal(
 
   // 5. Positive integer amount for expenses
   if (data.type === 'expense') {
-    if (
-      typeof data.amount !== 'number' ||
-      !Number.isInteger(data.amount) ||
-      data.amount <= 0
-    ) {
+    if (typeof data.amount !== 'number' || !Number.isInteger(data.amount) || data.amount <= 0) {
       return { valid: false, error: t.invalidExpenseAmount };
     }
   }
@@ -119,7 +112,9 @@ export function mapProposedActionToPrefilled(action: ProposedAction): PrefilledD
     title: action.title,
     date: action.date,
     amount: action.amount,
-    category: (action.category ? normalizeTransactionCategory(action.category) : 'Food & Groceries') as ExpenseCategory,
+    category: (action.category
+      ? normalizeTransactionCategory(action.category)
+      : 'Food & Groceries') as ExpenseCategory,
     paymentMethod: action.paymentMethod || 'QRIS',
     notes: action.notes,
   };

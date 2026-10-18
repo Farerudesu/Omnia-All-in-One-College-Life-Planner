@@ -10,7 +10,9 @@ interface StudyGapCardProps {
 export function StudyGapCard({ studyGap, podReservation }: StudyGapCardProps) {
   return (
     <div className="card" style={{ margin: '0.75rem 1rem', padding: '0.875rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+      <div
+        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}
+      >
         <div
           style={{
             width: 36,
@@ -22,14 +24,25 @@ export function StudyGapCard({ studyGap, podReservation }: StudyGapCardProps) {
             justifyContent: 'center',
           }}
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--on-secondary-container)" strokeWidth="2" aria-hidden="true">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="var(--on-secondary-container)"
+            strokeWidth="2"
+            aria-hidden="true"
+          >
             <circle cx="12" cy="12" r="10" />
             <polyline points="12 6 12 12 16 14" />
           </svg>
         </div>
         <div>
           <h4 style={{ fontSize: '0.9375rem' }}>Study gap detected</h4>
-          <p className="tabular-nums" style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>
+          <p
+            className="tabular-nums"
+            style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}
+          >
             {studyGap.hours} hours free between {studyGap.before} & {studyGap.after}
           </p>
         </div>
@@ -58,7 +71,11 @@ export function StudyGapCard({ studyGap, podReservation }: StudyGapCardProps) {
             type="button"
             onClick={() => ds.cancelPodReservation()}
             className="btn-ghost"
-            style={{ fontSize: '0.6875rem', padding: '0.2rem 0.4rem', color: 'var(--on-primary-container)' }}
+            style={{
+              fontSize: '0.6875rem',
+              padding: '0.2rem 0.4rem',
+              color: 'var(--on-primary-container)',
+            }}
           >
             Release
           </button>
@@ -76,7 +93,12 @@ export function StudyGapCard({ studyGap, podReservation }: StudyGapCardProps) {
               date: toDateString(new Date()),
             })
           }
-          style={{ width: '100%', justifyContent: 'center', fontSize: '0.75rem', padding: '0.4rem' }}
+          style={{
+            width: '100%',
+            justifyContent: 'center',
+            fontSize: '0.75rem',
+            padding: '0.4rem',
+          }}
         >
           Reserve Quiet Pod (Library Floor 2)
         </button>

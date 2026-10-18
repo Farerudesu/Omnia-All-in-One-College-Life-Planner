@@ -80,10 +80,22 @@ export function ScheduleMobileWeekStrip({
                 userSelect: 'none',
               }}
             >
-              <span style={{ fontSize: '0.625rem', fontWeight: 700, textTransform: 'uppercase', opacity: isSelected ? 0.95 : 0.7, letterSpacing: '-0.01em', lineHeight: 1 }}>
+              <span
+                style={{
+                  fontSize: '0.625rem',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  opacity: isSelected ? 0.95 : 0.7,
+                  letterSpacing: '-0.01em',
+                  lineHeight: 1,
+                }}
+              >
                 {dayNames[dayIdx] || 'DAY'}
               </span>
-              <span className="tabular-nums" style={{ fontSize: '0.875rem', fontWeight: 700, lineHeight: 1.1, marginTop: '2px' }}>
+              <span
+                className="tabular-nums"
+                style={{ fontSize: '0.875rem', fontWeight: 700, lineHeight: 1.1, marginTop: '2px' }}
+              >
                 {date.getDate()}
               </span>
             </button>

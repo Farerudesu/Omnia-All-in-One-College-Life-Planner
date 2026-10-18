@@ -36,18 +36,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     let active = true;
-    void supabase.auth.getSession().then(({ data, error }) => {
-      if (!active) return;
-      setUser(data.session?.user ?? null);
-      setLoading(false);
-      if (error) console.error('Unable to restore Supabase session:', error.message);
-    }).catch((error: unknown) => {
-      if (!active) return;
-      console.error('Unable to restore Supabase session:', error);
-      setLoading(false);
-    });
+    void supabase.auth
+      .getSession()
+      .then(({ data, error }) => {
+        if (!active) return;
+        setUser(data.session?.user ?? null);
+        setLoading(false);
+        if (error) console.error('Unable to restore Supabase session:', error.message);
+      })
+      .catch((error: unknown) => {
+        if (!active) return;
+        console.error('Unable to restore Supabase session:', error);
+        setLoading(false);
+      });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       setLoading(false);
     });
@@ -121,7 +126,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, sendPhoneSignInCode, verifyPhoneSignInCode, requestPasswordReset, updatePassword, signOut }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        signIn,
+        signUp,
+        sendPhoneSignInCode,
+        verifyPhoneSignInCode,
+        requestPasswordReset,
+        updatePassword,
+        signOut,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

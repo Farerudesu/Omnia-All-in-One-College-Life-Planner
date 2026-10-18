@@ -35,7 +35,9 @@ export function MonthView({
   closeQuickActionMenu,
 }: MonthViewProps) {
   const isId = lang === 'id';
-  const dayNames = isId ? ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'] : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const dayNames = isId
+    ? ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min']
+    : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   return (
     <div
@@ -111,10 +113,10 @@ export function MonthView({
               background: selected
                 ? 'var(--surface-container-high)'
                 : isMatchingSearch
-                ? 'color-mix(in srgb, var(--primary) 12%, var(--surface-container-lowest))'
-                : today
-                ? 'color-mix(in srgb, var(--primary) 6%, var(--surface-container-lowest))'
-                : 'var(--surface-container-lowest)',
+                  ? 'color-mix(in srgb, var(--primary) 12%, var(--surface-container-lowest))'
+                  : today
+                    ? 'color-mix(in srgb, var(--primary) 6%, var(--surface-container-lowest))'
+                    : 'var(--surface-container-lowest)',
               outline: selected ? '2px solid var(--primary)' : undefined,
               outlineOffset: -2,
               cursor: 'pointer',
@@ -122,7 +124,14 @@ export function MonthView({
               opacity: isCurrentMonth ? 1 : 0.45,
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.25rem' }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.375rem',
+                marginBottom: '0.25rem',
+              }}
+            >
               <span
                 style={{
                   display: 'inline-flex',
@@ -140,13 +149,19 @@ export function MonthView({
                 {date.getDate()}
               </span>
               {today && (
-                <span className="calendar-month-today" style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--primary)' }}>
+                <span
+                  className="calendar-month-today"
+                  style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--primary)' }}
+                >
                   {isId ? 'Hari Ini' : 'Today'}
                 </span>
               )}
             </div>
 
-            <div className="calendar-month-cell-items" style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+            <div
+              className="calendar-month-cell-items"
+              style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}
+            >
               {items.slice(0, 3).map((item) => (
                 <div
                   key={item.id}
@@ -161,7 +176,14 @@ export function MonthView({
                     if (quickActionMenu?.id === item.id) {
                       closeQuickActionMenu();
                     } else {
-                      setQuickActionMenu({ id: item.id, originX: e.clientX, originY: e.clientY, item, date, isExiting: false });
+                      setQuickActionMenu({
+                        id: item.id,
+                        originX: e.clientX,
+                        originY: e.clientY,
+                        item,
+                        date,
+                        isExiting: false,
+                      });
                     }
                   }}
                   style={{
@@ -176,23 +198,52 @@ export function MonthView({
                     cursor: 'pointer',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', filter: (!selected && item.isPast) ? 'grayscale(1)' : undefined, opacity: (!selected && item.isPast) ? 0.58 : 1 }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      overflow: 'hidden',
+                      whiteSpace: 'nowrap',
+                      textOverflow: 'ellipsis',
+                      filter: !selected && item.isPast ? 'grayscale(1)' : undefined,
+                      opacity: !selected && item.isPast ? 0.58 : 1,
+                    }}
+                  >
                     <CategoryIndicator shape={item.shape} color={item.color} size={7} />
-                    <span className="calendar-month-event-label" style={{ overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--on-surface)' }}>
+                    <span
+                      className="calendar-month-event-label"
+                      style={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        color: 'var(--on-surface)',
+                      }}
+                    >
                       {item.title}
                     </span>
                   </div>
 
                   <button
                     className="opacity-0 group-hover:opacity-100 p-0.5 rounded transition-all min-touch-target"
-                    style={{ flexShrink: 0, color: 'var(--on-surface-variant)', background: 'transparent' }}
+                    style={{
+                      flexShrink: 0,
+                      color: 'var(--on-surface-variant)',
+                      background: 'transparent',
+                    }}
                     onClick={(e) => {
                       e.stopPropagation();
                       if (quickActionMenu?.id === item.id) {
                         closeQuickActionMenu();
                       } else {
                         const target = e.currentTarget.getBoundingClientRect();
-                        setQuickActionMenu({ id: item.id, originX: target.right, originY: target.top, item, date, isExiting: false });
+                        setQuickActionMenu({
+                          id: item.id,
+                          originX: target.right,
+                          originY: target.top,
+                          item,
+                          date,
+                          isExiting: false,
+                        });
                       }
                     }}
                   >
@@ -212,7 +263,15 @@ export function MonthView({
                     setSelectedDate(date);
                     setViewMode('Agenda');
                   }}
-                  style={{ fontSize: '0.625rem', color: 'var(--on-surface-variant)', fontWeight: 600, padding: '0.5rem', background: 'none', border: 0, textAlign: 'left' }}
+                  style={{
+                    fontSize: '0.625rem',
+                    color: 'var(--on-surface-variant)',
+                    fontWeight: 600,
+                    padding: '0.5rem',
+                    background: 'none',
+                    border: 0,
+                    textAlign: 'left',
+                  }}
                 >
                   +{items.length - 3} {isId ? 'lainnya' : 'more'}
                 </button>

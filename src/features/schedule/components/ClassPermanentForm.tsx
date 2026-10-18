@@ -24,15 +24,33 @@ export function ClassPermanentForm({
   setTimeError,
 }: ClassPermanentFormProps) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', marginBottom: '1rem' }}>
-      <div style={{ background: 'var(--surface-container-low)', padding: '0.75rem', borderRadius: 8, fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>
+    <div
+      style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', marginBottom: '1rem' }}
+    >
+      <div
+        style={{
+          background: 'var(--surface-container-low)',
+          padding: '0.75rem',
+          borderRadius: 8,
+          fontSize: '0.75rem',
+          color: 'var(--on-surface-variant)',
+        }}
+      >
         {isId
           ? 'Perubahan ini akan mengubah informasi dosen, ruangan, dan jadwal kuliah secara permanen untuk semester ini.'
           : 'These changes will permanently update instructor, room, and timetable for all upcoming weeks.'}
       </div>
 
       <div>
-        <label htmlFor="class-instructor-perm" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.25rem' }}>
+        <label
+          htmlFor="class-instructor-perm"
+          style={{
+            display: 'block',
+            fontSize: '0.8125rem',
+            fontWeight: 600,
+            marginBottom: '0.25rem',
+          }}
+        >
           {isId ? 'Dosen Pengampu (Permanen)' : 'Instructor (Permanent)'}
         </label>
         <input
@@ -45,7 +63,15 @@ export function ClassPermanentForm({
       </div>
 
       <div>
-        <label htmlFor="class-room-perm" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.25rem' }}>
+        <label
+          htmlFor="class-room-perm"
+          style={{
+            display: 'block',
+            fontSize: '0.8125rem',
+            fontWeight: 600,
+            marginBottom: '0.25rem',
+          }}
+        >
           {isId ? 'Lokasi / Ruangan (Permanen)' : 'Location / Room (Permanent)'}
         </label>
         <input
@@ -59,7 +85,15 @@ export function ClassPermanentForm({
 
       <div className="modal-form-grid-2col">
         <div>
-          <label htmlFor="class-start-perm" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.25rem' }}>
+          <label
+            htmlFor="class-start-perm"
+            style={{
+              display: 'block',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              marginBottom: '0.25rem',
+            }}
+          >
             {isId ? 'Jam Mulai' : 'Start Time'}
           </label>
           <input
@@ -75,7 +109,15 @@ export function ClassPermanentForm({
           />
         </div>
         <div>
-          <label htmlFor="class-end-perm" style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.25rem' }}>
+          <label
+            htmlFor="class-end-perm"
+            style={{
+              display: 'block',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              marginBottom: '0.25rem',
+            }}
+          >
             {isId ? 'Jam Selesai' : 'End Time'}
           </label>
           <input

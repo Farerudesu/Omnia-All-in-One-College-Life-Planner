@@ -149,17 +149,13 @@ function ToastCard({ item, onDismiss }: { item: ToastItem; onDismiss: () => void
         gap: '0.75rem',
         padding: '0.75rem 1rem',
         borderRadius: 12,
-        background: isError
-          ? 'var(--error-container, #410002)'
-          : 'var(--inverse-surface, #1e2022)',
+        background: isError ? 'var(--error-container, #410002)' : 'var(--inverse-surface, #1e2022)',
         color: isError
           ? 'var(--on-error-container, #ffdad6)'
           : 'var(--inverse-on-surface, #f0f1f3)',
         boxShadow: '0 8px 24px rgba(0, 0, 0, 0.28), 0 2px 6px rgba(0, 0, 0, 0.16)',
         backdropFilter: 'blur(12px)',
-        border: isError
-          ? '1px solid var(--error, #ffb4ab)'
-          : '1px solid rgba(255, 255, 255, 0.12)',
+        border: isError ? '1px solid var(--error, #ffb4ab)' : '1px solid rgba(255, 255, 255, 0.12)',
         animation: 'toast-slide-up 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards',
       }}
     >

@@ -61,7 +61,9 @@ export function AccountSection({
     const file = event.target.files?.[0] || null;
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
-      setProfileError(isId ? 'Pilih foto berukuran kurang dari 5 MB.' : 'Choose an image smaller than 5 MB.');
+      setProfileError(
+        isId ? 'Pilih foto berukuran kurang dari 5 MB.' : 'Choose an image smaller than 5 MB.'
+      );
       event.target.value = '';
       return;
     }
@@ -72,13 +74,27 @@ export function AccountSection({
   return (
     <div className="card">
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--on-surface)" strokeWidth="2" aria-hidden="true">
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="var(--on-surface)"
+          strokeWidth="2"
+          aria-hidden="true"
+        >
           <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
           <circle cx="12" cy="7" r="4" />
         </svg>
         <h3 style={{ fontSize: '1.125rem' }}>{isId ? 'Akun' : 'Account'}</h3>
       </div>
-      <p style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)', marginBottom: '1.25rem' }}>
+      <p
+        style={{
+          fontSize: '0.8125rem',
+          color: 'var(--on-surface-variant)',
+          marginBottom: '1.25rem',
+        }}
+      >
         {isId ? 'Detail profil untuk akun Omnia Anda.' : 'Profile details for your Omnia account.'}
       </p>
 
@@ -115,7 +131,13 @@ export function AccountSection({
       <div style={{ marginBottom: '0.75rem' }}>
         <label
           htmlFor="account-email-input"
-          style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem', color: 'var(--on-surface)' }}
+          style={{
+            display: 'block',
+            fontSize: '0.8125rem',
+            fontWeight: 600,
+            marginBottom: '0.375rem',
+            color: 'var(--on-surface)',
+          }}
         >
           {isId ? 'Email akun' : 'Account email'}
         </label>
@@ -129,9 +151,18 @@ export function AccountSection({
       </div>
 
       {isEditingProfile ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '0.75rem' }}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.75rem',
+            marginBottom: '0.75rem',
+          }}
+        >
           <div>
-            <label htmlFor="profile-display-name" className="label">{isId ? 'Nama tampilan' : 'Display name'}</label>
+            <label htmlFor="profile-display-name" className="label">
+              {isId ? 'Nama tampilan' : 'Display name'}
+            </label>
             <input
               id="profile-display-name"
               value={profileName}
@@ -142,7 +173,9 @@ export function AccountSection({
             />
           </div>
           <div>
-            <label htmlFor="profile-avatar-url" className="label">{isId ? 'URL foto profil' : 'Profile image URL'}</label>
+            <label htmlFor="profile-avatar-url" className="label">
+              {isId ? 'URL foto profil' : 'Profile image URL'}
+            </label>
             <input
               id="profile-avatar-url"
               type="url"
@@ -153,7 +186,9 @@ export function AccountSection({
             />
           </div>
           <div>
-            <label htmlFor="profile-avatar-file" className="label">{isId ? 'Atau unggah foto' : 'Or upload an image'}</label>
+            <label htmlFor="profile-avatar-file" className="label">
+              {isId ? 'Atau unggah foto' : 'Or upload an image'}
+            </label>
             <input
               id="profile-avatar-file"
               type="file"
@@ -161,14 +196,28 @@ export function AccountSection({
               onChange={handleFileChange}
               style={{ width: '100%' }}
             />
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--on-surface-variant)', marginTop: '0.25rem' }}>
-              <span>PNG, JPG, WebP, GIF, {isId ? 'atau' : 'or'} AVIF · {isId ? 'hingga' : 'up to'} 5 MB{profileAvatarFile ? ` · ${profileAvatarFile.name}` : ''}</span>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                fontSize: '0.75rem',
+                color: 'var(--on-surface-variant)',
+                marginTop: '0.25rem',
+              }}
+            >
+              <span>
+                PNG, JPG, WebP, GIF, {isId ? 'atau' : 'or'} AVIF · {isId ? 'hingga' : 'up to'} 5 MB
+                {profileAvatarFile ? ` · ${profileAvatarFile.name}` : ''}
+              </span>
               {profileAvatarFile && (
                 <button
                   type="button"
                   onClick={() => {
                     setProfileAvatarFile(null);
-                    const fileInput = document.getElementById('profile-avatar-file') as HTMLInputElement | null;
+                    const fileInput = document.getElementById(
+                      'profile-avatar-file'
+                    ) as HTMLInputElement | null;
                     if (fileInput) fileInput.value = '';
                   }}
                   style={{
@@ -186,7 +235,11 @@ export function AccountSection({
               )}
             </div>
           </div>
-          {profileError && <div role="alert" style={{ color: 'var(--error)', fontSize: '0.8125rem' }}>{profileError}</div>}
+          {profileError && (
+            <div role="alert" style={{ color: 'var(--error)', fontSize: '0.8125rem' }}>
+              {profileError}
+            </div>
+          )}
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
             <button
               type="button"
@@ -205,7 +258,13 @@ export function AccountSection({
               onClick={handleSaveProfile}
               disabled={profileSaving}
             >
-              {profileSaving ? (isId ? 'Menyimpan…' : 'Saving…') : (isId ? 'Simpan profil' : 'Save profile')}
+              {profileSaving
+                ? isId
+                  ? 'Menyimpan…'
+                  : 'Saving…'
+                : isId
+                  ? 'Simpan profil'
+                  : 'Save profile'}
             </button>
           </div>
         </div>
@@ -222,7 +281,14 @@ export function AccountSection({
           {isId ? 'Ubah profil' : 'Edit profile'}
         </button>
       )}
-      {profileSaved && <div role="status" style={{ color: 'var(--primary)', fontSize: '0.8125rem', marginBottom: '0.75rem' }}>{isId ? 'Profil tersimpan.' : 'Profile saved.'}</div>}
+      {profileSaved && (
+        <div
+          role="status"
+          style={{ color: 'var(--primary)', fontSize: '0.8125rem', marginBottom: '0.75rem' }}
+        >
+          {isId ? 'Profil tersimpan.' : 'Profile saved.'}
+        </div>
+      )}
 
       <button
         type="button"
@@ -231,14 +297,38 @@ export function AccountSection({
         disabled={resetSending}
         style={{ width: '100%', justifyContent: 'center', marginBottom: '0.5rem' }}
       >
-        {resetSending ? (isId ? 'Mengirim tautan…' : 'Sending reset link…') : (isId ? 'Atur ulang kata sandi' : 'Reset password')}
+        {resetSending
+          ? isId
+            ? 'Mengirim tautan…'
+            : 'Sending reset link…'
+          : isId
+            ? 'Atur ulang kata sandi'
+            : 'Reset password'}
       </button>
-      {resetMessage && <div role="status" style={{ color: 'var(--primary)', fontSize: '0.8125rem', marginBottom: '0.75rem' }}>{resetMessage}</div>}
-      {resetError && <div role="alert" style={{ color: 'var(--error)', fontSize: '0.8125rem', marginBottom: '0.75rem' }}>{resetError}</div>}
+      {resetMessage && (
+        <div
+          role="status"
+          style={{ color: 'var(--primary)', fontSize: '0.8125rem', marginBottom: '0.75rem' }}
+        >
+          {resetMessage}
+        </div>
+      )}
+      {resetError && (
+        <div
+          role="alert"
+          style={{ color: 'var(--error)', fontSize: '0.8125rem', marginBottom: '0.75rem' }}
+        >
+          {resetError}
+        </div>
+      )}
 
       <button
         type="button"
-        onClick={() => void signOut().catch((error: unknown) => window.alert(error instanceof Error ? error.message : 'Unable to sign out.'))}
+        onClick={() =>
+          void signOut().catch((error: unknown) =>
+            window.alert(error instanceof Error ? error.message : 'Unable to sign out.')
+          )
+        }
         style={{
           width: '100%',
           display: 'flex',
@@ -255,7 +345,15 @@ export function AccountSection({
           cursor: 'pointer',
         }}
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          aria-hidden="true"
+        >
           <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
           <polyline points="16 17 21 12 16 7" />
           <line x1="21" y1="12" x2="9" y2="12" />

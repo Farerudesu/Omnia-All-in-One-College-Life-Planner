@@ -28,7 +28,12 @@ import {
   FileText,
   User,
 } from 'lucide-react';
-import { testAskOmniRaw, type RawApiResult, type ProposedAction, type ModelAttempt } from '../lib/askOmni';
+import {
+  testAskOmniRaw,
+  type RawApiResult,
+  type ProposedAction,
+  type ModelAttempt,
+} from '../lib/askOmni';
 import { useAuth } from '../lib/AuthContext';
 import { supabase, supabaseUrl } from '../lib/supabase';
 
@@ -84,7 +89,8 @@ const PRESETS: PresetItem[] = [
     id: 'receipt',
     name: 'Struk Belanja',
     desc: 'Uji multi-item receipt parser dari teks struk',
-    message: 'Masukkan struk belanja ini: Indomaret, Air Mineral 4.000, Roti Cokelat 8.500, Kopi Kaleng 9.500, total Rp22.000 tunai',
+    message:
+      'Masukkan struk belanja ini: Indomaret, Air Mineral 4.000, Roti Cokelat 8.500, Kopi Kaleng 9.500, total Rp22.000 tunai',
     icon: FileText,
   },
 ];
@@ -110,11 +116,14 @@ export function DebugPage() {
   const [sessionTokenPresent, setSessionTokenPresent] = useState<boolean | null>(null);
 
   useEffect(() => {
-    supabase?.auth.getSession().then(({ data }) => {
-      setSessionTokenPresent(Boolean(data?.session?.access_token));
-    }).catch(() => {
-      setSessionTokenPresent(false);
-    });
+    supabase?.auth
+      .getSession()
+      .then(({ data }) => {
+        setSessionTokenPresent(Boolean(data?.session?.access_token));
+      })
+      .catch(() => {
+        setSessionTokenPresent(false);
+      });
   }, []);
 
   const handleCopy = (text: string, key: string) => {
@@ -265,7 +274,9 @@ export function DebugPage() {
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-sm tracking-tight text-white">Omnia Debug Workbench</span>
+                <span className="font-semibold text-sm tracking-tight text-white">
+                  Omnia Debug Workbench
+                </span>
                 <span className="hidden sm:inline-block text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-[#15231b] text-[#4ade80] border border-[#23382c]">
                   v1.7.2 · Edge Live
                 </span>
@@ -294,7 +305,6 @@ export function DebugPage() {
 
       {/* ─── Main Workbench Body ─── */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-
         {/* ─── Telemetry Bar: System & Connection Status ─── */}
         <section aria-label="Status Koneksi" className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="p-3 rounded-xl bg-[#101713] border border-[#1d2b23] flex items-center justify-between gap-3">
@@ -303,7 +313,9 @@ export function DebugPage() {
                 <Database size={14} />
               </div>
               <div className="min-w-0">
-                <div className="text-[10px] font-mono uppercase tracking-wider text-[#7e9487]">Supabase Endpoint</div>
+                <div className="text-[10px] font-mono uppercase tracking-wider text-[#7e9487]">
+                  Supabase Endpoint
+                </div>
                 <div className="text-xs font-mono text-white truncate" title={supabaseUrl || ''}>
                   {(supabaseUrl || 'NOT SET').replace(/^https?:\/\//, '')}
                 </div>
@@ -318,7 +330,9 @@ export function DebugPage() {
                 <Cpu size={14} />
               </div>
               <div className="min-w-0">
-                <div className="text-[10px] font-mono uppercase tracking-wider text-[#7e9487]">Anon Key Protocol</div>
+                <div className="text-[10px] font-mono uppercase tracking-wider text-[#7e9487]">
+                  Anon Key Protocol
+                </div>
                 <div className="text-xs font-mono text-white">
                   {hasAnonKey ? 'Verified (Client Auth)' : 'Missing (.env)'}
                 </div>
@@ -336,9 +350,11 @@ export function DebugPage() {
                 <User size={14} />
               </div>
               <div className="min-w-0">
-                <div className="text-[10px] font-mono uppercase tracking-wider text-[#7e9487]">Auth Context</div>
+                <div className="text-[10px] font-mono uppercase tracking-wider text-[#7e9487]">
+                  Auth Context
+                </div>
                 <div className="text-xs font-mono text-white truncate">
-                  {user ? (user.email || user.id.slice(0, 8)) : 'Anonymous / Guest'}
+                  {user ? user.email || user.id.slice(0, 8) : 'Anonymous / Guest'}
                 </div>
               </div>
             </div>
@@ -351,7 +367,6 @@ export function DebugPage() {
 
         {/* ─── Two-Column Workstation Layout ─── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-
           {/* ─── Left Column: Request Dispatcher (5 Cols) ─── */}
           <section className="lg:col-span-5 space-y-4">
             <div className="p-4 sm:p-5 rounded-2xl bg-[#101713] border border-[#1d2b23] space-y-4">
@@ -406,7 +421,10 @@ export function DebugPage() {
                     Payload Request Mentah (JSON):
                   </label>
                   <textarea
-                    value={customJsonInput || JSON.stringify({ message, debug: includeDebugFlag }, null, 2)}
+                    value={
+                      customJsonInput ||
+                      JSON.stringify({ message, debug: includeDebugFlag }, null, 2)
+                    }
                     onChange={(e) => setCustomJsonInput(e.target.value)}
                     rows={7}
                     className="w-full rounded-xl bg-[#090d0b] border border-[#1d2b23] p-3 text-xs font-mono text-[#c0cfc6] focus:outline-none focus:border-[#4ade80] transition-colors leading-relaxed"
@@ -490,9 +508,11 @@ export function DebugPage() {
                 <div className="max-w-md mx-auto space-y-1">
                   <h2 className="text-sm font-semibold text-white">Konsol Siap Diuji</h2>
                   <p className="text-xs text-[#7e9487] leading-relaxed">
-                    Pilih salah satu preset skenario di sebelah kiri atau ketik prompt Anda sendiri, lalu tekan{' '}
-                    <span className="text-[#c0cfc6] font-medium">"Eksekusi Request"</span> untuk menginspeksi rincian
-                    komunikasi Edge Function, latency, model fallback, dan payload mentah.
+                    Pilih salah satu preset skenario di sebelah kiri atau ketik prompt Anda sendiri,
+                    lalu tekan{' '}
+                    <span className="text-[#c0cfc6] font-medium">"Eksekusi Request"</span> untuk
+                    menginspeksi rincian komunikasi Edge Function, latency, model fallback, dan
+                    payload mentah.
                   </p>
                 </div>
                 <button
@@ -511,17 +531,21 @@ export function DebugPage() {
               /* Live Results Inspector */
               <div className="space-y-4">
                 {/* Status Bar */}
-                <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-                  result.status === 200 && !result.parsedJson?.error
-                    ? 'bg-[#101c15] border-[#1d3d2a]'
-                    : 'bg-[#1f1212] border-[#421d1d]'
-                }`}>
+                <div
+                  className={`p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                    result.status === 200 && !result.parsedJson?.error
+                      ? 'bg-[#101c15] border-[#1d3d2a]'
+                      : 'bg-[#1f1212] border-[#421d1d]'
+                  }`}
+                >
                   <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                      result.status === 200 && !result.parsedJson?.error
-                        ? 'bg-[#1b4332] text-[#4ade80]'
-                        : 'bg-[#4a1818] text-[#ef4444]'
-                    }`}>
+                    <div
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                        result.status === 200 && !result.parsedJson?.error
+                          ? 'bg-[#1b4332] text-[#4ade80]'
+                          : 'bg-[#4a1818] text-[#ef4444]'
+                      }`}
+                    >
                       {result.status === 200 && !result.parsedJson?.error ? (
                         <CheckCircle2 size={16} />
                       ) : (
@@ -551,8 +575,8 @@ export function DebugPage() {
                         {result.error
                           ? `Error: ${result.error}`
                           : result.parsedJson?.error
-                          ? `Provider Error: ${result.parsedJson.error}`
-                          : 'Respons berhasil diterima dari Supabase Edge Function.'}
+                            ? `Provider Error: ${result.parsedJson.error}`
+                            : 'Respons berhasil diterima dari Supabase Edge Function.'}
                       </div>
                     </div>
                   </div>
@@ -562,7 +586,11 @@ export function DebugPage() {
                     onClick={() => handleCopy(generateFullReport(), 'report')}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#23382c] bg-[#141d18] hover:bg-[#1a2720] text-xs font-medium text-white transition-colors shrink-0 cursor-pointer self-start sm:self-center"
                   >
-                    {copiedKey === 'report' ? <Check size={13} className="text-[#4ade80]" /> : <Copy size={13} />}
+                    {copiedKey === 'report' ? (
+                      <Check size={13} className="text-[#4ade80]" />
+                    ) : (
+                      <Copy size={13} />
+                    )}
                     {copiedKey === 'report' ? 'Tersalin' : 'Salin Laporan Lengkap'}
                   </button>
                 </div>
@@ -591,16 +619,26 @@ export function DebugPage() {
                     {result.parsedJson.proposedAction && (
                       <div className="p-3.5 rounded-xl bg-[#090d0b] border border-[#2b2413] grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                         <div>
-                          <span className="text-[#7e9487] block text-[10px] uppercase font-mono">Tipe Action</span>
-                          <span className="font-semibold text-white uppercase">{result.parsedJson.proposedAction.type}</span>
+                          <span className="text-[#7e9487] block text-[10px] uppercase font-mono">
+                            Tipe Action
+                          </span>
+                          <span className="font-semibold text-white uppercase">
+                            {result.parsedJson.proposedAction.type}
+                          </span>
                         </div>
                         <div>
-                          <span className="text-[#7e9487] block text-[10px] uppercase font-mono">Judul</span>
-                          <span className="font-medium text-white">{result.parsedJson.proposedAction.title}</span>
+                          <span className="text-[#7e9487] block text-[10px] uppercase font-mono">
+                            Judul
+                          </span>
+                          <span className="font-medium text-white">
+                            {result.parsedJson.proposedAction.title}
+                          </span>
                         </div>
                         {result.parsedJson.proposedAction.amount !== undefined && (
                           <div>
-                            <span className="text-[#7e9487] block text-[10px] uppercase font-mono">Nominal</span>
+                            <span className="text-[#7e9487] block text-[10px] uppercase font-mono">
+                              Nominal
+                            </span>
                             <span className="font-semibold text-[#4ade80] font-mono tabular-nums">
                               Rp{result.parsedJson.proposedAction.amount.toLocaleString('id-ID')}
                             </span>
@@ -608,20 +646,32 @@ export function DebugPage() {
                         )}
                         {result.parsedJson.proposedAction.category && (
                           <div>
-                            <span className="text-[#7e9487] block text-[10px] uppercase font-mono">Kategori</span>
-                            <span className="text-white">{result.parsedJson.proposedAction.category}</span>
+                            <span className="text-[#7e9487] block text-[10px] uppercase font-mono">
+                              Kategori
+                            </span>
+                            <span className="text-white">
+                              {result.parsedJson.proposedAction.category}
+                            </span>
                           </div>
                         )}
                         {result.parsedJson.proposedAction.paymentMethod && (
                           <div>
-                            <span className="text-[#7e9487] block text-[10px] uppercase font-mono">Metode Bayar</span>
-                            <span className="text-[#93c5fd] font-medium">{result.parsedJson.proposedAction.paymentMethod}</span>
+                            <span className="text-[#7e9487] block text-[10px] uppercase font-mono">
+                              Metode Bayar
+                            </span>
+                            <span className="text-[#93c5fd] font-medium">
+                              {result.parsedJson.proposedAction.paymentMethod}
+                            </span>
                           </div>
                         )}
                         {result.parsedJson.proposedAction.date && (
                           <div>
-                            <span className="text-[#7e9487] block text-[10px] uppercase font-mono">Tanggal</span>
-                            <span className="font-mono text-white">{result.parsedJson.proposedAction.date}</span>
+                            <span className="text-[#7e9487] block text-[10px] uppercase font-mono">
+                              Tanggal
+                            </span>
+                            <span className="font-mono text-white">
+                              {result.parsedJson.proposedAction.date}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -631,7 +681,9 @@ export function DebugPage() {
                     {result.parsedJson.proposedActions && (
                       <div className="space-y-2">
                         <div className="text-xs text-white font-medium flex items-center justify-between">
-                          <span>Item Rincian Struk ({result.parsedJson.proposedActions.length} item)</span>
+                          <span>
+                            Item Rincian Struk ({result.parsedJson.proposedActions.length} item)
+                          </span>
                           {result.parsedJson.receiptTotal && (
                             <span className="font-mono tabular-nums text-[#4ade80]">
                               Total: Rp{result.parsedJson.receiptTotal.toLocaleString('id-ID')}
@@ -639,17 +691,24 @@ export function DebugPage() {
                           )}
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {result.parsedJson.proposedActions.map((action: ProposedAction, idx: number) => (
-                            <div key={idx} className="p-2.5 rounded-lg bg-[#090d0b] border border-[#23382c] text-xs flex justify-between items-center">
-                              <div>
-                                <span className="font-medium text-white">{action.title}</span>
-                                <span className="text-[#7e9487] block text-[10px]">{action.category} • {action.paymentMethod || 'Cash'}</span>
+                          {result.parsedJson.proposedActions.map(
+                            (action: ProposedAction, idx: number) => (
+                              <div
+                                key={idx}
+                                className="p-2.5 rounded-lg bg-[#090d0b] border border-[#23382c] text-xs flex justify-between items-center"
+                              >
+                                <div>
+                                  <span className="font-medium text-white">{action.title}</span>
+                                  <span className="text-[#7e9487] block text-[10px]">
+                                    {action.category} • {action.paymentMethod || 'Cash'}
+                                  </span>
+                                </div>
+                                <span className="font-semibold text-[#4ade80] font-mono tabular-nums">
+                                  Rp{action.amount?.toLocaleString('id-ID')}
+                                </span>
                               </div>
-                              <span className="font-semibold text-[#4ade80] font-mono tabular-nums">
-                                Rp{action.amount?.toLocaleString('id-ID')}
-                              </span>
-                            </div>
-                          ))}
+                            )
+                          )}
                         </div>
                       </div>
                     )}
@@ -657,48 +716,68 @@ export function DebugPage() {
                 )}
 
                 {/* Attempt Waterfall Table */}
-                {result.parsedJson?.diagnostics?.attempts && result.parsedJson.diagnostics.attempts.length > 0 && (
-                  <div className="p-4 sm:p-5 rounded-2xl bg-[#101713] border border-[#1d2b23] space-y-3">
-                    <div className="text-[11px] font-mono uppercase tracking-wider text-[#7e9487] flex items-center gap-2">
-                      <Clock size={13} className="text-[#4ade80]" />
-                      Waterfall Percobaan Model (Attempt Log)
-                    </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-xs border-collapse">
-                        <thead>
-                          <tr className="border-b border-[#1d2b23] text-[#7e9487] font-mono text-[11px]">
-                            <th className="py-2 px-2.5 font-medium">Provider</th>
-                            <th className="py-2 px-2.5 font-medium">Model</th>
-                            <th className="py-2 px-2.5 font-medium">Status</th>
-                            <th className="py-2 px-2.5 font-medium">Latency</th>
-                            <th className="py-2 px-2.5 font-medium">Tools</th>
-                            <th className="py-2 px-2.5 font-medium">Catatan / Error</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[#17221b] text-[#c0cfc6] font-mono text-xs">
-                          {result.parsedJson.diagnostics.attempts.map((attempt: ModelAttempt, idx: number) => (
-                            <tr key={idx} className="hover:bg-[#141d18]">
-                              <td className="py-2 px-2.5 uppercase font-semibold text-white">{attempt.provider}</td>
-                              <td className="py-2 px-2.5 text-[#93c5fd]">{attempt.model}</td>
-                              <td className="py-2 px-2.5">
-                                <span className={`px-1.5 py-0.5 rounded text-[10px] tabular-nums ${
-                                  attempt.status === 200 ? 'bg-[#152e20] text-[#4ade80]' : 'bg-[#3b1818] text-[#f87171]'
-                                }`}>
-                                  {attempt.status || 'Err'}
-                                </span>
-                              </td>
-                              <td className="py-2 px-2.5 tabular-nums text-[#7e9487]">{attempt.durationMs ? `${attempt.durationMs}ms` : '-'}</td>
-                              <td className="py-2 px-2.5 text-[#7e9487]">{attempt.withTools ? 'Ya' : 'Tidak'}</td>
-                              <td className="py-2 px-2.5 max-w-xs truncate text-[11px]" title={attempt.error || ''}>
-                                {attempt.error ? <span className="text-[#f87171]">{attempt.error}</span> : <span className="text-[#4ade80]">OK</span>}
-                              </td>
+                {result.parsedJson?.diagnostics?.attempts &&
+                  result.parsedJson.diagnostics.attempts.length > 0 && (
+                    <div className="p-4 sm:p-5 rounded-2xl bg-[#101713] border border-[#1d2b23] space-y-3">
+                      <div className="text-[11px] font-mono uppercase tracking-wider text-[#7e9487] flex items-center gap-2">
+                        <Clock size={13} className="text-[#4ade80]" />
+                        Waterfall Percobaan Model (Attempt Log)
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs border-collapse">
+                          <thead>
+                            <tr className="border-b border-[#1d2b23] text-[#7e9487] font-mono text-[11px]">
+                              <th className="py-2 px-2.5 font-medium">Provider</th>
+                              <th className="py-2 px-2.5 font-medium">Model</th>
+                              <th className="py-2 px-2.5 font-medium">Status</th>
+                              <th className="py-2 px-2.5 font-medium">Latency</th>
+                              <th className="py-2 px-2.5 font-medium">Tools</th>
+                              <th className="py-2 px-2.5 font-medium">Catatan / Error</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody className="divide-y divide-[#17221b] text-[#c0cfc6] font-mono text-xs">
+                            {result.parsedJson.diagnostics.attempts.map(
+                              (attempt: ModelAttempt, idx: number) => (
+                                <tr key={idx} className="hover:bg-[#141d18]">
+                                  <td className="py-2 px-2.5 uppercase font-semibold text-white">
+                                    {attempt.provider}
+                                  </td>
+                                  <td className="py-2 px-2.5 text-[#93c5fd]">{attempt.model}</td>
+                                  <td className="py-2 px-2.5">
+                                    <span
+                                      className={`px-1.5 py-0.5 rounded text-[10px] tabular-nums ${
+                                        attempt.status === 200
+                                          ? 'bg-[#152e20] text-[#4ade80]'
+                                          : 'bg-[#3b1818] text-[#f87171]'
+                                      }`}
+                                    >
+                                      {attempt.status || 'Err'}
+                                    </span>
+                                  </td>
+                                  <td className="py-2 px-2.5 tabular-nums text-[#7e9487]">
+                                    {attempt.durationMs ? `${attempt.durationMs}ms` : '-'}
+                                  </td>
+                                  <td className="py-2 px-2.5 text-[#7e9487]">
+                                    {attempt.withTools ? 'Ya' : 'Tidak'}
+                                  </td>
+                                  <td
+                                    className="py-2 px-2.5 max-w-xs truncate text-[11px]"
+                                    title={attempt.error || ''}
+                                  >
+                                    {attempt.error ? (
+                                      <span className="text-[#f87171]">{attempt.error}</span>
+                                    ) : (
+                                      <span className="text-[#4ade80]">OK</span>
+                                    )}
+                                  </td>
+                                </tr>
+                              )
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
                 {/* Cloud Model Discovery Output */}
                 {result.parsedJson?.debug && (
@@ -710,14 +789,20 @@ export function DebugPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                       <div className="p-3 rounded-xl bg-[#090d0b] border border-[#1d2b23] space-y-1.5">
                         <div className="text-[11px] font-mono font-semibold text-white">
-                          Gemini ({((result.parsedJson.debug as any)?.geminiModels || []).length} model)
+                          Gemini ({((result.parsedJson.debug as any)?.geminiModels || []).length}{' '}
+                          model)
                         </div>
                         <div className="max-h-40 overflow-y-auto space-y-1 font-mono text-[10px] text-[#7e9487]">
-                          {((result.parsedJson.debug as any)?.geminiModels || []).map((m: string) => (
-                            <div key={m} className="px-2 py-0.5 rounded bg-[#101713] text-[#4ade80] truncate">
-                              {m}
-                            </div>
-                          ))}
+                          {((result.parsedJson.debug as any)?.geminiModels || []).map(
+                            (m: string) => (
+                              <div
+                                key={m}
+                                className="px-2 py-0.5 rounded bg-[#101713] text-[#4ade80] truncate"
+                              >
+                                {m}
+                              </div>
+                            )
+                          )}
                         </div>
                       </div>
 
@@ -727,7 +812,10 @@ export function DebugPage() {
                         </div>
                         <div className="max-h-40 overflow-y-auto space-y-1 font-mono text-[10px] text-[#7e9487]">
                           {((result.parsedJson.debug as any)?.groqModels || []).map((m: string) => (
-                            <div key={m} className="px-2 py-0.5 rounded bg-[#101713] text-[#93c5fd] truncate">
+                            <div
+                              key={m}
+                              className="px-2 py-0.5 rounded bg-[#101713] text-[#93c5fd] truncate"
+                            >
                               {m}
                             </div>
                           ))}
@@ -754,7 +842,11 @@ export function DebugPage() {
                       onClick={() => handleCopy(JSON.stringify(result.requestBody, null, 2), 'req')}
                       className="inline-flex items-center gap-1 text-[11px] font-mono text-[#7e9487] hover:text-white px-2 py-0.5 rounded bg-[#090d0b] border border-[#23382c] cursor-pointer"
                     >
-                      {copiedKey === 'req' ? <Check size={11} className="text-[#4ade80]" /> : <Copy size={11} />}
+                      {copiedKey === 'req' ? (
+                        <Check size={11} className="text-[#4ade80]" />
+                      ) : (
+                        <Copy size={11} />
+                      )}
                       Salin Body
                     </button>
                   </div>
@@ -762,17 +854,23 @@ export function DebugPage() {
                   {expandReq && (
                     <div className="p-4 space-y-3 bg-[#090d0b] text-xs font-mono border-t border-[#1d2b23]">
                       <div>
-                        <span className="text-[#7e9487] block text-[10px] uppercase">Endpoint Target:</span>
+                        <span className="text-[#7e9487] block text-[10px] uppercase">
+                          Endpoint Target:
+                        </span>
                         <span className="text-[#c0cfc6] break-all">{result.endpoint}</span>
                       </div>
                       <div>
-                        <span className="text-[#7e9487] block text-[10px] uppercase mb-1">Request Headers:</span>
+                        <span className="text-[#7e9487] block text-[10px] uppercase mb-1">
+                          Request Headers:
+                        </span>
                         <pre className="p-2.5 rounded bg-[#040605] text-[#7e9487] overflow-x-auto text-[11px]">
                           {JSON.stringify(result.requestHeaders, null, 2)}
                         </pre>
                       </div>
                       <div>
-                        <span className="text-[#7e9487] block text-[10px] uppercase mb-1">Request Body JSON:</span>
+                        <span className="text-[#7e9487] block text-[10px] uppercase mb-1">
+                          Request Body JSON:
+                        </span>
                         <pre className="p-2.5 rounded bg-[#040605] text-[#4ade80] overflow-x-auto text-[11px]">
                           {JSON.stringify(result.requestBody, null, 2)}
                         </pre>
@@ -798,10 +896,19 @@ export function DebugPage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleCopy(result.rawResponseText || JSON.stringify(result.parsedJson, null, 2), 'res')}
+                        onClick={() =>
+                          handleCopy(
+                            result.rawResponseText || JSON.stringify(result.parsedJson, null, 2),
+                            'res'
+                          )
+                        }
                         className="inline-flex items-center gap-1 text-[11px] font-mono text-[#7e9487] hover:text-white px-2 py-0.5 rounded bg-[#090d0b] border border-[#23382c] cursor-pointer"
                       >
-                        {copiedKey === 'res' ? <Check size={11} className="text-[#4ade80]" /> : <Copy size={11} />}
+                        {copiedKey === 'res' ? (
+                          <Check size={11} className="text-[#4ade80]" />
+                        ) : (
+                          <Copy size={11} />
+                        )}
                         Salin JSON
                       </button>
                     </div>
@@ -809,7 +916,9 @@ export function DebugPage() {
 
                   {expandResHeaders && (
                     <div className="p-4 bg-[#090d0b] border-t border-[#1d2b23] text-xs font-mono">
-                      <span className="text-[#7e9487] block text-[10px] uppercase mb-1">Response Headers:</span>
+                      <span className="text-[#7e9487] block text-[10px] uppercase mb-1">
+                        Response Headers:
+                      </span>
                       <pre className="p-2.5 rounded bg-[#040605] text-[#7e9487] overflow-x-auto text-[11px]">
                         {JSON.stringify(result.responseHeaders, null, 2)}
                       </pre>
@@ -830,11 +939,9 @@ export function DebugPage() {
                     </pre>
                   </div>
                 </div>
-
               </div>
             )}
           </section>
-
         </div>
       </main>
 

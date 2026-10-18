@@ -21,7 +21,12 @@ import {
   getLayoutBlocksForDay,
 } from '../utils/scheduleUtils';
 import type { ScheduleSearchResult } from '../components/ScheduleHeader';
-import type { NextClassInfo, TodaySessionItem, StudyGapInfo, WeeklyLoadInfo } from '../components/ScheduleRightPanel';
+import type {
+  NextClassInfo,
+  TodaySessionItem,
+  StudyGapInfo,
+  WeeklyLoadInfo,
+} from '../components/ScheduleRightPanel';
 
 interface UseScheduleDataParams {
   currentDate: Date;
@@ -62,7 +67,9 @@ export function useScheduleData({
     return map;
   }, [courses]);
 
-  const getSessionsForDay = (date: Date): Array<{ session: ClassSession; exception?: SessionException }> => {
+  const getSessionsForDay = (
+    date: Date
+  ): Array<{ session: ClassSession; exception?: SessionException }> => {
     if (categoryVisibility.classes === false) return [];
     const dayNum = getISODay(date);
     const dateStr = toDateString(date);
@@ -79,7 +86,15 @@ export function useScheduleData({
     const dateStr = toDateString(date);
     return events.filter((e) => {
       if (e.date !== dateStr) return false;
-      const typeKey = (e.type === 'class' ? 'classes' : e.type === 'exam' ? 'exams' : e.type === 'deadline' ? 'deadlines' : 'personal') as CategoryKey;
+      const typeKey = (
+        e.type === 'class'
+          ? 'classes'
+          : e.type === 'exam'
+            ? 'exams'
+            : e.type === 'deadline'
+              ? 'deadlines'
+              : 'personal'
+      ) as CategoryKey;
       return categoryVisibility[typeKey] !== false;
     });
   };
@@ -108,14 +123,30 @@ export function useScheduleData({
         const hasRemaining = dayBlocks.some((b) => !scheduleItemHasPassed(currentDate, b.endTime));
 
         if (dayBlocks.length > 0 && !hasRemaining) {
-          firstActivityRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
+          firstActivityRef.current?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+            inline: 'nearest',
+          });
         } else if (currentTimeRef.current) {
-          currentTimeRef.current.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+          currentTimeRef.current.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+            inline: 'nearest',
+          });
         } else if (firstActivityRef.current) {
-          firstActivityRef.current.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
+          firstActivityRef.current.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+            inline: 'nearest',
+          });
         }
       } else if (firstActivityRef.current) {
-        firstActivityRef.current.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
+        firstActivityRef.current.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+          inline: 'nearest',
+        });
       }
     }, 120);
     return () => clearTimeout(timer);
@@ -132,7 +163,10 @@ export function useScheduleData({
       const daySessions = sessions
         .filter((s) => s.daysOfWeek.includes(dayNum))
         .map((s) => ({ session: s, exception: ds.getExceptionForDate(s.id, dateStr) }))
-        .filter(({ exception }) => !exception || (exception.type !== 'no-class' && exception.type !== 'cancelled'))
+        .filter(
+          ({ exception }) =>
+            !exception || (exception.type !== 'no-class' && exception.type !== 'cancelled')
+        )
         .sort((a, b) => {
           const tA = a.exception?.newStartTime || a.session.startTime;
           const tB = b.exception?.newStartTime || b.session.startTime;
@@ -208,7 +242,12 @@ export function useScheduleData({
       daySess.forEach(({ session, exception }) => {
         const start = exception?.newStartTime || session.startTime;
         const end = exception?.newEndTime || session.endTime;
-        if (start && end && exception?.type !== 'cancelled' && !exception?.types?.includes('cancelled')) {
+        if (
+          start &&
+          end &&
+          exception?.type !== 'cancelled' &&
+          !exception?.types?.includes('cancelled')
+        ) {
           totalMinutes += durationMinutes(start, end);
         }
       });
@@ -270,8 +309,14 @@ export function useScheduleData({
   }, [searchQuery, courses, sessions, events]);
 
   const todayDate = new Date();
-  const todaySessions: TodaySessionItem[] = useMemo(() => getSessionsForDay(todayDate), [sessions, exceptions, categoryVisibility]);
-  const todayEvents: CalendarEvent[] = useMemo(() => getEventsForDay(todayDate), [events, categoryVisibility]);
+  const todaySessions: TodaySessionItem[] = useMemo(
+    () => getSessionsForDay(todayDate),
+    [sessions, exceptions, categoryVisibility]
+  );
+  const todayEvents: CalendarEvent[] = useMemo(
+    () => getEventsForDay(todayDate),
+    [events, categoryVisibility]
+  );
 
   return {
     courses,

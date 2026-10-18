@@ -72,13 +72,29 @@ export function AppLayout() {
           Skip to main content
         </a>
 
-        <Sidebar isCollapsed={isSidebarCollapsed} onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)} />
+        <Sidebar
+          isCollapsed={isSidebarCollapsed}
+          onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        />
 
         <div className="app-content-wrapper">
           <MobileHeader />
-          <main id="main-content" tabIndex={-1} className="app-main" style={{ outline: 'none', position: 'relative' }}>
+          <main
+            id="main-content"
+            tabIndex={-1}
+            className="app-main"
+            style={{ outline: 'none', position: 'relative' }}
+          >
             {isDataLoading && (
-              <div style={{ position: 'absolute', inset: 0, zIndex: 10, background: 'var(--surface)', minHeight: 'calc(100vh - 5rem)' }}>
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  zIndex: 10,
+                  background: 'var(--surface)',
+                  minHeight: 'calc(100vh - 5rem)',
+                }}
+              >
                 <DataState />
               </div>
             )}

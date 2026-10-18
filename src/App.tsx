@@ -28,7 +28,9 @@ export default function App() {
                 <Route
                   path="/debug"
                   element={
-                    <Suspense fallback={<div style={{ padding: '2rem' }}>Loading debug console…</div>}>
+                    <Suspense
+                      fallback={<div style={{ padding: '2rem' }}>Loading debug console…</div>}
+                    >
                       <LazyDebugPage />
                     </Suspense>
                   }
@@ -67,9 +69,19 @@ function VersionPage() {
       <p>Version: {version}</p>
       {buildTime && <p>Build: {buildTime}</p>}
       <p style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem' }}>
-        <a href="/schedule" style={{ color: 'var(--primary, #0284c7)', textDecoration: 'underline' }}>← Back to App</a>
+        <a
+          href="/schedule"
+          style={{ color: 'var(--primary, #0284c7)', textDecoration: 'underline' }}
+        >
+          ← Back to App
+        </a>
         {import.meta.env.DEV && (
-          <a href="/debug" style={{ color: 'var(--primary, #0284c7)', textDecoration: 'underline' }}>🔧 Open Debug Console</a>
+          <a
+            href="/debug"
+            style={{ color: 'var(--primary, #0284c7)', textDecoration: 'underline' }}
+          >
+            🔧 Open Debug Console
+          </a>
         )}
       </p>
     </main>
@@ -89,5 +101,9 @@ function RequireAuth() {
 }
 
 function AuthLoading() {
-  return <main role="status" style={{ padding: '2rem', color: 'var(--on-surface-variant)' }}>Checking your session…</main>;
+  return (
+    <main role="status" style={{ padding: '2rem', color: 'var(--on-surface-variant)' }}>
+      Checking your session…
+    </main>
+  );
 }

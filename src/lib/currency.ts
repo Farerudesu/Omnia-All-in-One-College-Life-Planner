@@ -34,7 +34,10 @@ export function normalizeCurrency(currency?: string): string {
 
 export function getCurrencyFractionDigits(currency?: string): number {
   const code = normalizeCurrency(currency);
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: code }).resolvedOptions().maximumFractionDigits ?? 2;
+  return (
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: code }).resolvedOptions()
+      .maximumFractionDigits ?? 2
+  );
 }
 
 export function getCurrencyScale(currency?: string): number {
@@ -55,7 +58,9 @@ export function formatCurrency(amount: number, currency?: string): string {
 export function getCurrencySymbol(currency?: string): string {
   const code = normalizeCurrency(currency);
   const locale = currencyLocales[code];
-  return new Intl.NumberFormat(locale, { style: 'currency', currency: code })
-    .formatToParts(0)
-    .find((part) => part.type === 'currency')?.value || code;
+  return (
+    new Intl.NumberFormat(locale, { style: 'currency', currency: code })
+      .formatToParts(0)
+      .find((part) => part.type === 'currency')?.value || code
+  );
 }

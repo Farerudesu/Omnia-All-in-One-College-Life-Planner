@@ -54,7 +54,9 @@ export function BottomNav() {
             >
               {({ isActive }) => (
                 <>
-                  <div className={`app-bottom-nav__icon-wrapper ${isActive ? 'app-bottom-nav__icon-wrapper--active' : ''}`}>
+                  <div
+                    className={`app-bottom-nav__icon-wrapper ${isActive ? 'app-bottom-nav__icon-wrapper--active' : ''}`}
+                  >
                     <Icon
                       size={22}
                       strokeWidth={isActive ? 2.2 : 1.7}
