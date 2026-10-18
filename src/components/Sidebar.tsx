@@ -17,6 +17,7 @@ import {
   Sparkles,
   Pin,
   PinOff,
+  NotebookPen,
 } from 'lucide-react';
 import { useData } from '../lib/useData';
 import * as ds from '../lib/dataService';
@@ -68,6 +69,7 @@ export function Sidebar({
   const navItems = [
     { to: '/schedule', label: t.schedule, icon: Clock },
     { to: '/assignments', label: t.assignments, icon: CheckSquare },
+    { to: '/notes', label: t.notes, icon: NotebookPen },
     { to: '/calendar', label: t.calendar, icon: Calendar },
     { to: '/finance', label: t.finance, icon: DollarSign },
     { to: '/ask-omni', label: t.askOmni, icon: Sparkles },

@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Clock, CheckSquare, Calendar, DollarSign, Sparkles } from 'lucide-react';
+import { Clock, CheckSquare, Calendar, DollarSign, NotebookPen } from 'lucide-react';
 import { useLanguage } from '../lib/useLanguage';
 import { translations } from '../lib/i18n';
 
@@ -29,10 +29,9 @@ export function BottomNav() {
       icon: DollarSign,
     },
     {
-      to: '/ask-omni',
-      label: t.askOmni,
-      icon: Sparkles,
-      isSpecial: true,
+      to: '/notes',
+      label: t.notes,
+      icon: NotebookPen,
     },
   ];
 
@@ -46,9 +45,7 @@ export function BottomNav() {
               key={tab.to}
               to={tab.to}
               className={({ isActive }) =>
-                `app-bottom-nav__link ${isActive ? 'app-bottom-nav__link--active' : ''} ${
-                  tab.isSpecial ? 'app-bottom-nav__link--omni' : ''
-                }`
+                `app-bottom-nav__link ${isActive ? 'app-bottom-nav__link--active' : ''}`
               }
               aria-label={tab.label}
             >
@@ -62,9 +59,6 @@ export function BottomNav() {
                       strokeWidth={isActive ? 2.2 : 1.7}
                       className="app-bottom-nav__icon"
                     />
-                    {tab.isSpecial && (
-                      <span className="app-bottom-nav__omni-glow" aria-hidden="true" />
-                    )}
                   </div>
                   <span className="app-bottom-nav__label">{tab.label}</span>
                 </>

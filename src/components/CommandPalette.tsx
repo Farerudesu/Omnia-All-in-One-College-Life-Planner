@@ -14,8 +14,10 @@ import {
   Hourglass,
   DollarSign,
   Search,
+  StickyNote,
 } from 'lucide-react';
 import * as ds from '../lib/dataService';
+import { getCachedNotes } from '../lib/notesService';
 import { useData } from '../lib/useData';
 import { formatCurrency } from '../lib/currency';
 import { useLanguage } from '../lib/useLanguage';
@@ -30,7 +32,7 @@ interface CommandPaletteProps {
 
 interface PaletteItem {
   id: string;
-  category: 'Pages' | 'Courses' | 'Deliverables' | 'Events' | 'Finance' | 'Actions';
+  category: 'Pages' | 'Courses' | 'Deliverables' | 'Events' | 'Finance' | 'Notes' | 'Actions';
   title: string;
   subtitle?: string;
   icon: React.ReactNode;
@@ -104,6 +106,17 @@ export function CommandPalette({
         },
       },
       {
+        id: 'nav-notes',
+        category: 'Pages',
+        title: lang === 'id' ? 'Catatan Kuliah' : 'Course Notes',
+        subtitle: lang === 'id' ? 'Simpan materi, ringkasan, dan ide kuliah' : 'Study notes, lecture summaries, markdown',
+        icon: <StickyNote size={18} />,
+        action: () => {
+          navigate('/notes');
+          onClose();
+        },
+      },
+      {
         id: 'nav-finance',
         category: 'Pages',
         title: 'Finance & Ledger',
@@ -129,6 +142,28 @@ export function CommandPalette({
 
     // Quick Actions
     const actionItems: PaletteItem[] = [
+      {
+        id: 'act-add-note',
+        category: 'Actions',
+        title: lang === 'id' ? 'Catatan Baru' : 'New Note',
+        subtitle: lang === 'id' ? 'Buat catatan kuliah baru' : 'Create a new study note',
+        icon: <Plus size={18} />,
+        action: () => {
+          navigate('/notes');
+          onClose();
+        },
+      },
+      {
+        id: 'act-search-notes',
+        category: 'Actions',
+        title: lang === 'id' ? 'Cari Catatan' : 'Search Notes',
+        subtitle: lang === 'id' ? 'Buka pencarian catatan kuliah' : 'Open notes search and filters',
+        icon: <Search size={18} />,
+        action: () => {
+          navigate('/notes');
+          onClose();
+        },
+      },
       {
         id: 'act-add-class',
         category: 'Actions',
@@ -257,6 +292,27 @@ export function CommandPalette({
           icon: <DollarSign size={18} />,
           action: () => {
             navigate('/finance');
+            onClose();
+          },
+        });
+      }
+    });
+
+    // Notes
+    getCachedNotes().forEach((note) => {
+      if (
+        note.title.toLowerCase().includes(q) ||
+        note.content.toLowerCase().includes(q) ||
+        note.tags.some((tag) => tag.toLowerCase().includes(q))
+      ) {
+        result.push({
+          id: `note-${note.id}`,
+          category: 'Notes',
+          title: note.title.trim() || (lang === 'id' ? 'Catatan Tanpa Judul' : 'Untitled Note'),
+          subtitle: note.content.slice(0, 80) || (note.tags.length > 0 ? note.tags.join(', ') : undefined),
+          icon: <StickyNote size={18} />,
+          action: () => {
+            navigate(`/notes?open=${note.id}`);
             onClose();
           },
         });

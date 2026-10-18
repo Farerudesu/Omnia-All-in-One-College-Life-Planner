@@ -12,6 +12,7 @@ import {
   Calendar as CalendarIcon,
   Clock,
   DollarSign,
+  StickyNote,
 } from 'lucide-react';
 import { OmniaLogo } from './OmniaLogo';
 import { useAuth } from '../lib/AuthContext';
@@ -324,6 +325,30 @@ export function MobileHeader() {
                   {lang === 'id'
                     ? 'Makanan, buku, transportasi'
                     : 'Food, books, transport, supplies'}
+                </span>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              className="mobile-quick-add-tile"
+              onClick={() => {
+                setShowQuickAddModal(false);
+                navigate('/notes');
+              }}
+            >
+              <div
+                className="mobile-quick-add-tile__icon"
+                style={{ background: 'var(--surface-container-high)', color: 'var(--on-surface)' }}
+              >
+                <StickyNote size={20} />
+              </div>
+              <div className="mobile-quick-add-tile__info">
+                <strong>{lang === 'id' ? 'Catatan Baru' : 'New Note'}</strong>
+                <span>
+                  {lang === 'id'
+                    ? 'Ringkasan materi, catatan kuliah'
+                    : 'Lecture notes, study summary'}
                 </span>
               </div>
             </button>

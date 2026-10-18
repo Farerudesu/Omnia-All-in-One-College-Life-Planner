@@ -11,6 +11,7 @@ import { FinancePage } from './pages/FinancePage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AskOmniPage } from './pages/AskOmniPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
+import { NotesPage } from './pages/NotesPage';
 
 const LazyDebugPage = import.meta.env.DEV
   ? lazy(() => import('./pages/DebugPage').then((m) => ({ default: m.DebugPage })))
@@ -45,6 +46,7 @@ export default function App() {
                 <Route path="/schedule" element={<SchedulePage />} />
                 <Route path="/calendar" element={<CalendarPage />} />
                 <Route path="/assignments" element={<AssignmentsPage />} />
+                <Route path="/notes" element={<NotesPage />} />
                 <Route path="/finance" element={<FinancePage />} />
                 <Route path="/ask-omni" element={<AskOmniPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
