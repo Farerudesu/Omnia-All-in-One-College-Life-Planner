@@ -260,3 +260,58 @@ export async function searchNotes(q: string, limit = 20): Promise<Note[]> {
     });
   }
 }
+
+export function validateNoteInput(input: Partial<NoteInput>): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  if (input.title !== undefined) {
+    if (input.title.trim().length === 0) {
+      errors.push('Title cannot be empty');
+    } else if (input.title.length > 200) {
+      errors.push('Title must be at most 200 characters');
+    }
+  }
+  if (input.content !== undefined && input.content.length > 50000) {
+    errors.push('Content must be at most 50,000 characters');
+  }
+  if (input.tags !== undefined) {
+    if (input.tags.length > 10) {
+      errors.push('Tags cannot exceed 10 items');
+    }
+    for (const tag of input.tags) {
+      if (tag.length > 30) {
+        errors.push(`Tag "${tag}" exceeds 30 characters`);
+      }
+    }
+  }
+  return {
+    valid: errors.length === 0,
+    errors,
+  };
+}
+
+export function filterNotesInMemory(notes: Note[], filter: NoteFilter): Note[] {
+  return notes.filter((note) => {
+    if (filter.isArchived !== undefined && note.isArchived !== filter.isArchived) {
+      return false;
+    }
+    if (filter.isPinned !== undefined && note.isPinned !== filter.isPinned) {
+      return false;
+    }
+    if (filter.courseId && note.courseId !== filter.courseId) {
+      return false;
+    }
+    if (filter.tag && !note.tags.includes(filter.tag)) {
+      return false;
+    }
+    if (filter.search) {
+      const q = filter.search.toLowerCase();
+      const matchTitle = note.title.toLowerCase().includes(q);
+      const matchContent = note.content.toLowerCase().includes(q);
+      const matchTag = note.tags.some((t) => t.toLowerCase().includes(q));
+      if (!matchTitle && !matchContent && !matchTag) {
+        return false;
+      }
+    }
+    return true;
+  });
+}

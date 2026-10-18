@@ -34,13 +34,18 @@ export let settings: UserSettings = {
   monthlyBudget: 2500000,
   currency: 'IDR',
   theme: 'light',
-  language: (localStorage.getItem('omnia_language') as 'en' | 'id') || 'id',
+  language:
+    (typeof localStorage !== 'undefined'
+      ? (localStorage.getItem('omnia_language') as 'en' | 'id')
+      : null) || 'id',
   timeZone:
-    localStorage.getItem('omnia_timezone') ||
+    (typeof localStorage !== 'undefined' ? localStorage.getItem('omnia_timezone') : null) ||
     (typeof Intl !== 'undefined'
       ? Intl.DateTimeFormat().resolvedOptions().timeZone
       : 'Asia/Jakarta'),
-  initialBalance: Number(localStorage.getItem('omnia_initial_balance') || 0),
+  initialBalance: Number(
+    (typeof localStorage !== 'undefined' ? localStorage.getItem('omnia_initial_balance') : null) || 0
+  ),
 };
 
 export function setCourses(next: Course[]) {

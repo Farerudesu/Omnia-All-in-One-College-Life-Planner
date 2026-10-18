@@ -334,6 +334,7 @@ export function CommandPalette({
     events,
     transactions,
     settings.currency,
+    lang,
     navigate,
     onClose,
     onOpenAddClass,

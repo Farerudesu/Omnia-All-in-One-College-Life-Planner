@@ -4,30 +4,19 @@ import { Sparkles, X, ChevronRight, ChevronLeft } from 'lucide-react';
 import { OmniChat } from '@/features/ask-omni/components/OmniChat';
 import { useLanguage } from '@/lib/useLanguage';
 
-interface BubblePreference {
-  side: 'left' | 'right';
-  y: number;
-  collapsed: boolean;
-}
+import {
+  type BubblePreference,
+  parseBubblePreference,
+  loadBubblePreference,
+  BUBBLE_STORAGE_KEY,
+  BUBBLE_INTRO_KEY,
+} from '@/lib/bubblePreferences';
 
-const STORAGE_KEY = 'omnia_omni_bubble';
-const INTRO_KEY = 'omnia_omni_bubble_intro_seen';
+export type { BubblePreference };
+export { parseBubblePreference, loadBubblePreference };
+
 const BUBBLE_SIZE = 52;
 const DRAG_THRESHOLD = 6;
-
-function loadPreference(): BubblePreference {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { side: 'right', y: 120, collapsed: false };
-    const parsed = JSON.parse(raw);
-    const side = parsed.side === 'left' ? 'left' : 'right';
-    const y = typeof parsed.y === 'number' && !isNaN(parsed.y) ? Math.max(70, parsed.y) : 120;
-    const collapsed = Boolean(parsed.collapsed);
-    return { side, y, collapsed };
-  } catch {
-    return { side: 'right', y: 120, collapsed: false };
-  }
-}
 
 export function OmniBubble() {
   const location = useLocation();
@@ -35,9 +24,15 @@ export function OmniBubble() {
   const [searchParams] = useSearchParams();
   const lang = useLanguage();
 
-  const [pref, setPref] = useState<BubblePreference>(loadPreference);
+  const [pref, setPref] = useState<BubblePreference>(loadBubblePreference);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [showIntro, setShowIntro] = useState(() => !localStorage.getItem(INTRO_KEY));
+  const [showIntro, setShowIntro] = useState(() => {
+    try {
+      return typeof localStorage !== 'undefined' ? !localStorage.getItem(BUBBLE_INTRO_KEY) : false;
+    } catch {
+      return false;
+    }
+  });
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 768);
   const [isDragging, setIsDragging] = useState(false);
   const [hasNewMessage, setHasNewMessage] = useState(false);
@@ -82,7 +77,7 @@ export function OmniBubble() {
   const savePreference = useCallback((next: BubblePreference) => {
     setPref(next);
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      localStorage.setItem(BUBBLE_STORAGE_KEY, JSON.stringify(next));
     } catch {
       // ignore quota
     }
@@ -92,7 +87,7 @@ export function OmniBubble() {
   const dismissIntro = () => {
     setShowIntro(false);
     try {
-      localStorage.setItem(INTRO_KEY, 'true');
+      localStorage.setItem(BUBBLE_INTRO_KEY, 'true');
     } catch {
       // ignore
     }
