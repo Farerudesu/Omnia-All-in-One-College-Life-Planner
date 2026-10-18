@@ -1,6 +1,27 @@
 -- Migration: 20261018000000_add_notes.sql
 -- Description: Adds the notes table, indexes, trigger, search RPC, and user profile preference for Omni notes access.
 
+-- 0. Helper function to validate note tags length without subqueries in check constraints
+create or replace function public.validate_note_tags(tags text[])
+returns boolean
+language plpgsql
+immutable
+as $$
+declare
+  t text;
+begin
+  if tags is null then
+    return true;
+  end if;
+  foreach t in array tags loop
+    if char_length(t) > 30 then
+      return false;
+    end if;
+  end loop;
+  return true;
+end;
+$$;
+
 -- 1. Create table notes
 create table if not exists public.notes (
   id uuid primary key default gen_random_uuid(),
@@ -8,8 +29,7 @@ create table if not exists public.notes (
   title text not null default '' check (char_length(title) <= 200),
   content text not null default '' check (char_length(content) <= 50000),
   tags text[] not null default '{}' check (
-    cardinality(tags) <= 10 and
-    (select bool_and(char_length(t) <= 30) from unnest(tags) as t) is not false
+    cardinality(tags) <= 10 and public.validate_note_tags(tags)
   ),
   color text null,
   is_pinned boolean not null default false,
