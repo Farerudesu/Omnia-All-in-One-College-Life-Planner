@@ -114,6 +114,9 @@ export function updateSettings(data: Partial<UserSettings>): void {
   if (settings.initialBalance !== undefined) {
     localStorage.setItem('omnia_initial_balance', String(settings.initialBalance));
   }
+  if (settings.monthlyBudget !== undefined) {
+    localStorage.setItem('omnia_monthly_budget', String(settings.monthlyBudget));
+  }
   notify();
   const row = {
     term_name: settings.termName ?? null,

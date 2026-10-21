@@ -6,6 +6,7 @@ import * as ds from '@/lib/dataService';
 import type { UserSettings } from '@/types';
 import { getLanguage, setLanguage, translations, type Language } from '@/lib/i18n';
 import { getUserTimezone } from '@/lib/dateUtils';
+import { Sparkles } from 'lucide-react';
 
 import { useProfileSettings } from './hooks/useProfileSettings';
 import { useShareSchedule } from './hooks/useShareSchedule';
@@ -158,7 +159,7 @@ export function SettingsPage() {
     const initBalNum = initialBalance.trim() ? parseFloat(initialBalance) : undefined;
     const updated: UserSettings = {
       ...settings,
-      monthlyBudget: parseFloat(monthlyBudget) || 1850,
+      monthlyBudget: Math.max(0, parseFloat(monthlyBudget) || 0),
       currency: normalizedCurrency,
       theme,
       termName,
@@ -421,6 +422,30 @@ export function SettingsPage() {
               handleExportICS={handleExportICS}
               handleExportCoursesCSV={handleExportCoursesCSV}
             />
+
+            {/* App Tour & Guidance */}
+            <div className="card" style={{ marginTop: '1rem', padding: '1.25rem' }}>
+              <h3 style={{ fontSize: '1rem', marginBottom: '0.375rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Sparkles size={16} style={{ color: 'var(--primary)' }} />
+                <span>{language === 'id' ? 'Tur Aplikasi & Panduan' : 'App Tour & Guidance'}</span>
+              </h3>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)', marginBottom: '0.875rem' }}>
+                {language === 'id'
+                  ? 'Ingin melihat kembali panduan dan sorotan fitur-fitur utama di Omnia? Mulai ulang tur spotlight kapan saja.'
+                  : 'Want to review the highlights and core features of Omnia again? Restart the spotlight tour anytime.'}
+              </p>
+              <button
+                type="button"
+                className="btn-outline min-touch-target"
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent('start-coach-tour'));
+                }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.8125rem' }}
+              >
+                <Sparkles size={14} />
+                <span>{language === 'id' ? 'Mulai Ulang Tur Panduan' : 'Restart Spotlight Tour'}</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

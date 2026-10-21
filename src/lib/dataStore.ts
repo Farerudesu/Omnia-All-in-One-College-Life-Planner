@@ -31,7 +31,9 @@ export let settings: UserSettings = {
   semesterStart: '',
   semesterEnd: '',
   breakWeeks: [],
-  monthlyBudget: 2500000,
+  monthlyBudget: Number(
+    (typeof localStorage !== 'undefined' ? localStorage.getItem('omnia_monthly_budget') : null) || 0
+  ),
   currency: 'IDR',
   theme: 'light',
   language:
@@ -374,7 +376,7 @@ export function clearUserData() {
     semesterStart: '',
     semesterEnd: '',
     breakWeeks: [],
-    monthlyBudget: 2500000,
+    monthlyBudget: 0,
     currency: 'IDR',
     theme: 'light',
   };

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../lib/useData';
 import * as ds from '../lib/dataService';
@@ -12,6 +12,8 @@ import { EXPENSE_CATEGORIES, CATEGORY_COLORS } from '../lib/categories';
 import { useLanguage } from '../lib/useLanguage';
 import { translations } from '../lib/i18n';
 import { formatDateNumeric, getTodayDateString } from '../lib/dateUtils';
+import { AdjustBudgetModal } from '../features/finance/components/AdjustBudgetModal';
+import { SlidersHorizontal } from 'lucide-react';
 
 const CATEGORIES = EXPENSE_CATEGORIES;
 
@@ -42,6 +44,17 @@ export function FinancePage() {
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
   const [showTxModal, setShowTxModal] = useState(false);
   const [deletingTx, setDeletingTx] = useState<Transaction | null>(null);
+  const [showAdjustModal, setShowAdjustModal] = useState(false);
+  const [adjustFocusSection, setAdjustFocusSection] = useState<'all' | 'budget' | 'balance'>('all');
+
+  useEffect(() => {
+    const handleOpenModal = () => {
+      setAdjustFocusSection('all');
+      setShowAdjustModal(true);
+    };
+    window.addEventListener('open-adjust-budget-modal', handleOpenModal);
+    return () => window.removeEventListener('open-adjust-budget-modal', handleOpenModal);
+  }, []);
 
   // Real filtering states
   const [searchQuery, setSearchQuery] = useState('');
@@ -107,15 +120,12 @@ export function FinancePage() {
   const hasIncomeOrInitialBalance = totalIncomeAllTime > 0 || initialBalance > 0;
   const effectiveCashBalance = initialBalance + totalIncomeAllTime - totalExpenseAllTime;
 
-  const effectiveMonthlyBudget =
-    currency === 'IDR' && settings.monthlyBudget < 10000
-      ? 2500000
-      : settings.monthlyBudget || 2500000;
-
-  const budgetPercent = (spentThisMonth / effectiveMonthlyBudget) * 100;
-  const remaining = effectiveMonthlyBudget - spentThisMonth;
+  const effectiveMonthlyBudget = Math.max(0, settings.monthlyBudget || 0);
+  const hasBudgetSet = effectiveMonthlyBudget > 0;
+  const budgetPercent = hasBudgetSet ? (spentThisMonth / effectiveMonthlyBudget) * 100 : 0;
+  const remaining = hasBudgetSet ? effectiveMonthlyBudget - spentThisMonth : 0;
   const daysLeftInMonth = Math.max(1, 30 - now.getDate());
-  const dailyAllowance = remaining > 0 ? remaining / daysLeftInMonth : 0;
+  const dailyAllowance = hasBudgetSet && remaining > 0 ? remaining / daysLeftInMonth : 0;
 
   const budgetColor =
     budgetPercent > 100 ? 'var(--error)' : budgetPercent > 80 ? 'var(--warning)' : 'var(--primary)';
@@ -285,37 +295,104 @@ export function FinancePage() {
             <div>
               <div
                 style={{
-                  fontSize: '0.8125rem',
-                  fontWeight: 600,
-                  color: 'var(--on-surface-variant)',
-                  marginBottom: '0.25rem',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '0.5rem',
+                  flexWrap: 'wrap',
+                  gap: '0.5rem',
                 }}
               >
-                {lang === 'id' ? 'Sisa Anggaran Bulan Ini' : 'Remaining Monthly Budget'}
+                <div
+                  style={{
+                    fontSize: '0.8125rem',
+                    fontWeight: 600,
+                    color: 'var(--on-surface-variant)',
+                  }}
+                >
+                  {lang === 'id' ? 'Sisa Anggaran Bulan Ini' : 'Remaining Monthly Budget'}
+                </div>
+                <button
+                  type="button"
+                  className="btn-outline min-touch-target"
+                  style={{
+                    fontSize: '0.75rem',
+                    padding: '0.2rem 0.5rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                  }}
+                  onClick={() => {
+                    setAdjustFocusSection('budget');
+                    setShowAdjustModal(true);
+                  }}
+                >
+                  <SlidersHorizontal size={13} />
+                  <span>
+                    {hasBudgetSet
+                      ? lang === 'id'
+                        ? 'Ubah Batas'
+                        : 'Adjust Limit'
+                      : lang === 'id'
+                      ? 'Atur Batas'
+                      : 'Set Limit'}
+                  </span>
+                </button>
               </div>
-              <div
-                className="tabular-nums"
-                style={{
-                  fontSize: '2.5rem',
-                  fontWeight: 700,
-                  fontFamily: 'var(--font-heading)',
-                  color: remaining >= 0 ? 'var(--on-surface)' : 'var(--error)',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {formatMoney(remaining)}
-              </div>
-            </div>
-            <div
-              style={{
-                marginTop: '0.75rem',
-                fontSize: '0.75rem',
-                color: 'var(--on-surface-variant)',
-              }}
-            >
-              {lang === 'id'
-                ? `Rencana pengeluaran bulanan: ${formatMoney(effectiveMonthlyBudget)}. Berkurang ${formatMoney(spentThisMonth)} dari pengeluaran tercatat.`
-                : `Monthly budget cap: ${formatMoney(effectiveMonthlyBudget)}. Reduced by ${formatMoney(spentThisMonth)} from recorded spending.`}
+
+              {!hasBudgetSet ? (
+                <div>
+                  <div
+                    className="tabular-nums"
+                    style={{
+                      fontSize: '2.5rem',
+                      fontWeight: 700,
+                      fontFamily: 'var(--font-heading)',
+                      color: 'var(--on-surface-variant)',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {formatMoney(0)}
+                  </div>
+                  <div
+                    style={{
+                      marginTop: '0.5rem',
+                      fontSize: '0.75rem',
+                      color: 'var(--on-surface-variant)',
+                    }}
+                  >
+                    {lang === 'id'
+                      ? 'Batas anggaran bulanan belum diatur (Rp 0). Klik tombol "Atur Batas" untuk menentukan kuota belanja.'
+                      : 'Monthly budget cap is not set (0). Click "Set Limit" to define your spending quota.'}
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div
+                    className="tabular-nums"
+                    style={{
+                      fontSize: '2.5rem',
+                      fontWeight: 700,
+                      fontFamily: 'var(--font-heading)',
+                      color: remaining >= 0 ? 'var(--on-surface)' : 'var(--error)',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {formatMoney(remaining)}
+                  </div>
+                  <div
+                    style={{
+                      marginTop: '0.75rem',
+                      fontSize: '0.75rem',
+                      color: 'var(--on-surface-variant)',
+                    }}
+                  >
+                    {lang === 'id'
+                      ? `Rencana pengeluaran bulanan: ${formatMoney(effectiveMonthlyBudget)}. Berkurang ${formatMoney(spentThisMonth)} dari pengeluaran tercatat.`
+                      : `Monthly budget cap: ${formatMoney(effectiveMonthlyBudget)}. Reduced by ${formatMoney(spentThisMonth)} from recorded spending.`}
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -334,13 +411,49 @@ export function FinancePage() {
             <div>
               <div
                 style={{
-                  fontSize: '0.8125rem',
-                  fontWeight: 600,
-                  color: 'var(--on-surface-variant)',
-                  marginBottom: '0.25rem',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '0.5rem',
+                  flexWrap: 'wrap',
+                  gap: '0.5rem',
                 }}
               >
-                {lang === 'id' ? 'Saldo Kas & Rekening' : 'Cash & Account Balance'}
+                <div
+                  style={{
+                    fontSize: '0.8125rem',
+                    fontWeight: 600,
+                    color: 'var(--on-surface-variant)',
+                  }}
+                >
+                  {lang === 'id' ? 'Saldo Kas & Rekening' : 'Cash & Account Balance'}
+                </div>
+                <button
+                  type="button"
+                  className="btn-outline min-touch-target"
+                  style={{
+                    fontSize: '0.75rem',
+                    padding: '0.2rem 0.5rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                  }}
+                  onClick={() => {
+                    setAdjustFocusSection('balance');
+                    setShowAdjustModal(true);
+                  }}
+                >
+                  <SlidersHorizontal size={13} />
+                  <span>
+                    {hasIncomeOrInitialBalance
+                      ? lang === 'id'
+                        ? 'Atur Saldo'
+                        : 'Adjust'
+                      : lang === 'id'
+                      ? 'Atur Saldo'
+                      : 'Set Balance'}
+                  </span>
+                </button>
               </div>
               {!hasIncomeOrInitialBalance ? (
                 <div>
@@ -362,17 +475,30 @@ export function FinancePage() {
                     }}
                   >
                     {lang === 'id'
-                      ? 'Catat uang masuk atau atur saldo awal di Pengaturan.'
-                      : 'Record income or set initial balance in Settings.'}
+                      ? 'Catat uang masuk atau tentukan saldo awal dompet & rekeningmu.'
+                      : 'Record income or set your initial cash balance.'}
                   </div>
-                  <button
-                    type="button"
-                    className="btn-outline min-touch-target"
-                    style={{ fontSize: '0.75rem', padding: '0.25rem 0.625rem' }}
-                    onClick={() => setShowAddIncome(true)}
-                  >
-                    + {lang === 'id' ? 'Catat pemasukan' : 'Add income'}
-                  </button>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      className="btn-outline min-touch-target"
+                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.625rem' }}
+                      onClick={() => {
+                        setAdjustFocusSection('balance');
+                        setShowAdjustModal(true);
+                      }}
+                    >
+                      {lang === 'id' ? 'Atur saldo awal' : 'Set initial balance'}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-outline min-touch-target"
+                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.625rem' }}
+                      onClick={() => setShowAddIncome(true)}
+                    >
+                      + {lang === 'id' ? 'Catat pemasukan' : 'Add income'}
+                    </button>
+                  </div>
                 </div>
               ) : effectiveCashBalance < 0 ? (
                 <div>
@@ -613,73 +739,131 @@ export function FinancePage() {
 
         {/* Budget progress bar */}
         <div className="card" style={{ marginBottom: '1.5rem' }}>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'baseline',
-              marginBottom: '0.5rem',
-              flexWrap: 'wrap',
-              gap: '0.5rem',
-            }}
-          >
-            <h2 style={{ fontSize: '1.25rem' }}>
-              {lang === 'id' ? 'Batas Anggaran Bulanan Semester' : 'Semester Monthly Budget Cap'}
-            </h2>
+          {!hasBudgetSet ? (
             <div
-              className="tabular-nums"
-              style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)' }}
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '1rem',
+                padding: '0.5rem 0',
+              }}
             >
-              {lang === 'id'
-                ? `Terpakai ${formatMoney(spentThisMonth)} dari batas ${formatMoney(effectiveMonthlyBudget)}`
-                : `${formatMoney(spentThisMonth)} spent of ${formatMoney(effectiveMonthlyBudget)} cap`}
+              <div>
+                <h2 style={{ fontSize: '1.25rem', margin: '0 0 0.25rem 0' }}>
+                  {lang === 'id' ? 'Batas Anggaran Bulanan Semester' : 'Semester Monthly Budget Cap'}
+                </h2>
+                <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--on-surface-variant)' }}>
+                  {lang === 'id'
+                    ? 'Batas anggaran bulanan saat ini adalah Rp 0. Tentukan batas untuk melihat progres pemakaian kuota dan peringatan 80%.'
+                    : 'Your monthly budget cap is currently 0. Set a limit to track usage progress and 80% threshold warnings.'}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn-primary min-touch-target"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.8125rem' }}
+                onClick={() => {
+                  setAdjustFocusSection('budget');
+                  setShowAdjustModal(true);
+                }}
+              >
+                <SlidersHorizontal size={14} />
+                <span>{lang === 'id' ? 'Atur Batas Anggaran' : 'Set Budget Limit'}</span>
+              </button>
             </div>
-          </div>
-          <div
-            style={{
-              height: 12,
-              background: 'var(--surface-container-high)',
-              borderRadius: 999,
-              overflow: 'hidden',
-              marginBottom: '0.5rem',
-            }}
-          >
-            <div
-              style={{
-                height: '100%',
-                width: `${Math.min(budgetPercent, 100)}%`,
-                background: budgetColor,
-                borderRadius: 999,
-                transition: 'width 0.4s ease',
-              }}
-            />
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '0.25rem',
-              fontSize: '0.75rem',
-              color: 'var(--on-surface-variant)',
-            }}
-          >
-            <span className="tabular-nums">0% ({formatMoney(0)})</span>
-            <span className="tabular-nums">
-              {lang === 'id'
-                ? `Peringatan (80%: ${formatMoney(effectiveMonthlyBudget * 0.8)})`
-                : `Warning (80%: ${formatMoney(effectiveMonthlyBudget * 0.8)})`}
-            </span>
-            <span
-              className="tabular-nums"
-              style={{
-                color: budgetPercent > 100 ? 'var(--error)' : undefined,
-                fontWeight: budgetPercent > 100 ? 600 : 400,
-              }}
-            >
-              100% ({formatMoney(effectiveMonthlyBudget)})
-            </span>
-          </div>
+          ) : (
+            <>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'baseline',
+                  marginBottom: '0.5rem',
+                  flexWrap: 'wrap',
+                  gap: '0.5rem',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <h2 style={{ fontSize: '1.25rem', margin: 0 }}>
+                    {lang === 'id' ? 'Batas Anggaran Bulanan Semester' : 'Semester Monthly Budget Cap'}
+                  </h2>
+                  <button
+                    type="button"
+                    className="btn-outline min-touch-target"
+                    style={{
+                      fontSize: '0.75rem',
+                      padding: '0.15rem 0.5rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                    }}
+                    onClick={() => {
+                      setAdjustFocusSection('budget');
+                      setShowAdjustModal(true);
+                    }}
+                  >
+                    <SlidersHorizontal size={12} />
+                    <span>{lang === 'id' ? 'Ubah Batas' : 'Adjust Limit'}</span>
+                  </button>
+                </div>
+                <div
+                  className="tabular-nums"
+                  style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)' }}
+                >
+                  {lang === 'id'
+                    ? `Terpakai ${formatMoney(spentThisMonth)} dari batas ${formatMoney(effectiveMonthlyBudget)}`
+                    : `${formatMoney(spentThisMonth)} spent of ${formatMoney(effectiveMonthlyBudget)} cap`}
+                </div>
+              </div>
+              <div
+                style={{
+                  height: 12,
+                  background: 'var(--surface-container-high)',
+                  borderRadius: 999,
+                  overflow: 'hidden',
+                  marginBottom: '0.5rem',
+                }}
+              >
+                <div
+                  style={{
+                    height: '100%',
+                    width: `${Math.min(budgetPercent, 100)}%`,
+                    background: budgetColor,
+                    borderRadius: 999,
+                    transition: 'width 0.4s ease',
+                  }}
+                />
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '0.25rem',
+                  fontSize: '0.75rem',
+                  color: 'var(--on-surface-variant)',
+                }}
+              >
+                <span className="tabular-nums">0% ({formatMoney(0)})</span>
+                <span className="tabular-nums">
+                  {lang === 'id'
+                    ? `Peringatan (80%: ${formatMoney(effectiveMonthlyBudget * 0.8)})`
+                    : `Warning (80%: ${formatMoney(effectiveMonthlyBudget * 0.8)})`}
+                </span>
+                <span
+                  className="tabular-nums"
+                  style={{
+                    color: budgetPercent > 100 ? 'var(--error)' : undefined,
+                    fontWeight: budgetPercent > 100 ? 600 : 400,
+                  }}
+                >
+                  100% ({formatMoney(effectiveMonthlyBudget)})
+                </span>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Spending by Category + Smart Advisory */}
@@ -1459,6 +1643,15 @@ export function FinancePage() {
         confirmText={lang === 'id' ? 'Hapus transaksi' : 'Delete transaction'}
         cancelText={lang === 'id' ? 'Batal' : 'Cancel'}
         variant="danger"
+      />
+
+      {/* Adjust Budget & Initial Balance Modal */}
+      <AdjustBudgetModal
+        isOpen={showAdjustModal}
+        onClose={() => setShowAdjustModal(false)}
+        settings={settings}
+        lang={lang}
+        focusSection={adjustFocusSection}
       />
     </div>
   );

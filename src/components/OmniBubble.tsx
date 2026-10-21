@@ -242,6 +242,7 @@ export function OmniBubble() {
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
           <button
             type="button"
+            data-tour="omni-bubble"
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}

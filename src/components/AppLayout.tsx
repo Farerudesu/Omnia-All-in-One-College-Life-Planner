@@ -9,6 +9,7 @@ import { DataState } from './DataState';
 import { ErrorBoundary } from './ErrorBoundary';
 import { useData, useDataStatus } from '../lib/useData';
 import { ToastProvider } from './Toast';
+import { CoachMarkTour } from './CoachMarkTour';
 import * as ds from '../lib/dataService';
 
 export function AppLayout() {
@@ -112,6 +113,9 @@ export function AppLayout() {
 
         {/* Global Universal Search & Command Palette */}
         <CommandPalette isOpen={isPaletteOpen} onClose={() => setIsPaletteOpen(false)} />
+
+        {/* Global Spotlight / Coach Mark Onboarding Tour */}
+        <CoachMarkTour />
       </div>
     </ToastProvider>
   );

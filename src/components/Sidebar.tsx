@@ -184,6 +184,7 @@ export function Sidebar({
           {!isCollapsed && (
             <NavLink
               to="/schedule"
+              data-tour="omnia-brand"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -244,10 +245,21 @@ export function Sidebar({
         >
           {navItems.map((item) => {
             const Icon = item.icon;
+            const tourId =
+              item.to === '/schedule'
+                ? 'nav-schedule'
+                : item.to === '/assignments'
+                ? 'nav-assignments'
+                : item.to === '/finance'
+                ? 'nav-finance'
+                : item.to === '/ask-omni'
+                ? 'nav-ask-omni'
+                : undefined;
             return (
               <NavLink
                 key={item.to}
                 to={item.to}
+                data-tour={tourId}
                 title={isCollapsed ? item.label : undefined}
                 style={({ isActive }) => ({
                   display: 'flex',

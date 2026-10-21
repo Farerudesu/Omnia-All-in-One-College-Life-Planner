@@ -40,10 +40,19 @@ export function BottomNav() {
       <div className="app-bottom-nav__bar">
         {tabs.map((tab) => {
           const Icon = tab.icon;
+          const tourId =
+            tab.to === '/schedule'
+              ? 'nav-schedule'
+              : tab.to === '/assignments'
+              ? 'nav-assignments'
+              : tab.to === '/finance'
+              ? 'nav-finance'
+              : undefined;
           return (
             <NavLink
               key={tab.to}
               to={tab.to}
+              data-tour={tourId}
               className={({ isActive }) =>
                 `app-bottom-nav__link ${isActive ? 'app-bottom-nav__link--active' : ''}`
               }
