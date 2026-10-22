@@ -67,27 +67,7 @@ export function CoachMarkTour() {
   const step = TOUR_STEPS[currentStepIndex];
   const retryCountRef = useRef(0);
 
-  // Check storage on mount: mark as seen so refresh never opens it again!
-  useEffect(() => {
-    try {
-      const completed = localStorage.getItem(TOUR_STORAGE_KEY);
-      const sessionSeen = sessionStorage.getItem('omnia_tour_session_seen');
-
-      // Only auto-trigger once EVER for new users
-      if (!completed && !sessionSeen) {
-        sessionStorage.setItem('omnia_tour_session_seen', 'true');
-        // Mark completed right away so subsequent reloads never pop it up again
-        localStorage.setItem(TOUR_STORAGE_KEY, 'true');
-
-        const timer = setTimeout(() => {
-          setIsActive(true);
-        }, 1000);
-        return () => clearTimeout(timer);
-      }
-    } catch {
-      // ignore
-    }
-  }, []);
+  // Strictly on-demand: only starts when explicitly triggered via event
 
   // Listen for custom trigger event to restart tour anytime from settings
   useEffect(() => {
