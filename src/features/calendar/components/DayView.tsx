@@ -1,5 +1,6 @@
 import { formatDateLong, formatTime12 } from '@/lib/dateUtils';
 import { CategoryIndicator } from '@/components/CategoryIndicator';
+import { safeMixWithSurface, safeAlphaColor } from '@/lib/colorMix';
 import type { CalendarItem } from '../types';
 
 interface DayViewProps {
@@ -85,8 +86,9 @@ export function DayView({
               style={{
                 padding: '1rem 1.25rem',
                 borderRadius: 8,
-                background: `color-mix(in srgb, ${item.color} 5%, var(--surface-container-low))`,
-                border: `1px solid color-mix(in srgb, ${item.color} 20%, var(--outline-variant))`,
+                backgroundColor: 'var(--surface-container-low)',
+                background: safeMixWithSurface(item.color, 8, 'var(--surface-container-low)'),
+                border: `1px solid ${safeAlphaColor(item.color, 0.22, 'var(--outline-variant)')}`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -128,7 +130,8 @@ export function DayView({
                 <span
                   className="badge"
                   style={{
-                    background: `color-mix(in srgb, ${item.color} 15%, transparent)`,
+                    backgroundColor: 'var(--surface-container-high)',
+                    background: safeAlphaColor(item.color, 0.15, 'var(--primary-container)'),
                     color: item.color,
                     fontWeight: 600,
                     fontSize: '0.75rem',

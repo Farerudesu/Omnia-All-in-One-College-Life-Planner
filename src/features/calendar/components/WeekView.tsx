@@ -1,4 +1,5 @@
 import { isToday, isSameDay, formatTime12 } from '@/lib/dateUtils';
+import { safeMixWithSurface } from '@/lib/colorMix';
 import type { CalendarItem } from '../types';
 
 interface WeekViewProps {
@@ -85,7 +86,8 @@ export function WeekView({
                   style={{
                     padding: '0.5rem 0.625rem',
                     borderRadius: 6,
-                    background: `color-mix(in srgb, ${item.color} 8%, var(--surface-container-low))`,
+                    backgroundColor: 'var(--surface-container-low)',
+                    background: safeMixWithSurface(item.color, 10, 'var(--surface-container-low)'),
                     borderLeft: `3px solid ${item.color}`,
                     fontSize: '0.75rem',
                     filter: item.isPast ? 'grayscale(1)' : undefined,

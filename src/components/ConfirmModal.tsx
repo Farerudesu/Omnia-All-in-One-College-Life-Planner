@@ -47,7 +47,7 @@ export function ConfirmModal({
                 width: 36,
                 height: 36,
                 borderRadius: '50%',
-                background: 'color-mix(in srgb, var(--error) 15%, transparent)',
+                background: 'var(--error-container, #fee2e2)',
                 color: 'var(--error)',
                 display: 'flex',
                 alignItems: 'center',
@@ -91,7 +91,7 @@ export function ConfirmModal({
               paddingInline: '1.25rem',
               color: isDanger ? 'var(--error)' : undefined,
               borderColor: isDanger ? 'var(--error)' : undefined,
-              background: danger ? 'color-mix(in srgb, var(--error) 10%, transparent)' : undefined,
+              background: danger ? 'var(--error-container, #fee2e2)' : undefined,
             }}
           >
             {isLoading ? 'Memproses…' : confirmText}

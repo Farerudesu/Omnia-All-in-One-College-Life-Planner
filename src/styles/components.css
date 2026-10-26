@@ -242,7 +242,10 @@ textarea:focus-visible {
   border-radius: 16px;
   width: 100%;
   max-width: 520px;
+  max-height: 90vh;
   max-height: 90dvh;
+  display: flex;
+  flex-direction: column;
   overflow-y: auto;
   box-shadow: var(--shadow-modal);
   animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);

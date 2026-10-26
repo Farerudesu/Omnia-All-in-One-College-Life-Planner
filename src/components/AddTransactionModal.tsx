@@ -5,23 +5,17 @@ import { useToast } from './Toast';
 import * as ds from '../lib/dataService';
 import { useData } from '../lib/useData';
 import type { TransactionType } from '../types';
-import { EXPENSE_CATEGORIES } from '../lib/categories';
+
+import { EXPENSE_CATEGORIES, CATEGORY_NAMES_ID } from '../lib/categories';
 import { useLanguage } from '../lib/useLanguage';
 import { getCurrencySymbol, getCurrencyFractionDigits } from '../lib/currency';
 import { formatDateNumeric, getTodayDateString, getUserTimezone } from '../lib/dateUtils';
 
 const CATEGORIES = EXPENSE_CATEGORIES;
+export { CATEGORY_NAMES_ID };
 
-export const CATEGORY_NAMES_ID: Record<string, string> = {
-  'Food & Groceries': 'Makanan & Minuman',
-  'Phone & Internet': 'Pulsa & Internet',
-  Transport: 'Transportasi',
-  'Academic Supplies': 'Kebutuhan Kuliah',
-  'Housing & Utilities': 'Tempat Tinggal & Tagihan',
-  Entertainment: 'Hiburan & Gaya Hidup',
-  'Health & Wellness': 'Kesehatan',
-  Other: 'Lainnya',
-};
+
+
 
 export interface AddTransactionModalProps {
   isOpen: boolean;

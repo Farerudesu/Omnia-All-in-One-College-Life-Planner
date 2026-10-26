@@ -5,8 +5,8 @@ import { useToast } from './Toast';
 import { useData } from '../lib/useData';
 import * as ds from '../lib/dataService';
 import { getCurrencyFractionDigits, getCurrencySymbol } from '../lib/currency';
-import { EXPENSE_CATEGORIES, normalizeTransactionCategory } from '../lib/categories';
-import { CATEGORY_NAMES_ID } from '../pages/FinancePage';
+import { EXPENSE_CATEGORIES, normalizeTransactionCategory, CATEGORY_NAMES_ID } from '../lib/categories';
+
 import { useLanguage } from '../lib/useLanguage';
 import { getTodayDateString, getUserTimezone } from '../lib/dateUtils';
 import type { Transaction, TransactionType } from '../types';

@@ -1,5 +1,5 @@
 import { Outlet, Navigate, useLocation } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { Sidebar } from './Sidebar';
 import { MobileHeader } from './MobileHeader';
 import { BottomNav } from './BottomNav';
@@ -101,7 +101,22 @@ export function AppLayout() {
               </div>
             )}
             <ErrorBoundary>
-              <Outlet />
+              <Suspense
+                fallback={
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      minHeight: '40vh',
+                    }}
+                  >
+                    <div className="loading-spinner" />
+                  </div>
+                }
+              >
+                <Outlet />
+              </Suspense>
             </ErrorBoundary>
           </main>
         </div>

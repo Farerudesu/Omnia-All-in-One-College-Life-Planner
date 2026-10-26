@@ -617,9 +617,26 @@ export function AssignmentDetailsModal({
                 <span style={{ color: 'var(--on-surface-variant)', width: 100, flexShrink: 0 }}>
                   {lang === 'id' ? 'Catatan:' : 'Notes:'}
                 </span>
-                <span style={{ color: 'var(--on-surface)', whiteSpace: 'pre-wrap' }}>
+                <div
+                  style={{
+                    color: 'var(--on-surface)',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
+                    overflowWrap: 'anywhere',
+                    maxHeight: '160px',
+                    overflowY: 'auto',
+                    flex: 1,
+                    minWidth: 0,
+                    padding: '0.5rem 0.75rem',
+                    borderRadius: '8px',
+                    background: 'var(--surface-container-lowest)',
+                    border: '1px solid var(--outline-variant)',
+                    fontSize: '0.8125rem',
+                    lineHeight: 1.5,
+                  }}
+                >
                   {assignment.notes}
-                </span>
+                </div>
               </div>
             )}
           </div>
@@ -666,7 +683,7 @@ export function AssignmentDetailsModal({
                   color: pinnedIds.includes(assignment.id) ? 'var(--primary)' : 'inherit',
                   borderColor: pinnedIds.includes(assignment.id) ? 'var(--primary)' : undefined,
                   background: pinnedIds.includes(assignment.id)
-                    ? 'color-mix(in srgb, var(--primary) 10%, transparent)'
+                    ? 'var(--primary-container)'
                     : undefined,
                 }}
               >

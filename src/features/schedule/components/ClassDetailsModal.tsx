@@ -4,6 +4,7 @@ import { ConfirmModal } from '@/components/ConfirmModal';
 import { useToast } from '@/components/Toast';
 import { useLanguage } from '@/lib/useLanguage';
 import { formatTime12, toDateString, formatDateLong, parseTime } from '@/lib/dateUtils';
+import { safeAlphaColor } from '@/lib/colorMix';
 import type { ClassSession, Course, SessionException, ExceptionType } from '@/types';
 import * as ds from '@/lib/dataService';
 import { ClassPermanentForm } from './ClassPermanentForm';
@@ -280,7 +281,8 @@ export function ClassDetailsModal({
           </h4>
           <span
             style={{
-              background: `color-mix(in srgb, ${course.color || 'var(--primary)'} 15%, transparent)`,
+              backgroundColor: 'var(--surface-container-high)',
+              background: safeAlphaColor(course.color || '#2563eb', 0.15, 'var(--primary-container)'),
               color: course.color || 'var(--primary)',
               fontWeight: 700,
               fontSize: '0.6875rem',
@@ -391,7 +393,8 @@ export function ClassDetailsModal({
         <div
           style={{
             padding: '0.625rem 0.875rem',
-            background: 'color-mix(in srgb, var(--error) 12%, var(--surface-container-lowest))',
+            backgroundColor: 'var(--surface-container-low)',
+            background: 'var(--error-container, #fee2e2)',
             color: 'var(--error)',
             borderRadius: 8,
             fontSize: '0.75rem',

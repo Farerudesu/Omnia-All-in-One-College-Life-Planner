@@ -8,6 +8,7 @@ import { toDateString, formatTime12 } from '@/lib/dateUtils';
 import type { CalendarEvent } from '@/types';
 import type { SelectedClassBlock } from './types';
 import { getUpcomingBadgeText, getClassBadges } from './utils/scheduleUtils';
+import { safeAlphaColor } from '@/lib/colorMix';
 import { ScheduleHeader } from './components/ScheduleHeader';
 import { ScheduleGrid } from './components/ScheduleGrid';
 import { ScheduleRightPanel } from './components/ScheduleRightPanel';
@@ -233,7 +234,8 @@ export function SchedulePage() {
                 <span
                   className="badge"
                   style={{
-                    background: `color-mix(in srgb, ${nextClass.course.color || 'var(--primary)'} 15%, transparent)`,
+                    backgroundColor: 'var(--surface-container-high)',
+                    background: safeAlphaColor(nextClass.course.color || '#2563eb', 0.15, 'var(--primary-container)'),
                     color: nextClass.course.color || 'var(--primary)',
                     fontWeight: 700,
                     fontSize: '0.6875rem',

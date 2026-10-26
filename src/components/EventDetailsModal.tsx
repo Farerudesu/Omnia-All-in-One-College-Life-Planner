@@ -415,7 +415,7 @@ export function EventDetailsModal({
                   fontWeight: 600,
                   padding: '0.2rem 0.5rem',
                   borderRadius: 999,
-                  background: 'color-mix(in srgb, #4285F4 12%, transparent)',
+                  background: 'rgba(66, 133, 244, 0.12)',
                   color: '#4285F4',
                 }}
               >
@@ -543,9 +543,26 @@ export function EventDetailsModal({
                 <span style={{ color: 'var(--on-surface-variant)', width: 80, flexShrink: 0 }}>
                   {isId ? 'Catatan:' : 'Notes:'}
                 </span>
-                <span style={{ color: 'var(--on-surface)', whiteSpace: 'pre-wrap' }}>
+                <div
+                  style={{
+                    color: 'var(--on-surface)',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
+                    overflowWrap: 'anywhere',
+                    maxHeight: '160px',
+                    overflowY: 'auto',
+                    flex: 1,
+                    minWidth: 0,
+                    padding: '0.5rem 0.75rem',
+                    borderRadius: '8px',
+                    background: 'var(--surface-container-lowest)',
+                    border: '1px solid var(--outline-variant)',
+                    fontSize: '0.8125rem',
+                    lineHeight: 1.5,
+                  }}
+                >
                   {event.notes}
-                </span>
+                </div>
               </div>
             )}
           </div>
@@ -592,7 +609,7 @@ export function EventDetailsModal({
                   color: pinnedEventIds.includes(event.id) ? 'var(--primary)' : 'inherit',
                   borderColor: pinnedEventIds.includes(event.id) ? 'var(--primary)' : undefined,
                   background: pinnedEventIds.includes(event.id)
-                    ? 'color-mix(in srgb, var(--primary) 10%, transparent)'
+                    ? 'var(--primary-container)'
                     : undefined,
                 }}
               >

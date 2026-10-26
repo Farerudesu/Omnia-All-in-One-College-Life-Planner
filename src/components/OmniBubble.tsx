@@ -257,7 +257,8 @@ export function OmniBubble() {
                   ? '0 26px 26px 0'
                   : '26px 0 0 26px'
                 : '50%',
-              background: 'linear-gradient(135deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 70%, #9333ea) 100%)',
+              backgroundColor: 'var(--primary)',
+              background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-container, var(--primary)) 100%)',
               color: 'var(--on-primary)',
               border: '2px solid rgba(255, 255, 255, 0.25)',
               boxShadow: '0 6px 16px rgba(0, 0, 0, 0.24)',

@@ -300,8 +300,12 @@ export function ScheduleGrid({
               return (
                 <div
                   key={dayIdx}
+                  className="schedule-grid-day-col"
                   style={{
                     position: 'relative',
+                    overflow: 'hidden',
+                    minWidth: 0,
+                    boxSizing: 'border-box',
                     borderLeft: '1px solid var(--outline-variant)',
                     background: isToday(date) ? 'rgba(49, 99, 66, 0.02)' : 'transparent',
                   }}

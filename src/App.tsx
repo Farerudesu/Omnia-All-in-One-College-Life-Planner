@@ -3,15 +3,16 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom
 import { AuthProvider, useAuth } from './lib/AuthContext';
 import { AppLayout } from './components/AppLayout';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { SignInPage } from './pages/SignInPage';
 import { SchedulePage } from './pages/SchedulePage';
-import { CalendarPage } from './pages/CalendarPage';
-import { AssignmentsPage } from './pages/AssignmentsPage';
-import { FinancePage } from './pages/FinancePage';
-import { SettingsPage } from './pages/SettingsPage';
-import { AskOmniPage } from './pages/AskOmniPage';
-import { ResetPasswordPage } from './pages/ResetPasswordPage';
-import { NotesPage } from './pages/NotesPage';
+
+const SignInPage = lazy(() => import('./pages/SignInPage').then((m) => ({ default: m.SignInPage })));
+const CalendarPage = lazy(() => import('./pages/CalendarPage').then((m) => ({ default: m.CalendarPage })));
+const AssignmentsPage = lazy(() => import('./pages/AssignmentsPage').then((m) => ({ default: m.AssignmentsPage })));
+const FinancePage = lazy(() => import('./pages/FinancePage').then((m) => ({ default: m.FinancePage })));
+const SettingsPage = lazy(() => import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })));
+const AskOmniPage = lazy(() => import('./pages/AskOmniPage').then((m) => ({ default: m.AskOmniPage })));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage })));
+const NotesPage = lazy(() => import('./pages/NotesPage').then((m) => ({ default: m.NotesPage })));
 
 const LazyDebugPage = import.meta.env.DEV
   ? lazy(() => import('./pages/DebugPage').then((m) => ({ default: m.DebugPage })))
@@ -39,8 +40,22 @@ export default function App() {
                 <Route path="/debug-omni" element={<Navigate to="/debug" replace />} />
               </>
             )}
-            <Route path="/signin" element={<SignInRoute />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route
+              path="/signin"
+              element={
+                <Suspense fallback={<AuthLoading />}>
+                  <SignInRoute />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/reset-password"
+              element={
+                <Suspense fallback={<AuthLoading />}>
+                  <ResetPasswordPage />
+                </Suspense>
+              }
+            />
             <Route element={<RequireAuth />}>
               <Route element={<AppLayout />}>
                 <Route path="/schedule" element={<SchedulePage />} />

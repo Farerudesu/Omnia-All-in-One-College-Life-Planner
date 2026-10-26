@@ -956,7 +956,7 @@ function AssignmentRow({
             padding: '0.3rem',
             color: isPinned ? 'var(--primary)' : 'var(--on-surface-variant)',
             background: isPinned
-              ? 'color-mix(in srgb, var(--primary) 12%, transparent)'
+              ? 'var(--primary-container)'
               : 'transparent',
             borderRadius: 6,
           }}

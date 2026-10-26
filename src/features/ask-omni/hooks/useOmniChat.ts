@@ -205,6 +205,7 @@ export function useOmniChat(options?: UseOmniChatOptions) {
         .replace(/\[propose_note[\s\S]*?\]/gi, '')
         .replace(/\b(?:title|content|tanggal|tags|mode)\s*=\s*"[^"]*"/gi, '')
         .replace(/\{[\s\S]*?"(?:action|name)"\s*:[\s\S]*?\}/g, '')
+        .replace(/^\s*}\s*$/gm, '')
         .replace(/\n{3,}/g, '\n\n')
         .trim();
 

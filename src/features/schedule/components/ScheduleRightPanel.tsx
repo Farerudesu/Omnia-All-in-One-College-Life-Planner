@@ -3,6 +3,7 @@ import type { SelectedClassBlock } from '../types';
 import { formatTime12 } from '@/lib/dateUtils';
 import { CategoryIndicator } from '@/components/CategoryIndicator';
 import { getClassBadges, scheduleItemHasPassed } from '../utils/scheduleUtils';
+import { safeAlphaColor, safeMixWithSurface } from '@/lib/colorMix';
 import * as ds from '@/lib/dataService';
 import { NextClassHeroCard } from './NextClassHeroCard';
 import { StudyGapCard } from './StudyGapCard';
@@ -174,7 +175,8 @@ export function ScheduleRightPanel({
                   <span
                     className="badge"
                     style={{
-                      background: `color-mix(in srgb, ${course.color} 15%, transparent)`,
+                      backgroundColor: 'var(--surface-container-high)',
+                      background: safeAlphaColor(course.color, 0.15, 'var(--primary-container)'),
                       color: course.color,
                       fontWeight: 700,
                       fontSize: '0.6875rem',
@@ -286,7 +288,8 @@ export function ScheduleRightPanel({
                 marginBottom: '0.5rem',
                 padding: '0.75rem 0.875rem',
                 borderRadius: 8,
-                background: `color-mix(in srgb, ${color} 4%, var(--surface-container-lowest))`,
+                backgroundColor: 'var(--surface-container-lowest)',
+                background: safeMixWithSurface(color, 6, 'var(--surface-container-lowest)'),
                 cursor: 'pointer',
                 opacity: isPast ? 0.58 : 1,
                 filter: isPast ? 'grayscale(1)' : undefined,
@@ -305,7 +308,8 @@ export function ScheduleRightPanel({
                   <span
                     className="badge"
                     style={{
-                      background: `color-mix(in srgb, ${color} 15%, transparent)`,
+                      backgroundColor: 'var(--surface-container-high)',
+                      background: safeAlphaColor(color, 0.15, 'var(--primary-container)'),
                       color: color,
                       fontWeight: 700,
                       fontSize: '0.6875rem',

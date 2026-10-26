@@ -29,6 +29,23 @@ export const CATEGORY_COLORS: Record<string, string> = {
   Income: '#316342',
 };
 
+export const CATEGORY_NAMES_ID: Record<string, string> = {
+  'Food & Groceries': 'Makanan & Minuman',
+  'Books & Supplies': 'Buku & Perlengkapan',
+  'Rent & Utilities': 'Kos & Tagihan',
+  Transport: 'Transportasi',
+  Entertainment: 'Hiburan & Gaya Hidup',
+  'Phone & Internet': 'Pulsa & Internet',
+  Health: 'Kesehatan',
+  'Other Discretionary': 'Lainnya',
+  'Academic Supplies': 'Kebutuhan Kuliah',
+  'Housing & Utilities': 'Tempat Tinggal & Tagihan',
+  'Health & Wellness': 'Kesehatan',
+  Other: 'Lainnya',
+  Income: 'Pemasukan',
+};
+
+
 /**
  * Normalizes any category string (including legacy values, free-text from AI, etc.)
  * to the strict single source of truth vocabulary.

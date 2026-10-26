@@ -4,6 +4,7 @@ import type { DayScheduleBlock, SelectedClassBlock } from '../types';
 import { formatTime12 } from '@/lib/dateUtils';
 import { CategoryIndicator } from '@/components/CategoryIndicator';
 import { scheduleItemHasPassed, getClassBadges } from '../utils/scheduleUtils';
+import { safeMixWithSurface, safeAlphaColor } from '@/lib/colorMix';
 
 interface ScheduleGridBlockProps {
   block: DayScheduleBlock;
@@ -68,8 +69,11 @@ export function ScheduleGridBlock({
           height: `${block.height}%`,
           left: leftStyle,
           width: widthStyle,
-          background: `color-mix(in srgb, ${course.color} 8%, var(--surface-container-lowest))`,
-          border: `1px solid color-mix(in srgb, ${course.color} 28%, var(--outline-variant))`,
+          maxWidth: 'calc(100% - 4px)',
+          boxSizing: 'border-box',
+          backgroundColor: 'var(--surface-container-lowest)',
+          background: safeMixWithSurface(course.color, 12, 'var(--surface-container-lowest)'),
+          border: `1px solid ${safeAlphaColor(course.color, 0.32, 'var(--outline-variant)')}`,
           borderRadius: 6,
           padding: isMultiCol ? '0.25rem 0.375rem' : '0.375rem 0.5rem',
           cursor: 'pointer',
@@ -98,6 +102,8 @@ export function ScheduleGridBlock({
             alignItems: 'center',
             gap: '0.25rem',
             marginBottom: '0.125rem',
+            minWidth: 0,
+            overflow: 'hidden',
           }}
         >
           <CategoryIndicator shape="square" color={course.color} size={6} />
@@ -108,6 +114,10 @@ export function ScheduleGridBlock({
               color: course.color,
               letterSpacing: '-0.01em',
               whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              flexShrink: 1,
+              minWidth: 0,
             }}
           >
             {course.code}
@@ -119,6 +129,7 @@ export function ScheduleGridBlock({
               color: 'var(--on-surface-variant)',
               marginLeft: 'auto',
               whiteSpace: 'nowrap',
+              flexShrink: 0,
             }}
           >
             {formatTime12(block.startTime).replace(' AM', '').replace(' PM', '')}–
@@ -280,8 +291,11 @@ export function ScheduleGridBlock({
           height: `${block.height}%`,
           left: leftStyle,
           width: widthStyle,
-          background: `color-mix(in srgb, ${color} 8%, var(--surface-container-lowest))`,
-          border: `1px solid color-mix(in srgb, ${color} 28%, var(--outline-variant))`,
+          maxWidth: 'calc(100% - 4px)',
+          boxSizing: 'border-box',
+          backgroundColor: 'var(--surface-container-lowest)',
+          background: safeMixWithSurface(color, 12, 'var(--surface-container-lowest)'),
+          border: `1px solid ${safeAlphaColor(color, 0.32, 'var(--outline-variant)')}`,
           borderRadius: 6,
           padding: isMultiCol ? '0.25rem 0.375rem' : '0.25rem 0.5rem',
           overflow: 'hidden',
@@ -310,6 +324,8 @@ export function ScheduleGridBlock({
             alignItems: 'center',
             gap: '0.25rem',
             marginBottom: '0.125rem',
+            minWidth: 0,
+            overflow: 'hidden',
           }}
         >
           <CategoryIndicator shape={shape} color={color} size={6} />
@@ -321,6 +337,10 @@ export function ScheduleGridBlock({
               letterSpacing: '-0.01em',
               textTransform: 'capitalize',
               whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              flexShrink: 1,
+              minWidth: 0,
             }}
           >
             {ev.type}
@@ -333,6 +353,7 @@ export function ScheduleGridBlock({
                 color: 'var(--on-surface-variant)',
                 marginLeft: 'auto',
                 whiteSpace: 'nowrap',
+                flexShrink: 0,
               }}
             >
               {formatTime12(block.startTime).replace(' AM', '').replace(' PM', '')}

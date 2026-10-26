@@ -975,6 +975,8 @@
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
     padding: calc(1rem + env(safe-area-inset-top, 0px)) 1rem
       calc(1.25rem + max(14px, env(safe-area-inset-bottom, 14px))) 1rem !important;
     background: rgba(0, 0, 0, 0.65) !important;
@@ -985,15 +987,17 @@
   .modal-content {
     width: 100% !important;
     max-width: min(520px, calc(100vw - 2rem)) !important;
+    max-height: 85vh !important;
     max-height: min(
       85dvh,
       calc(
-        100dvh - 3.5rem - env(safe-area-inset-top, 0px) -
+        100vh - 3rem - env(safe-area-inset-top, 0px) -
           max(14px, env(safe-area-inset-bottom, 14px))
       )
     ) !important;
     display: flex !important;
     flex-direction: column !important;
+    min-height: 0 !important;
     border-radius: 20px !important;
     border: 1px solid var(--outline-variant) !important;
     box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4) !important;
@@ -1003,12 +1007,14 @@
   }
   .modal-scroll-body {
     flex: 1 1 auto !important;
+    min-height: 0 !important;
     overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch;
+    -webkit-overflow-scrolling: touch !important;
     padding: 1.25rem !important;
   }
   .modal-content > div:first-child {
     padding: 1rem 1.25rem 0.75rem !important;
+    flex-shrink: 0 !important;
   }
 
   .modal-form-grid-2col {
@@ -1018,17 +1024,18 @@
   }
 
   .modal-actions-sticky {
-    position: sticky;
-    bottom: -1.25rem;
-    margin: 1.25rem -1.25rem -1.25rem -1.25rem;
-    padding: 0.875rem 1.25rem;
-    background: var(--surface-container);
-    border-top: 1px solid var(--outline-variant);
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 0.75rem;
-    z-index: 10;
+    position: sticky !important;
+    bottom: 0 !important;
+    margin: 1.25rem -1.25rem -1.25rem -1.25rem !important;
+    padding: 0.875rem 1.25rem calc(0.875rem + env(safe-area-inset-bottom, 0px)) !important;
+    background: var(--surface-container) !important;
+    border-top: 1px solid var(--outline-variant) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 0.75rem !important;
+    z-index: 10 !important;
+    margin-top: auto !important;
   }
 
   .settings-page-container,
@@ -1060,15 +1067,6 @@
 @media (min-width: 1024px) {
   .show-mobile {
     display: none !important;
-  }
-}
-
-@media (min-width: 820px) and (max-width: 1023px) {
-  .hidden-mobile {
-    display: none !important;
-  }
-  .show-mobile {
-    display: block !important;
   }
 }
 

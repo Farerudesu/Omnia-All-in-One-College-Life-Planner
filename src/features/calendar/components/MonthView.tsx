@@ -113,9 +113,9 @@ export function MonthView({
               background: selected
                 ? 'var(--surface-container-high)'
                 : isMatchingSearch
-                  ? 'color-mix(in srgb, var(--primary) 12%, var(--surface-container-lowest))'
+                  ? 'var(--primary-container)'
                   : today
-                    ? 'color-mix(in srgb, var(--primary) 6%, var(--surface-container-lowest))'
+                    ? 'var(--surface-container)'
                     : 'var(--surface-container-lowest)',
               outline: selected ? '2px solid var(--primary)' : undefined,
               outlineOffset: -2,

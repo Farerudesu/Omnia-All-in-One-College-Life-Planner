@@ -17,6 +17,10 @@ export default defineConfig({
     __APP_VERSION__: JSON.stringify(pkg.version || '0.0.0'),
     __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
   },
+  build: {
+    target: 'es2020',
+    cssTarget: 'chrome80',
+  },
   server: {
     watch: {
       ignored: ['**/*.zip'],

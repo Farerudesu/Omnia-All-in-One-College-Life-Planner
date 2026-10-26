@@ -1,10 +1,15 @@
 import { useState } from 'react';
+import { Globe } from 'lucide-react';
 import { Modal } from '../components/Modal';
 import { OmniaLogo } from '../components/OmniaLogo';
 import { useAuth } from '../lib/AuthContext';
+import { getLanguage, setLanguage, translations, type Language } from '../lib/i18n';
 
 export function SignInPage() {
   const { signIn, signUp, sendPhoneSignInCode, verifyPhoneSignInCode } = useAuth();
+  const [lang, setLang] = useState<Language>(getLanguage());
+  const t = translations[lang].auth;
+
   const [signInMethod, setSignInMethod] = useState<'email' | 'sms'>('email');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,6 +23,12 @@ export function SignInPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
+  const toggleLanguage = () => {
+    const nextLang: Language = lang === 'id' ? 'en' : 'id';
+    setLanguage(nextLang);
+    setLang(nextLang);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
@@ -26,7 +37,7 @@ export function SignInPage() {
     try {
       if (signInMethod === 'sms') {
         if (!/^\+[1-9]\d{7,14}$/.test(phone.trim())) {
-          setErrorMessage('Enter a valid phone number with country code, such as +14155552671.');
+          setErrorMessage(t.invalidPhone);
           return;
         }
 
@@ -35,17 +46,18 @@ export function SignInPage() {
         } else {
           await sendPhoneSignInCode(phone.trim());
           setIsSmsCodeSent(true);
-          setSuccessMessage(`If ${phone.trim()} can receive SMS, a sign-in code has been sent.`);
+          setSuccessMessage(t.smsSentSuccess(phone.trim()));
         }
       } else if (isSignUp) {
         const needsEmailConfirmation = await signUp(email, password);
-        if (needsEmailConfirmation)
-          setSuccessMessage('Check your email to confirm your account, then sign in.');
+        if (needsEmailConfirmation) {
+          setSuccessMessage(t.emailConfirmSuccess);
+        }
       } else {
         await signIn(email, password);
       }
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Unable to sign in. Try again.');
+      setErrorMessage(error instanceof Error ? error.message : t.defaultError);
     } finally {
       setIsSubmitting(false);
     }
@@ -102,33 +114,59 @@ export function SignInPage() {
             Omnia
           </span>
         </div>
-        <button
-          type="button"
-          className="btn-ghost"
-          onClick={() => setShowHelpModal(true)}
-          style={{
-            fontSize: '0.8125rem',
-            color: 'var(--on-surface-variant)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.375rem',
-          }}
-        >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            aria-hidden="true"
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <button
+            type="button"
+            className="btn-ghost"
+            onClick={toggleLanguage}
+            aria-label={t.languageToggle}
+            title={t.languageToggle}
+            style={{
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              color: 'var(--on-surface-variant)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.375rem',
+              padding: '0.375rem 0.625rem',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--outline-variant)',
+              cursor: 'pointer',
+            }}
           >
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="16" x2="12" y2="12" />
-            <line x1="12" y1="8" x2="12.01" y2="8" />
-          </svg>
-          Help
-        </button>
+            <Globe size={14} />
+            <span>{lang === 'id' ? 'ID 🇮🇩' : 'EN 🇬🇧'}</span>
+          </button>
+
+          <button
+            type="button"
+            className="btn-ghost"
+            onClick={() => setShowHelpModal(true)}
+            style={{
+              fontSize: '0.8125rem',
+              color: 'var(--on-surface-variant)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.375rem',
+            }}
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="16" x2="12" y2="12" />
+              <line x1="12" y1="8" x2="12.01" y2="8" />
+            </svg>
+            {t.help}
+          </button>
+        </div>
       </header>
 
       {/* Center card */}
@@ -185,11 +223,11 @@ export function SignInPage() {
           >
             {signInMethod === 'sms'
               ? isSmsCodeSent
-                ? 'Masukkan kode SMS'
-                : 'Masuk dengan nomor telepon'
+                ? t.enterSmsCodeTitle
+                : t.phoneSignInTitle
               : isSignUp
-                ? 'Buat akun'
-                : 'Selamat datang kembali di Omnia'}
+                ? t.createAccountTitle
+                : t.welcomeBack}
           </h1>
           <p
             style={{
@@ -202,11 +240,11 @@ export function SignInPage() {
           >
             {signInMethod === 'sms'
               ? isSmsCodeSent
-                ? `Masukkan kode yang dikirim ke ${phone}.`
-                : 'We’ll text you a one-time code. New phone numbers can create an account.'
+                ? t.enterSmsCodeDesc(phone)
+                : t.phoneSignInDesc
               : isSignUp
-                ? 'Simpan kelas, tugas, dan rencana kuliah di satu tempat.'
-                : 'Masuk untuk melihat kelas, tugas, dan rencana kuliah.'}
+                ? t.createAccountDesc
+                : t.welcomeDesc}
           </p>
 
           <div className="signin-method-switch" role="group" aria-label="Sign-in method">
@@ -220,7 +258,7 @@ export function SignInPage() {
                 setSuccessMessage('');
               }}
             >
-              Email
+              {t.emailTab}
             </button>
             <button
               type="button"
@@ -232,7 +270,7 @@ export function SignInPage() {
                 setSuccessMessage('');
               }}
             >
-              Text message
+              {t.smsTab}
             </button>
           </div>
 
@@ -251,7 +289,7 @@ export function SignInPage() {
                       color: 'var(--on-surface)',
                     }}
                   >
-                    Email address
+                    {t.emailLabel}
                   </label>
                   <div style={{ position: 'relative' }}>
                     <svg
@@ -302,7 +340,7 @@ export function SignInPage() {
                         color: 'var(--on-surface)',
                       }}
                     >
-                      Password
+                      {t.passwordLabel}
                     </label>
                   </div>
                   <div style={{ position: 'relative' }}>
@@ -392,7 +430,7 @@ export function SignInPage() {
                       color: 'var(--on-surface)',
                     }}
                   >
-                    Phone number
+                    {t.phoneLabel}
                   </label>
                   <input
                     id="sign-in-phone"
@@ -416,7 +454,7 @@ export function SignInPage() {
                       fontSize: '0.75rem',
                     }}
                   >
-                    Include your country code, for example +1 for the US.
+                    {t.phoneHint}
                   </p>
                 </div>
                 {isSmsCodeSent && (
@@ -431,7 +469,7 @@ export function SignInPage() {
                         color: 'var(--on-surface)',
                       }}
                     >
-                      Text message code
+                      {t.smsCodeLabel}
                     </label>
                     <input
                       id="sign-in-sms-code"
@@ -444,7 +482,7 @@ export function SignInPage() {
                       onChange={(event) =>
                         setSmsCode(event.target.value.replace(/\D/g, '').slice(0, 6))
                       }
-                      placeholder="6-digit code"
+                      placeholder={t.smsCodePlaceholder}
                       maxLength={6}
                       required
                       style={{ width: '100%' }}
@@ -487,14 +525,14 @@ export function SignInPage() {
               }}
             >
               {isSubmitting
-                ? 'Please wait…'
+                ? t.pleaseWait
                 : signInMethod === 'sms'
                   ? isSmsCodeSent
-                    ? 'Verify code'
-                    : 'Send code'
+                    ? t.verifyCodeButton
+                    : t.sendCodeButton
                   : isSignUp
-                    ? 'Create account'
-                    : 'Sign in to Omnia'}
+                    ? t.createAccountButton
+                    : t.signInButton}
               <svg
                 width="18"
                 height="18"
@@ -520,21 +558,17 @@ export function SignInPage() {
                     try {
                       await sendPhoneSignInCode(phone.trim());
                       setSmsCode('');
-                      setSuccessMessage(
-                        `If ${phone.trim()} can receive SMS, a new sign-in code has been sent.`
-                      );
+                      setSuccessMessage(t.smsSentSuccess(phone.trim()));
                     } catch (error) {
                       setErrorMessage(
-                        error instanceof Error
-                          ? error.message
-                          : 'Unable to send a sign-in code. Try again.'
+                        error instanceof Error ? error.message : t.sendSmsError
                       );
                     } finally {
                       setIsSubmitting(false);
                     }
                   }}
                 >
-                  Resend code
+                  {t.resendCode}
                 </button>
                 <button
                   type="button"
@@ -546,7 +580,7 @@ export function SignInPage() {
                     setSuccessMessage('');
                   }}
                 >
-                  Change number
+                  {t.changeNumber}
                 </button>
               </div>
             )}
@@ -565,10 +599,10 @@ export function SignInPage() {
             }}
           >
             {signInMethod === 'sms'
-              ? 'Akun baru dibuat jika nomor telepon belum terdaftar.'
+              ? t.smsAccountNotice
               : isSignUp
-                ? 'Sudah punya akun? '
-                : 'Belum punya akun? '}
+                ? `${t.alreadyHaveAccount} `
+                : `${t.dontHaveAccount} `}
             {signInMethod === 'email' && (
               <button
                 type="button"
@@ -582,7 +616,7 @@ export function SignInPage() {
                   fontSize: '0.875rem',
                 }}
               >
-                {isSignUp ? 'Sign in' : 'Create an account'}
+                {isSignUp ? t.signInLink : t.createAccountLink}
               </button>
             )}
           </div>
@@ -604,7 +638,7 @@ export function SignInPage() {
           gap: '0.75rem',
         }}
       >
-        <span className="tabular-nums">© 2026 Omnia · A personal planner for college life.</span>
+        <span className="tabular-nums">{t.footerTagline}</span>
         <button
           type="button"
           onClick={() => setShowHelpModal(true)}
@@ -616,24 +650,20 @@ export function SignInPage() {
             cursor: 'pointer',
           }}
         >
-          Sign-in help
+          {t.helpTitle}
         </button>
       </footer>
 
-      <Modal isOpen={showHelpModal} onClose={() => setShowHelpModal(false)} title="Sign-in help">
+      <Modal isOpen={showHelpModal} onClose={() => setShowHelpModal(false)} title={t.helpTitle}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div
             style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)', lineHeight: 1.6 }}
           >
-            <p>
-              Sign in with your email and password, or choose Text message to receive a one-time
-              code. Phone sign-in can create a separate account unless the phone number is already
-              linked to that account.
-            </p>
+            <p>{t.helpBody}</p>
           </div>
           <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '0.5rem' }}>
             <button type="button" className="btn-primary" onClick={() => setShowHelpModal(false)}>
-              Close
+              {t.close}
             </button>
           </div>
         </div>

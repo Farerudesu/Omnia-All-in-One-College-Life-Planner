@@ -117,7 +117,7 @@ export function getClassBadges(
       key: 'relocated',
       label: isId ? 'RUANGAN' : 'RELOCATED',
       color: 'var(--tertiary)',
-      bg: 'color-mix(in srgb, var(--tertiary) 15%, transparent)',
+      bg: 'var(--tertiary-container)',
     });
   }
 
@@ -126,7 +126,7 @@ export function getClassBadges(
       key: 'extra',
       label: isId ? 'TAMBAHAN' : 'EXTRA',
       color: 'var(--primary)',
-      bg: 'color-mix(in srgb, var(--primary) 15%, transparent)',
+      bg: 'var(--primary-container)',
     });
   }
 

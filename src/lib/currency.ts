@@ -32,8 +32,31 @@ export function normalizeCurrency(currency?: string): string {
   return isSupportedCurrencyCode(code) ? code : 'IDR';
 }
 
+export const ZERO_DECIMAL_CURRENCIES = new Set([
+  'IDR',
+  'JPY',
+  'KRW',
+  'VND',
+  'CLP',
+  'PYG',
+  'RWF',
+  'UGX',
+  'BIF',
+  'DJF',
+  'GNF',
+  'KMF',
+  'MGA',
+  'VUV',
+  'XAF',
+  'XOF',
+  'XPF',
+]);
+
 export function getCurrencyFractionDigits(currency?: string): number {
   const code = normalizeCurrency(currency);
+  if (ZERO_DECIMAL_CURRENCIES.has(code)) {
+    return 0;
+  }
   return (
     new Intl.NumberFormat('en-US', { style: 'currency', currency: code }).resolvedOptions()
       .maximumFractionDigits ?? 2

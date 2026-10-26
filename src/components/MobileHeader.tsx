@@ -22,8 +22,9 @@ import { Modal } from './Modal';
 import { AddAssignmentModal } from './AddAssignmentModal';
 import { AddTransactionModal } from './AddTransactionModal';
 import type { EventType } from '../types';
-import { EXPENSE_CATEGORIES, type ExpenseCategory } from '../lib/categories';
-import { CATEGORY_NAMES_ID } from '../pages/FinancePage';
+import { EXPENSE_CATEGORIES, type ExpenseCategory, CATEGORY_NAMES_ID } from '../lib/categories';
+
+
 import { useLanguage } from '../lib/useLanguage';
 import { useToast } from './Toast';
 import { getTodayDateString } from '../lib/dateUtils';

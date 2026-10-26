@@ -16,17 +16,8 @@ import { AdjustBudgetModal } from '../features/finance/components/AdjustBudgetMo
 import { SlidersHorizontal } from 'lucide-react';
 
 const CATEGORIES = EXPENSE_CATEGORIES;
+export { CATEGORY_NAMES_ID } from '../lib/categories';
 
-export const CATEGORY_NAMES_ID: Record<string, string> = {
-  'Food & Groceries': 'Makanan & Minuman',
-  'Phone & Internet': 'Pulsa & Internet',
-  Transport: 'Transportasi',
-  'Academic Supplies': 'Kebutuhan Kuliah',
-  'Housing & Utilities': 'Tempat Tinggal & Tagihan',
-  Entertainment: 'Hiburan & Gaya Hidup',
-  'Health & Wellness': 'Kesehatan',
-  Other: 'Lainnya',
-};
 
 export function FinancePage() {
   const navigate = useNavigate();
@@ -1521,7 +1512,7 @@ export function FinancePage() {
                               height: 44,
                               padding: 0,
                               borderRadius: 'var(--radius-sm)',
-                              border: '1px solid color-mix(in srgb, var(--error) 30%, transparent)',
+                              border: '1px solid var(--error-container, #fca5a5)',
                               background: 'transparent',
                               cursor: 'pointer',
                               color: 'var(--error)',

@@ -151,19 +151,22 @@
 
 /* ─── Apple-style Context Menu / Popover ─── */
 .apple-context-menu {
+  background: var(--surface-container);
   background: color-mix(in srgb, var(--surface) 82%, transparent);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--outline-variant);
   border: 1px solid color-mix(in srgb, var(--on-surface) 10%, transparent);
   border-radius: 14px;
   box-shadow:
     0 16px 36px -4px rgba(0, 0, 0, 0.16),
-    0 0 0 1px color-mix(in srgb, var(--on-surface) 5%, transparent);
+    0 0 0 1px rgba(0, 0, 0, 0.05);
   overflow: hidden;
 }
 
 .apple-context-menu-header {
   padding: 0.625rem 0.875rem 0.5rem;
+  border-bottom: 1px solid var(--outline-variant);
   border-bottom: 1px solid color-mix(in srgb, var(--on-surface) 8%, transparent);
 }
 
@@ -197,10 +200,12 @@
 }
 
 .apple-context-item:hover {
+  background: var(--surface-container-high);
   background: color-mix(in srgb, var(--on-surface) 8%, transparent);
 }
 
 .apple-context-item:active {
+  background: var(--surface-container-highest);
   background: color-mix(in srgb, var(--on-surface) 12%, transparent);
 }
 
@@ -209,11 +214,13 @@
 }
 
 .apple-context-item--danger:hover {
+  background: var(--error-container);
   background: color-mix(in srgb, var(--error) 12%, transparent);
 }
 
 .apple-context-divider {
   height: 1px;
+  background: var(--outline-variant);
   background: color-mix(in srgb, var(--on-surface) 8%, transparent);
   margin: 0.25rem 0.375rem;
 }
@@ -541,14 +548,6 @@ textarea:focus-visible {
 }
 
 @media (max-width: 819px) {
-  .modal-overlay {
-    padding: 0;
-  }
-
-  .modal-content {
-    border-radius: 20px 20px 0 0;
-  }
-
   .calendar-month-cell {
     min-height: 3.75rem !important;
   }

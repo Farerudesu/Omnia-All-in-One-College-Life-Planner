@@ -1,4 +1,5 @@
 import { formatDateLong, formatTime12, isToday } from '@/lib/dateUtils';
+import { safeMixWithSurface, safeAlphaColor } from '@/lib/colorMix';
 import type { CalendarItem } from '../types';
 
 interface AgendaViewProps {
@@ -61,7 +62,8 @@ export function AgendaView({ lang, agendaDates, handleItemClick }: AgendaViewPro
                 onClick={() => handleItemClick(item)}
                 style={{
                   borderRadius: 8,
-                  background: `color-mix(in srgb, ${item.color} 5%, var(--surface-container-low))`,
+                  backgroundColor: 'var(--surface-container-low)',
+                  background: safeMixWithSurface(item.color, 8, 'var(--surface-container-low)'),
                   borderLeft: `4px solid ${item.color}`,
                   display: 'flex',
                   alignItems: 'center',
@@ -111,7 +113,8 @@ export function AgendaView({ lang, agendaDates, handleItemClick }: AgendaViewPro
                   <span
                     className="badge"
                     style={{
-                      background: `color-mix(in srgb, ${item.color} 15%, transparent)`,
+                      backgroundColor: 'var(--surface-container-high)',
+                      background: safeAlphaColor(item.color, 0.15, 'var(--primary-container)'),
                       color: item.color,
                       fontWeight: 600,
                       fontSize: '0.6875rem',

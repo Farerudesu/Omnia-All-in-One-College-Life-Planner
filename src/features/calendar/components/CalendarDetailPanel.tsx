@@ -1,6 +1,7 @@
 import React from 'react';
 import { formatDateLong, formatTime12 } from '@/lib/dateUtils';
 import { CategoryIndicator } from '@/components/CategoryIndicator';
+import { safeMixWithSurface, safeAlphaColor } from '@/lib/colorMix';
 import type { CalendarItem } from '../types';
 
 interface CalendarDetailPanelProps {
@@ -107,8 +108,9 @@ export function CalendarDetailPanel({
               onClick={() => handleItemClick(item)}
               style={{
                 padding: '0.875rem 1rem',
-                background: `color-mix(in srgb, ${item.color} 5%, var(--surface-container-lowest))`,
-                border: `1px solid color-mix(in srgb, ${item.color} 18%, var(--outline-variant))`,
+                backgroundColor: 'var(--surface-container-lowest)',
+                background: safeMixWithSurface(item.color, 8, 'var(--surface-container-lowest)'),
+                border: `1px solid ${safeAlphaColor(item.color, 0.22, 'var(--outline-variant)')}`,
                 borderRadius: 'var(--radius-sm)',
                 display: 'flex',
                 flexDirection: 'column',
@@ -132,7 +134,8 @@ export function CalendarDetailPanel({
                   <span
                     className="badge"
                     style={{
-                      background: `color-mix(in srgb, ${item.color} 15%, transparent)`,
+                      backgroundColor: 'var(--surface-container-high)',
+                      background: safeAlphaColor(item.color, 0.15, 'var(--primary-container)'),
                       color: item.color,
                       fontWeight: 600,
                       fontSize: '0.6875rem',

@@ -197,7 +197,7 @@ export function CalendarQuickActionMenu({
             <span
               className="apple-context-badge"
               style={{
-                background: 'color-mix(in srgb, var(--on-surface) 6%, transparent)',
+                background: 'var(--surface-container-high)',
                 color: 'var(--on-surface-variant)',
               }}
             >
