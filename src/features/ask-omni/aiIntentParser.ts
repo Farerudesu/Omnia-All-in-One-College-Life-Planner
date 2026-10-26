@@ -162,6 +162,19 @@ export function extractProposalFromResponse(response: AskOmniResponse): Prefille
       eventType: 'personal',
     };
   }
+
+  const noteMatch = response.reply.match(/\[propose_note\s+title="([\s\S]*?)"\s+content="([\s\S]*?)"(?:\s+tanggal:\s*([^"\]]+))?(?:\s+tags=\[([^\]]*)\])?\s+mode="(create|append)"\s*\]/i);
+  if (noteMatch) {
+    return {
+      type: 'note',
+      title: noteMatch[1].trim(),
+      content: noteMatch[2].replace(/\\n/g, '\n').trim(),
+      date: noteMatch[3]?.trim(),
+      tags: noteMatch[4]?.split(',').map((tag) => tag.replace(/["']/g, '').trim()).filter(Boolean),
+      mode: noteMatch[5].toLowerCase() as 'create' | 'append',
+    };
+  }
+
   return parseProposalFromText(response.reply);
 }
 
@@ -187,8 +200,12 @@ export function parseUserPromptToData(
     ) &&
       (/\d+/.test(lower) || /\b(log|add|catat|tambah)\b/i.test(lower))) ||
     /^\s*(?:log\s+expense|catat\s+pengeluaran|pengeluaran)\b/i.test(lower);
+  const hasTimeRange =
+    /(?:sampai|hingga|sampe|s\/d|s\.d\.|to|-)\s*(?:(pagi|siang|sore|malam)\s+)?(?:jam|pukul\s*)?\d{1,2}/i.test(lower)
+    || /\bdari\s+jam\s*\d/i.test(lower);
   const isEvent =
-    /\b(schedule|meeting|event|appointment|workout|practice|gym|class|exam|party|call|interview|session|hangout|flight|doctor|jadwal|jadwalkan|tambah|tambahkan|agendakan|rapat|fgd|kuliah|kelas|ujian|latihan|senam|acara|kegiatan|janji|pertemuan)\b/i.test(
+    hasTimeRange ||
+    /\b(schedule|meeting|event|appointment|workout|practice|gym|class|exam|party|call|interview|session|hangout|flight|doctor|jadwal|jadwalkan|tambah|tambahin|tambahkan|agendakan|rapat|fgd|kuliah|kelas|ujian|latihan|senam|acara|kegiatan|janji|pertemuan|instalasi)\b/i.test(
       lower
     ) ||
     (/\b(at|on|tomorrow|today|besok|hari\s+ini|lusa|senin|selasa|rabu|kamis|jumat|sabtu|minggu)\b/i.test(
@@ -203,7 +220,7 @@ export function parseUserPromptToData(
   let type: 'event' | 'task' | 'expense' = 'event';
   if (isExpense) {
     type = 'expense';
-  } else if (isTask) {
+  } else if (isTask && !hasTimeRange) {
     type = 'task';
   } else {
     type = 'event';
@@ -292,45 +309,67 @@ export function parseUserPromptToData(
   let startTime = '10:00';
   let endTime = '11:00';
 
-  const indoTimeMatch = lower.match(
-    /\b(?:jam|pukul)\s*(\d{1,2})(?:[:.](\d{2}))?\s*(pagi|siang|sore|malam)?\b/i
-  );
-  const engTimeMatch = lower.match(/\b(?:at\s*)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/i);
+  // Helper to parse hour + minute + period into HH:mm
+  const toTimeString = (
+    hourStr: string,
+    minStr?: string,
+    period1?: string,
+    period2?: string
+  ): string | null => {
+    let h = parseInt(hourStr, 10);
+    const m = minStr ? parseInt(minStr, 10) : 0;
+    if (isNaN(h) || h < 0 || h > 24) return null;
 
-  if (indoTimeMatch) {
-    let hours = parseInt(indoTimeMatch[1], 10);
-    const mins = indoTimeMatch[2] ? parseInt(indoTimeMatch[2], 10) : 0;
-    const period = indoTimeMatch[3]?.toLowerCase();
-
-    if (period === 'sore' || period === 'malam') {
-      if (hours < 12) hours += 12;
+    const period = (period1 || period2 || '').toLowerCase();
+    if (period === 'malam' || period === 'sore' || period === 'pm') {
+      if (h < 12) h += 12;
     } else if (period === 'siang') {
-      if (hours < 11) hours += 12;
-    } else if (period === 'pagi') {
-      if (hours === 12) hours = 0;
+      if (h < 11) h += 12;
+    } else if (period === 'pagi' || period === 'am') {
+      if (h === 12) h = 0;
     } else {
-      if (hours >= 1 && hours <= 6) {
-        hours += 12;
+      if (h >= 1 && h <= 6) h += 12;
+    }
+    return `${String(h % 24).padStart(2, '0')}:${String(Math.min(59, Math.max(0, m))).padStart(2, '0')}`;
+  };
+
+  // 1. Check for time range (e.g. "dari jam 8 pagi sampai malam jam 8", "jam 9 sampai jam 11", "08:00 - 20:00")
+  const rangeMatch = lower.match(
+    /(?:dari\s+)?(?:(pagi|siang|sore|malam)\s+)?\b(?:jam|pukul)\s*(\d{1,2})(?:[:.](\d{2}))?\s*(pagi|siang|sore|malam|am|pm)?\s*(?:sampai|hingga|sampe|s\/d|s\.d\.|to|-)\s*(?:(pagi|siang|sore|malam)\s+)?(?:\b(?:jam|pukul)\s*)?(\d{1,2})(?:[:.](\d{2}))?\s*(pagi|siang|sore|malam|am|pm)?/i
+  ) || lower.match(
+    /\b(\d{1,2})[:.](\d{2})\s*(pagi|siang|sore|malam|am|pm)?\s*(?:sampai|hingga|sampe|s\/d|s\.d\.|to|-)\s*(?:(pagi|siang|sore|malam)\s+)?(?:\b(?:jam|pukul)\s*)?(\d{1,2})(?:[:.](\d{2}))?\s*(pagi|siang|sore|malam|am|pm)?/i
+  );
+
+  if (rangeMatch) {
+    const parsedStart = toTimeString(rangeMatch[2], rangeMatch[3], rangeMatch[1], rangeMatch[4]);
+    const parsedEnd = toTimeString(rangeMatch[6], rangeMatch[7], rangeMatch[5], rangeMatch[8]);
+    if (parsedStart) startTime = parsedStart;
+    if (parsedEnd) endTime = parsedEnd;
+    else {
+      const [h, m] = startTime.split(':').map(Number);
+      endTime = `${String((h + 1) % 24).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    }
+  } else {
+    // 2. Single time extraction fallback
+    const indoTimeMatch = lower.match(
+      /(?:(pagi|siang|sore|malam)\s+)?(?:jam|pukul)\s*(\d{1,2})(?:[:.](\d{2}))?\s*(pagi|siang|sore|malam)?/i
+    );
+    const engTimeMatch = lower.match(/\b(?:at\s*)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/i);
+
+    if (indoTimeMatch) {
+      const parsed = toTimeString(indoTimeMatch[2], indoTimeMatch[3], indoTimeMatch[1], indoTimeMatch[4]);
+      if (parsed) {
+        startTime = parsed;
+        const [h, m] = startTime.split(':').map(Number);
+        endTime = `${String((h + 1) % 24).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
       }
-    }
-
-    if (hours >= 0 && hours < 24) {
-      startTime = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
-      const endHours = (hours + 1) % 24;
-      endTime = `${String(endHours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
-    }
-  } else if (engTimeMatch) {
-    let hours = parseInt(engTimeMatch[1], 10);
-    const mins = engTimeMatch[2] ? parseInt(engTimeMatch[2], 10) : 0;
-    const meridian = engTimeMatch[3]?.toLowerCase();
-
-    if (meridian === 'pm' && hours < 12) hours += 12;
-    if (meridian === 'am' && hours === 12) hours = 0;
-
-    if (hours >= 0 && hours < 24) {
-      startTime = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
-      const endHours = (hours + 1) % 24;
-      endTime = `${String(endHours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+    } else if (engTimeMatch) {
+      const parsed = toTimeString(engTimeMatch[1], engTimeMatch[2], undefined, engTimeMatch[3]);
+      if (parsed) {
+        startTime = parsed;
+        const [h, m] = startTime.split(':').map(Number);
+        endTime = `${String((h + 1) % 24).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+      }
     }
   }
 
@@ -340,7 +379,7 @@ export function parseUserPromptToData(
   );
   if (amountMatch) {
     let parsed = parseFloat(amountMatch[1].replace(',', '.'));
-    if (/\b(ribu|rb|k)\b/i.test(lower)) {
+    if (/(?:\b(?:ribu|rb|k)\b|\d\s*(?:rb|k|ribu))/i.test(lower)) {
       parsed *= 1000;
     }
     if (!isNaN(parsed) && parsed > 0) {
@@ -420,16 +459,25 @@ export function parseUserPromptToData(
   } else {
     cleanTitle = cleanTitle
       .replace(
-        /\b(add|schedule|create|log|remind me to|please|put|can you|jadwal|jadwalkan|tambahakn|tambahkan|tambah|agendakan|buat|tolong|baru)\b[:\s-]*/gi,
+        /\b(add|schedule|create|log|remind me to|please|put|can you|jadwal|jadwalkan|tambahakn|tambahkan|tambahin|tambah|agendakan|buat|tolong|baru)\b[:\s-]*/gi,
         ''
       )
+      .replace(
+        /(?:dari\s+)?(?:(?:pagi|siang|sore|malam)\s+)?\b(?:jam|pukul)\s*\d{1,2}(?:[:.]\d{2})?\s*(?:pagi|siang|sore|malam|am|pm)?\s*(?:sampai|hingga|sampe|s\/d|s\.d\.|to|-)\s*(?:(?:pagi|siang|sore|malam)\s+)?(?:\b(?:jam|pukul)\s*)?\d{1,2}(?:[:.]\d{2})?\s*(?:pagi|siang|sore|malam|am|pm)?/gi,
+        ''
+      )
+      .replace(
+        /\b\d{1,2}[:.]\d{2}\s*(?:pagi|siang|sore|malam|am|pm)?\s*(?:sampai|hingga|sampe|s\/d|s\.d\.|to|-)\s*(?:(?:pagi|siang|sore|malam)\s+)?(?:\b(?:jam|pukul)\s*)?\d{1,2}(?:[:.]\d{2})?\s*(?:pagi|siang|sore|malam|am|pm)?/gi,
+        ''
+      )
+      .replace(/\b(dari\s+jam|jam|pukul)\s*\d{1,2}(?:[:.]\d{2})?\s*(pagi|siang|sore|malam)?\b/gi, '')
+      .replace(/\b(?:at\s+\d{1,2}(?::\d{2})?(?:\s*(?:am|pm))?|\d{1,2}:\d{2}(?:\s*(?:am|pm))?|\d{1,2}\s*(?:am|pm))\b/gi, '')
       .replace(/\b(tomorrow|today|yesterday|besok|lusa|kemarin|hari\s+ini)\b/gi, '')
       .replace(
         /\b(hari\s+)?(senin|selasa|rabu|kamis|jumat|jum'at|sabtu|minggu|sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/gi,
         ''
       )
-      .replace(/\b(jam|pukul)\s*\d{1,2}(?:[:.]\d{2})?\s*(pagi|siang|sore|malam)?\b/gi, '')
-      .replace(/\b(?:at\s*)?\d{1,2}(?::\d{2})?\s*(?:am|pm)?\b/gi, '')
+      .replace(/\bdari\b/gi, '')
       .replace(/\b(di|in|at)\s+[A-Za-z0-9\s]+$/gi, '')
       .replace(
         /\b(task|assignment|event|jadwal|tugas|acara|kegiatan|pr|homework|hw|expense|pengeluaran)\b/gi,
