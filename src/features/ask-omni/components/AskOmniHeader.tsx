@@ -51,28 +51,30 @@ export function AskOmniHeader({ lang, hasMessages, onClearHistory }: AskOmniHead
         </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <Link
-          to="/debug"
-          style={{
-            padding: '0.4rem 0.75rem',
-            borderRadius: 8,
-            fontSize: '0.8125rem',
-            fontWeight: 500,
-            border: '1px solid var(--outline-variant)',
-            background: 'var(--surface-container)',
-            color: 'var(--on-surface-variant)',
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.35rem',
-            textDecoration: 'none',
-            transition: 'background-color 0.15s ease, color 0.15s ease',
-          }}
-          title="Buka Omnia API Debug Console"
-        >
-          <Bug size={14} />
-          Debug API
-        </Link>
+        {import.meta.env.DEV && (
+          <Link
+            to="/debug"
+            style={{
+              padding: '0.4rem 0.75rem',
+              borderRadius: 8,
+              fontSize: '0.8125rem',
+              fontWeight: 500,
+              border: '1px solid var(--outline-variant)',
+              background: 'var(--surface-container)',
+              color: 'var(--on-surface-variant)',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              textDecoration: 'none',
+              transition: 'background-color 0.15s ease, color 0.15s ease',
+            }}
+            title="Buka Omnia API Debug Console"
+          >
+            <Bug size={14} />
+            Debug API
+          </Link>
+        )}
         {hasMessages && (
           <button
             type="button"

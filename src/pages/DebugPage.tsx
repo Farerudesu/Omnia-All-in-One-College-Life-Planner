@@ -808,10 +808,10 @@ export function DebugPage() {
 
                       <div className="p-3 rounded-xl bg-[#090d0b] border border-[#1d2b23] space-y-1.5">
                         <div className="text-[11px] font-mono font-semibold text-white">
-                          Groq ({((result.parsedJson.debug as any)?.groqModels || []).length} model)
+                          Ollama ({((result.parsedJson.debug as any)?.ollamaModels || []).length} model)
                         </div>
                         <div className="max-h-40 overflow-y-auto space-y-1 font-mono text-[10px] text-[#7e9487]">
-                          {((result.parsedJson.debug as any)?.groqModels || []).map((m: string) => (
+                          {((result.parsedJson.debug as any)?.ollamaModels || []).map((m: string) => (
                             <div
                               key={m}
                               className="px-2 py-0.5 rounded bg-[#101713] text-[#93c5fd] truncate"

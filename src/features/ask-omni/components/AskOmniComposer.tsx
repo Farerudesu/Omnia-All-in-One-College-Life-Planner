@@ -210,21 +210,23 @@ export function AskOmniComposer({
                 Coba lagi
               </button>
             )}
-            <Link
-              to="/debug"
-              style={{
-                color: 'var(--primary)',
-                textDecoration: 'underline',
-                marginLeft: 'auto',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.25rem',
-                fontWeight: 500,
-              }}
-            >
-              <Bug size={13} />
-              Buka Debug Console
-            </Link>
+            {import.meta.env.DEV && (
+              <Link
+                to="/debug"
+                style={{
+                  color: 'var(--primary)',
+                  textDecoration: 'underline',
+                  marginLeft: 'auto',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.25rem',
+                  fontWeight: 500,
+                }}
+              >
+                <Bug size={13} />
+                Buka Debug Console
+              </Link>
+            )}
           </div>
         )}
       </div>
