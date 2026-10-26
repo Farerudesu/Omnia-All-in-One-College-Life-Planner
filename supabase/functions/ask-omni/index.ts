@@ -65,9 +65,18 @@ CORE INSTRUCTIONS:
    - If the user provides a shorthand amount (e.g., "7k" = 7000, "15rb" = 15000, "200k" = 200000), interpret it accurately.
    - If user intent is ambiguous between task, note, event, or expense, DO NOT call any proposal tool. Ask one short clarification question first (for example: "Mau saya masukkan sebagai tugas atau catatan?").
    - For task proposals, a deadline/date is required. If user says "deadline" but gives no date, ask for the deadline date before calling propose_task. Never invent a task date.
-   - If a specific field is omitted (like an exact category or start time), choose a sensible default based on context (e.g., category: "Food & Groceries" for food/meals/QRIS, date: currentDate, time: current or next hour) and call the tool.
+   - If the user asks about existing schedule, tasks, notes, or finances, answer from supplied user data. Never treat a question as a request to create an item.
+   - Use sensible defaults only for optional fields, such as an expense category or an event end time. Never invent required values.
    - When calling propose_expense:
+     * Amount is mandatory. If user did not state an amount, DO NOT call propose_expense and DO NOT guess any amount. Ask one short Indonesian follow-up: "Berapa nominal pengeluarannya?".
      * category MUST strictly be one of: 'Food & Groceries', 'Books & Supplies', 'Rent & Utilities', 'Transport', 'Entertainment', 'Health', 'Other Discretionary'. For meals, food, snacks, groceries, coffee, or QRIS food purchases, always use 'Food & Groceries'.
+   - When calling propose_calendar_event:
+     * A date and start time are mandatory. If date is missing, ask for date. If start time is missing, ask one short Indonesian follow-up: "Jam berapa acaranya dimulai?". Do not call the tool before both are known.
+     * End time and location are optional. You may leave them empty or choose a sensible end time only after user gives start time.
+   - When calling propose_task:
+     * A due date is mandatory. If missing, ask: "Kapan batas waktu tugasnya?". Never invent a due date.
+   - When calling propose_note:
+     * Title and content are mandatory. If detail/content is missing, ask what should be saved. Never generate academic note content the user did not provide.
      * paymentMethod MUST strictly be one of: 'QRIS', 'Debit', 'Cash', 'Transfer'. When the user mentions "qris", "debit", "cash", "tunai", "transfer", ALWAYS put it in paymentMethod (e.g. paymentMethod: "QRIS"), NEVER in notes.
    - RECEIPT SCANNING: When the user shares a shopping receipt (struk belanja) — recognized by a list of items with prices and a grand total — ALWAYS call propose_receipt immediately. Extract EVERY line item. Do NOT ask "maksud kamu X atau Y". "Masukkan" (with double-k) = record/log = use propose_receipt. "Masukan" (single-k) = suggestion/feedback. Map payment: Tunai → Cash, Debit → Debit, QRIS → QRIS, Transfer → Transfer.
 4. DATE HANDLING:
@@ -313,7 +322,8 @@ function normalizeProposedEvent(value: unknown): ProposedEvent | null {
 
   const startTime = typeof candidate.startTime === 'string' && /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(candidate.startTime)
     ? candidate.startTime
-    : '09:00';
+    : '';
+  if (!startTime) return null;
   const endTime = typeof candidate.endTime === 'string' && /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(candidate.endTime)
     ? candidate.endTime
     : undefined;
@@ -858,7 +868,9 @@ Deno.serve(async (request) => {
     const isGeneralActionIntent = /\b(add|create|schedule|save|plan|book|tambah|tambahin|tambahkan|buat|jadwalkan|agendakan|masukkan|catat|log|beli|bayar)\b/i.test(message);
 
     const wantsActionTool = isReceiptIntent || (!isQueryIntent && (isGeneralActionIntent || isNoteActionIntent || isScheduleActionIntent));
-    const tools = wantsActionTool
+    const explicitScheduleRequest = /\b(jadwal|jadwalkan|agendakan|meeting|rapat|acara|kegiatan|janji|pertemuan|bimbingan)\b/i.test(message);
+    const mentionsTime = /\b(?:jam|pukul)\s*\d{1,2}(?::\d{2})?\b|\b\d{1,2}:\d{2}\b|\b\d{1,2}\s*(?:pagi|siang|sore|malam)\b/i.test(message);
+    const tools = wantsActionTool && !(explicitScheduleRequest && !mentionsTime)
       ? (isReceiptIntent
         ? [RECEIPT_PROPOSAL_TOOL, EXPENSE_PROPOSAL_TOOL, EVENT_PROPOSAL_TOOL, TASK_PROPOSAL_TOOL, NOTE_PROPOSAL_TOOL]
         : isScheduleActionIntent

@@ -163,22 +163,33 @@ export function extractProposalFromResponse(response: AskOmniResponse): Prefille
     };
   }
 
-  let rawCalls: unknown;
-  try {
-    rawCalls = JSON.parse(response.reply);
-  } catch {
-    rawCalls = null;
+  const calls: unknown[] = [];
+  const pushParsed = (raw: string) => {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) calls.push(...parsed);
+      else if (parsed && typeof parsed === 'object') calls.push(parsed);
+    } catch {
+      // not JSON
+    }
+  };
+  pushParsed(response.reply);
+  const braceBlocks = response.reply.match(/\{(?:[^{}]|\{[^{}]*\})*\}/g) || [];
+  for (const block of braceBlocks) {
+    pushParsed(block);
   }
-  const calls = Array.isArray(rawCalls) ? rawCalls : rawCalls && typeof rawCalls === 'object' ? [rawCalls] : [];
   for (const call of calls) {
     if (!call || typeof call !== 'object') continue;
-    const entry = call as { name?: unknown; arguments?: unknown };
-    const name = typeof entry.name === 'string' ? entry.name : '';
+    const entry = call as { name?: unknown; arguments?: unknown; action?: unknown; data?: unknown };
+    let name = typeof entry.name === 'string' ? entry.name : '';
     let args: Record<string, unknown> = {};
     if (typeof entry.arguments === 'string') {
       try { args = JSON.parse(entry.arguments) as Record<string, unknown>; } catch { continue; }
     } else if (entry.arguments && typeof entry.arguments === 'object') {
       args = entry.arguments as Record<string, unknown>;
+    } else if (typeof entry.action === 'string' && entry.data && typeof entry.data === 'object') {
+      name = entry.action;
+      args = entry.data as Record<string, unknown>;
     }
     if (name === 'propose_note' && typeof args.title === 'string' && typeof args.content === 'string') {
       return {
@@ -207,6 +218,25 @@ export function extractProposalFromResponse(response: AskOmniResponse): Prefille
         priority: args.priority === 'low' || args.priority === 'high' ? args.priority : 'medium',
         notes: typeof args.notes === 'string' ? args.notes : undefined,
       };
+    }
+    if ((name === 'propose_calendar_event' || name === 'schedule_event') && typeof args.title === 'string') {
+      const date = typeof args.date === 'string' ? args.date : '';
+      const startTime = typeof args.startTime === 'string' ? args.startTime.slice(0, 5) : '';
+      if (/^\d{4}-\d{2}-\d{2}$/.test(date) && /^\d{2}:\d{2}$/.test(startTime)) {
+        const endTime = typeof args.endTime === 'string' && /^\d{2}:\d{2}/.test(args.endTime)
+          ? args.endTime.slice(0, 5)
+          : undefined;
+        return {
+          type: 'event',
+          title: args.title.trim(),
+          date,
+          startTime,
+          endTime,
+          location: typeof args.location === 'string' ? args.location : undefined,
+          notes: typeof args.notes === 'string' ? args.notes : undefined,
+          eventType: 'personal',
+        };
+      }
     }
   }
 

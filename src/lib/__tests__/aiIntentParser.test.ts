@@ -20,6 +20,36 @@ describe('aiIntentParser Unit Tests', () => {
     });
   });
 
+  it('recovers schedule_event JSON reply into an event proposal', () => {
+    const result = extractProposalFromResponse({
+      reply: `{\n  "action": "schedule_event",\n  "data": {\n    "title": "Belajar Kelompok Kalkulus",\n    "date": "2026-10-27",\n    "startTime": "09:00:00",\n    "endTime": "11:00:00",\n    "kind": "event"\n  }\n}`,
+    });
+    expect(result).toMatchObject({
+      type: 'event', title: 'Belajar Kelompok Kalkulus',
+      date: '2026-10-27', startTime: '09:00', endTime: '11:00',
+    });
+  });
+
+  it('recovers propose_calendar_event JSON reply into an event proposal', () => {
+    const result = extractProposalFromResponse({
+      reply: `{\n  "action": "propose_calendar_event",\n  "data": {\n    "title": "Belajar Kelompok Kalkulus",\n    "date": "2026-10-27",\n    "startTime": "09:00",\n    "endTime": "11:00"\n  }\n}`,
+    });
+    expect(result).toMatchObject({
+      type: 'event', title: 'Belajar Kelompok Kalkulus',
+      date: '2026-10-27', startTime: '09:00', endTime: '11:00',
+    });
+  });
+
+  it('recovers schedule_event JSON embedded in prose reply', () => {
+    const result = extractProposalFromResponse({
+      reply: `Karena besok mata kuliah terakhirmu selesai jam 09:00, saya jadwalkan tepat setelah itu ya.\n\n{\n  "action": "schedule_event",\n  "data": {\n    "title": "Belajar Kelompok Kalkulus",\n    "date": "2026-10-27",\n    "startTime": "09:00:00",\n    "endTime": "11:00:00",\n    "kind": "event"\n  }\n}`,
+    });
+    expect(result).toMatchObject({
+      type: 'event', title: 'Belajar Kelompok Kalkulus',
+      date: '2026-10-27', startTime: '09:00', endTime: '11:00',
+    });
+  });
+
   // 1. ISO Date parsing
   it('case 1: parseProposalFromText parses ISO date (YYYY-MM-DD)', () => {
     const text =
