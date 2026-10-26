@@ -213,16 +213,20 @@ export function extractProposalFromResponse(response: AskOmniResponse): Prefille
   const expenseDetailMatch = response.reply.match(
     /(?:transaksi|transaction):\s*([^\n]+)[\s\S]*?(?:nominal|amount):\s*(?:Rp\s*)?([\d.,]+)[\s\S]*?(?:metode pembayaran|payment method):\s*([^\n]+)/i
   );
-  if (expenseDetailMatch) {
-    const amount = Number(expenseDetailMatch[2].replace(/\./g, '').replace(',', '.'));
+  const compactExpenseMatch = response.reply.match(
+    /(?:added transaction|transaksi)\s+([^\n]+?)\s+(?:for|sebesar)\s+(?:Rp\s*)?([\d.,]+)[\s\S]*?(?:category|kategori):\s*([^,\n]+),\s*(?:payment|pembayaran):\s*([^).\n]+)/i
+  );
+  const expenseMatch = expenseDetailMatch || compactExpenseMatch;
+  if (expenseMatch) {
+    const amount = Number(expenseMatch[2].replace(/\./g, '').replace(',', '.'));
     if (Number.isFinite(amount) && amount > 0) {
       return {
         type: 'expense',
-        title: expenseDetailMatch[1].trim(),
+        title: expenseMatch[1].trim(),
         amount,
-        date: new Date().toISOString().split('T')[0],
-        category: response.reply.match(/kategori:\s*([^\n]+)/i)?.[1]?.trim() || 'Other Discretionary',
-        paymentMethod: expenseDetailMatch[3].trim(),
+        date: response.reply.match(/\b(20\d{2}-\d{2}-\d{2})\b/)?.[1] || new Date().toISOString().split('T')[0],
+        category: expenseDetailMatch ? response.reply.match(/kategori:\s*([^\n]+)/i)?.[1]?.trim() || 'Other Discretionary' : expenseMatch[3].trim(),
+        paymentMethod: expenseDetailMatch ? expenseMatch[3].trim() : expenseMatch[4].trim(),
       };
     }
   }
