@@ -177,12 +177,10 @@ export function useOmniChat(options?: UseOmniChatOptions) {
         }
       }
 
+      let saveConfirmation = '';
       if (aiPrefilled) {
-        setPrefilledModal({
-          data: { ...aiPrefilled },
-          messageId: (Date.now() + 1).toString(),
-        });
-        setPrefilledError('');
+        const saved = await saveProposalToOmnia(aiPrefilled);
+        saveConfirmation = `\n\n✓ ${saved.confirmationText}`;
       }
 
       let resolvedNoteSource = response.noteSource;
@@ -201,13 +199,13 @@ export function useOmniChat(options?: UseOmniChatOptions) {
         .replace(/\[propose_note[\s\S]*?\]/gi, '')
         .replace(/\b(?:title|content|tanggal|tags|mode)\s*=\s*"[^"]*"/gi, '')
         .replace(/\n{3,}/g, '\n\n')
-        .trim();
+        .trim() + saveConfirmation;
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: cleanReply,
-        prefilledData: aiPrefilled || undefined,
+        prefilledData: undefined,
         noteSource: resolvedNoteSource,
       };
 
