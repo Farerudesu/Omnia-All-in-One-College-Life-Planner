@@ -18,6 +18,7 @@ export function getScheduleContext() {
   const courses = new Map(ds.getCourses().map((course) => [course.id, course]));
   const sessions = ds.getClassSessions();
   const exceptions = ds.getSessionExceptions();
+  const rawEvents = ds.getEvents();
   const items = dates
     .flatMap((date) => {
       const dateString = toDateString(date);
@@ -46,13 +47,13 @@ export function getScheduleContext() {
           },
         ];
       });
-      const events = ds
-        .getEvents()
+      const events = rawEvents
         .filter((event) => event.date === dateString)
         .map((event) => ({
           date: dateString,
           weekday,
           kind: 'event' as const,
+          type: event.type,
           title: event.title,
           startTime: event.startTime,
           endTime: event.endTime,
@@ -65,6 +66,24 @@ export function getScheduleContext() {
       (a, b) => a.date.localeCompare(b.date) || (a.startTime || '').localeCompare(b.startTime || '')
     );
 
+  // Include ALL calendar events (exams, quizzes, deadlines, activities)
+  const calendarEvents = rawEvents
+    .map((e) => {
+      const course = e.courseId ? courses.get(e.courseId) : undefined;
+      return {
+        id: e.id,
+        title: e.title,
+        date: e.date,
+        startTime: e.startTime,
+        endTime: e.endTime,
+        type: e.type,
+        course: course ? `${course.code} - ${course.name}` : e.course,
+        location: e.location,
+        notes: e.notes ? e.notes.slice(0, 300) : undefined,
+      };
+    })
+    .sort((a, b) => a.date.localeCompare(b.date));
+
   // Include assignments (tasks) context
   const assignments = ds.getAssignments();
   const tasksContext = assignments.map((a) => {
@@ -76,7 +95,7 @@ export function getScheduleContext() {
       course: course ? `${course.code} - ${course.name}` : undefined,
       priority: a.priority,
       status: a.status,
-      notes: a.notes,
+      notes: a.notes ? a.notes.slice(0, 300) : undefined,
     };
   });
 
@@ -84,7 +103,7 @@ export function getScheduleContext() {
   const transactions = ds.getTransactions();
   const recentTransactions = [...transactions]
     .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, 40)
+    .slice(0, 25)
     .map((t) => ({
       date: t.date,
       title: t.merchant,
@@ -92,7 +111,7 @@ export function getScheduleContext() {
       category: t.category,
       type: t.type,
       paymentMethod: t.paymentMethod,
-      notes: t.notes,
+      notes: t.notes ? t.notes.slice(0, 100) : undefined,
     }));
 
   return {
@@ -105,6 +124,7 @@ export function getScheduleContext() {
       weekday: date.toLocaleDateString('en-US', { weekday: 'long' }),
     })),
     items,
+    calendarEvents,
     tasks: tasksContext,
     recentTransactions,
   };

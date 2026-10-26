@@ -16,11 +16,12 @@ Always reply in the language used by the user (Indonesian or English).
 
 CORE INSTRUCTIONS:
 1. You have direct access to the user's data context containing:
-   - Schedules, classes, timetable, and calendar events (items)
+   - Schedules, classes, and timetable (items)
+   - All calendar events, exams, and milestones (calendarEvents)
    - Assignments and deliverables (tasks)
    - Financial transactions, expenses, and income records (recentTransactions)
    - User notes (<notes_data>) when provided
-   NEVER say "saya belum memiliki akses ke riwayat/catatan" or "I don't have access to your data", and do NOT ask them to open another screen to check. The data is already in your context!
+   NEVER say "saya belum memiliki akses ke riwayat/catatan" or "tidak melihat adanya jadwal di kalender" if the item exists in items or calendarEvents! The data is already in your context!
 2. ANSWERING QUESTIONS:
    - For schedule/timetable queries: inspect the date requested (e.g. today, tomorrow, yesterday/kemarin, specific date) and present the sessions/events clearly in chronological order with time, course/title, and room.
    - For task/deliverable queries: list their pending assignments with due dates and priority clearly.
@@ -40,6 +41,17 @@ CORE INSTRUCTIONS:
    - DO NOT call proposal tools when the user is simply asking/querying about their existing data. Answer queries directly with friendly text.
 
    DISAMBIGUATION PRIORITY (VERY IMPORTANT):
+   - CONVERTING/LINKING CALENDAR EVENTS TO TASKS:
+     When the user asks to add or enter an item/event/exam from the calendar into tasks (e.g. "masukan juga quiz pbo yg di kalender ke tugas", "jadikan ujian X tugas", "tambahkan ke tugas"):
+     * Look up the event in calendarEvents or items (matching the title, subject, or keywords e.g. "Quiz PBO").
+     * Extract its title, date (as dueDate YYYY-MM-DD), and notes/details.
+     * Call propose_task with:
+       - title: event title (e.g. "Quiz PBO")
+       - dueDate: the event's date (YYYY-MM-DD)
+       - dueTime: event startTime or "23:59"
+       - priority: "high" for exams/quizzes, otherwise "medium"
+       - notes: the event's notes or exam details
+     * NEVER say you cannot find the event if it exists in calendarEvents or items!
    - IF THE USER MENTIONS A TIME RANGE (e.g. "dari jam 8 pagi sampai malam jam 8", "jam 8 sampai jam 20", "from 9 to 11", "08:00 - 20:00") OR AN ACTIVITY/EVENT WITH A TIME/DATE:
      * ALWAYS call propose_calendar_event.
      * NEVER call propose_note for scheduled activities or time ranges!
@@ -78,7 +90,7 @@ CORE INSTRUCTIONS:
    - When calling propose_note:
      * Title and content are mandatory. If detail/content is missing, ask what should be saved. Never generate academic note content the user did not provide.
      * paymentMethod MUST strictly be one of: 'QRIS', 'Debit', 'Cash', 'Transfer'. When the user mentions "qris", "debit", "cash", "tunai", "transfer", ALWAYS put it in paymentMethod (e.g. paymentMethod: "QRIS"), NEVER in notes.
-   - RECEIPT SCANNING: When the user shares a shopping receipt (struk belanja) — recognized by a list of items with prices and a grand total — ALWAYS call propose_receipt immediately. Extract EVERY line item. Do NOT ask "maksud kamu X atau Y". "Masukkan" (with double-k) = record/log = use propose_receipt. "Masukan" (single-k) = suggestion/feedback. Map payment: Tunai → Cash, Debit → Debit, QRIS → QRIS, Transfer → Transfer.
+   - RECEIPT SCANNING: When the user shares a shopping receipt (struk belanja) — recognized by a list of items with prices and a grand total — ALWAYS call propose_receipt immediately. Extract EVERY line item. Do NOT ask "maksud kamu X atau Y". "masukkan", "masukan", and "masukin" are common variations for "enter / record / add / input". Treat all of them as commands to add/record items. Map payment: Tunai → Cash, Debit → Debit, QRIS → QRIS, Transfer → Transfer.
 4. DATE HANDLING:
    - Always refer to currentDate and yesterdayDate provided in the Omnia context.
    - "hari ini" / "today" / "malam ini" = currentDate.
@@ -316,9 +328,11 @@ function jsonResponse(body: ReceiptResponse, status = 200) {
 function normalizeProposedEvent(value: unknown): ProposedEvent | null {
   if (!value || typeof value !== 'object') return null;
   const candidate = value as Record<string, unknown>;
-  const title = typeof candidate.title === 'string' ? candidate.title.trim() : '';
-  const date = typeof candidate.date === 'string' ? candidate.date : '';
-  if (!title || title.length > 120 || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+  const title = typeof candidate.title === 'string' ? candidate.title.trim().slice(0, 200) : '';
+  const rawDate = typeof candidate.date === 'string' ? candidate.date : typeof candidate.dueDate === 'string' ? candidate.dueDate : '';
+  const dateMatch = rawDate.match(/^(\d{4}-\d{2}-\d{2})/);
+  const date = dateMatch ? dateMatch[1] : '';
+  if (!title || !date) return null;
 
   const startTime = typeof candidate.startTime === 'string' && /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(candidate.startTime)
     ? candidate.startTime
@@ -347,9 +361,11 @@ function normalizeProposedEvent(value: unknown): ProposedEvent | null {
 function normalizeProposedTask(value: unknown): ProposedTask | null {
   if (!value || typeof value !== 'object') return null;
   const candidate = value as Record<string, unknown>;
-  const title = typeof candidate.title === 'string' ? candidate.title.trim() : '';
-  const date = typeof candidate.dueDate === 'string' ? candidate.dueDate : typeof candidate.date === 'string' ? candidate.date : '';
-  if (!title || title.length > 120 || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+  const title = typeof candidate.title === 'string' ? candidate.title.trim().slice(0, 200) : '';
+  const rawDate = typeof candidate.dueDate === 'string' ? candidate.dueDate : typeof candidate.date === 'string' ? candidate.date : '';
+  const dateMatch = rawDate.match(/^(\d{4}-\d{2}-\d{2})/);
+  const date = dateMatch ? dateMatch[1] : '';
+  if (!title || !date) return null;
 
   const dueTime = typeof candidate.dueTime === 'string' && /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(candidate.dueTime)
     ? candidate.dueTime
@@ -717,7 +733,7 @@ Deno.serve(async (request) => {
   const scheduleContext = payload.scheduleContext && typeof payload.scheduleContext === 'object'
     ? JSON.stringify(payload.scheduleContext)
     : '';
-  if (scheduleContext.length > 16_000) {
+  if (scheduleContext.length > 32_000) {
     return jsonResponse({ reply: 'The schedule context is too large. Please try again.' }, 413);
   }
 
@@ -832,7 +848,7 @@ Deno.serve(async (request) => {
       { role: 'system', content: SYSTEM_PROMPT },
       ...(scheduleContext ? [{
         role: 'system' as const,
-        content: `Current local date, yesterday date, and Omnia data reference: ${scheduleContext}. Answer questions about schedules, tasks, and recent financial transactions (expenses/income) directly from this data. Never say you don't have access to their transactions or data. When asked to schedule, add, or log a new item, use the tools.`,
+        content: `Current local date, yesterday date, and Omnia data reference: ${scheduleContext}. Answer questions about schedules, calendar events, tasks, and recent financial transactions (expenses/income) directly from this data. Never say you don't have access to their transactions or data. When asked to schedule, add, or log a new item, use the tools.`,
       }] : []),
       ...(notesText ? [{
         role: 'system' as const,
@@ -863,9 +879,14 @@ Deno.serve(async (request) => {
       || /\b(tambah|tambahin|tambahkan|jadwal|jadwalkan|agendakan|masukkan|ingatkan)\b.*\b(jam|pukul|\d{1,2}:\d{2})\b/i.test(message)
       || /\b(instalasi|meeting|rapat|fgd|kuliah|acara|kegiatan|janji|pertemuan)\b.*\b(jam|pukul|\d{1,2}:\d{2})\b/i.test(message);
 
-    // Only allow note proposal if user didn't express a schedule intent
-    const isNoteActionIntent = !isScheduleActionIntent && /\b(catat|catatkan|buatkan catatan|tambah catatan|tulis catatan|rangkum|ringkas|buat quiz|checklist|append|sisipkan ke catatan)\b/i.test(message);
-    const isGeneralActionIntent = /\b(add|create|schedule|save|plan|book|tambah|tambahin|tambahkan|buat|jadwalkan|agendakan|masukkan|catat|log|beli|bayar)\b/i.test(message);
+    // Task-specific: user wants to add/convert a task or mentions "ke tugas"
+    const isTaskActionIntent = (/\b(tugas|task|assignment|todo|pr)\b/i.test(message)
+      && /\b(tambah|tambahin|tambahkan|buat|buatkan|masukkan|masukan|masukin|jadikan|taruh|input|masuk|set|agendakan)\b/i.test(message))
+      || /\b(ke\s+tugas|jadi\s+tugas|sebagai\s+tugas)\b/i.test(message);
+
+    // Only allow note proposal if user didn't express a schedule or task intent
+    const isNoteActionIntent = !isScheduleActionIntent && !isTaskActionIntent && /\b(catat|catatkan|buatkan catatan|tambah catatan|tulis catatan|rangkum|ringkas|buat quiz|checklist|append|sisipkan ke catatan)\b/i.test(message);
+    const isGeneralActionIntent = /\b(add|create|schedule|save|plan|book|tambah|tambahin|tambahkan|buat|buatkan|jadwalkan|agendakan|masukkan|masukan|masukin|catat|catatkan|log|beli|bayar)\b/i.test(message);
 
     const lastAssistantMessage = [...history].reverse().find((m) => m.role === 'assistant')?.content || '';
     const isAwaitingScheduleAnswer = /jam berapa|kapan acaranya|kapan dimulai|mau dijadwalkan jam berapa/i.test(lastAssistantMessage);
@@ -875,7 +896,7 @@ Deno.serve(async (request) => {
 
     const isEffectiveScheduleIntent = isScheduleActionIntent || isAwaitingScheduleAnswer || hasRelativeScheduleTime;
 
-    const wantsActionTool = isReceiptIntent || (!isQueryIntent && (isGeneralActionIntent || isNoteActionIntent || isEffectiveScheduleIntent));
+    const wantsActionTool = isReceiptIntent || (!isQueryIntent && (isGeneralActionIntent || isNoteActionIntent || isEffectiveScheduleIntent || isTaskActionIntent));
     const tools = wantsActionTool
       ? (isReceiptIntent
         ? [RECEIPT_PROPOSAL_TOOL, EXPENSE_PROPOSAL_TOOL, EVENT_PROPOSAL_TOOL, TASK_PROPOSAL_TOOL, NOTE_PROPOSAL_TOOL]
