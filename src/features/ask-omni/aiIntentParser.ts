@@ -213,14 +213,18 @@ export function extractProposalFromResponse(response: AskOmniResponse): Prefille
   const taskTextMatch = response.reply.match(
     /(?:catatan dan tugas untuk|tugas untuk)\s+\*{0,2}([^*\n]+?)\*{0,2}\s+dengan deadline\s+\*{0,2}([^*\n(]+?)\*{0,2}/i
   );
-  if (taskTextMatch) {
-    const parsedDate = Date.parse(taskTextMatch[2].trim());
+  const taskDetailMatch = response.reply.match(
+    /(?:tugas|task):\s*([^\n]+)[\s\S]*?(?:tenggat waktu \(deadline\)|deadline):\s*([^,\n]+)(?:,\s*pukul\s*(\d{1,2}:\d{2}))?/i
+  );
+  const taskMatch = taskTextMatch || taskDetailMatch;
+  if (taskMatch) {
+    const parsedDate = Date.parse(taskMatch[2].trim());
     if (!Number.isNaN(parsedDate)) {
       return {
         type: 'task',
-        title: taskTextMatch[1].trim(),
+        title: taskMatch[1].trim().replace(/^\*+|\*+$/g, ''),
         date: toDateString(new Date(parsedDate)),
-        dueTime: '23:59',
+        dueTime: taskMatch[3] || '23:59',
         priority: /prioritas:\s*(tinggi|high)/i.test(response.reply) ? 'high' : 'medium',
         notes: response.reply.match(/catatan:\s*([^\n]+)/i)?.[1]?.trim(),
       };
