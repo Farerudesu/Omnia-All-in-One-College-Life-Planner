@@ -163,6 +163,43 @@ export function extractProposalFromResponse(response: AskOmniResponse): Prefille
     };
   }
 
+  let rawCalls: unknown;
+  try {
+    rawCalls = JSON.parse(response.reply);
+  } catch {
+    rawCalls = null;
+  }
+  const calls = Array.isArray(rawCalls) ? rawCalls : rawCalls && typeof rawCalls === 'object' ? [rawCalls] : [];
+  for (const call of calls) {
+    if (!call || typeof call !== 'object') continue;
+    const entry = call as { name?: unknown; arguments?: unknown };
+    const name = typeof entry.name === 'string' ? entry.name : '';
+    let args: Record<string, unknown> = {};
+    if (typeof entry.arguments === 'string') {
+      try { args = JSON.parse(entry.arguments) as Record<string, unknown>; } catch { continue; }
+    } else if (entry.arguments && typeof entry.arguments === 'object') {
+      args = entry.arguments as Record<string, unknown>;
+    }
+    if (name === 'propose_note' && typeof args.title === 'string' && typeof args.content === 'string') {
+      return {
+        type: 'note',
+        title: args.title.trim(),
+        content: args.content.replace(/\\n/g, '\n').trim(),
+        tags: Array.isArray(args.tags) ? args.tags.filter((tag): tag is string => typeof tag === 'string') : [],
+        mode: args.mode === 'append' ? 'append' : 'create',
+        noteId: typeof args.noteId === 'string' ? args.noteId : undefined,
+      };
+    }
+    if (name === 'propose_expense' && typeof args.title === 'string' && typeof args.amount === 'number') {
+      return {
+        type: 'expense', title: args.title.trim(), amount: args.amount,
+        date: typeof args.date === 'string' ? args.date : undefined,
+        category: typeof args.category === 'string' ? args.category : 'Food & Groceries',
+        paymentMethod: typeof args.paymentMethod === 'string' ? args.paymentMethod : 'QRIS',
+      };
+    }
+  }
+
   const noteMatch = response.reply.match(/\[propose_note\s+title="([\s\S]*?)"\s+content="([\s\S]*?)"(?:\s+tanggal:\s*([^"\]]+))?(?:\s+tags=\[([^\]]*)\])?\s+mode="(create|append)"\s*\]/i);
   if (noteMatch) {
     return {
