@@ -216,7 +216,10 @@ export function extractProposalFromResponse(response: AskOmniResponse): Prefille
   const compactExpenseMatch = response.reply.match(
     /(?:added transaction|transaksi)\s+([^\n]+?)\s+(?:for|sebesar)\s+(?:Rp\s*)?([\d.,]+)[\s\S]*?(?:category|kategori):\s*([^,\n]+),\s*(?:payment|pembayaran):\s*([^).\n]+)/i
   );
-  const expenseMatch = expenseDetailMatch || compactExpenseMatch;
+  const savedExpenseMatch = response.reply.replace(/\*+/g, '').match(
+    /(?:catatan pengeluaran berhasil disimpan|expense (?:has been )?saved)[\s\S]*?(?:judul|title):\s*([^\n]+)[\s\S]*?(?:jumlah|nominal|amount):\s*(?:Rp\s*)?([\d.,]+)[\s\S]*?(?:kategori|category):\s*([^\n]+)[\s\S]*?(?:metode pembayaran|payment method):\s*([^\n]+)/i
+  );
+  const expenseMatch = expenseDetailMatch || compactExpenseMatch || savedExpenseMatch;
   if (expenseMatch) {
     const amount = Number(expenseMatch[2].replace(/\./g, '').replace(',', '.'));
     if (Number.isFinite(amount) && amount > 0) {

@@ -4,11 +4,22 @@ import {
   isConfirmationIntent,
   validateProposal,
   extractProposalFromResponse,
+  parseUserPromptToData,
 } from '../aiIntentParser';
 import type { PrefilledData, ChatMessage } from '../../types';
 import type { AskOmniResponse } from '../askOmni';
 
 describe('aiIntentParser Unit Tests', () => {
+  it('recovers saved expense reply into a proposal', () => {
+    const result = extractProposalFromResponse({
+      reply: `Catatan pengeluaran berhasil disimpan:\n- **Judul:** pentol\n- **Jumlah:** Rp5.000\n- **Kategori:** Food & Groceries\n- **Metode Pembayaran:** QRIS`,
+    });
+    expect(result).toMatchObject({
+      type: 'expense', title: 'pentol', amount: 5000,
+      category: 'Food & Groceries', paymentMethod: 'QRIS',
+    });
+  });
+
   // 1. ISO Date parsing
   it('case 1: parseProposalFromText parses ISO date (YYYY-MM-DD)', () => {
     const text =
@@ -265,4 +276,26 @@ describe('aiIntentParser Unit Tests', () => {
       expect(validateProposal(validExpense, 'id').valid).toBe(true);
     });
   });
+
+  describe('parseUserPromptToData', () => {
+    it('correctly parses schedule request with time range and removes extraneous words', () => {
+      const prompt = 'Tambahin instalasi 4 dari jam 8 pagi sampai malam jam 8 hari ini';
+      const result = parseUserPromptToData(prompt);
+      expect(result).not.toBeNull();
+      expect(result?.type).toBe('event');
+      expect(result?.title).toBe('Instalasi 4');
+      expect(result?.startTime).toBe('08:00');
+      expect(result?.endTime).toBe('20:00');
+    });
+
+    it('correctly parses Indonesian time range with morning to noon', () => {
+      const prompt = 'jadwal rapat dari jam 9 sampai jam 11 besok';
+      const result = parseUserPromptToData(prompt);
+      expect(result).not.toBeNull();
+      expect(result?.type).toBe('event');
+      expect(result?.startTime).toBe('09:00');
+      expect(result?.endTime).toBe('11:00');
+    });
+  });
 });
+
