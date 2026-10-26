@@ -867,13 +867,19 @@ Deno.serve(async (request) => {
     const isNoteActionIntent = !isScheduleActionIntent && /\b(catat|catatkan|buatkan catatan|tambah catatan|tulis catatan|rangkum|ringkas|buat quiz|checklist|append|sisipkan ke catatan)\b/i.test(message);
     const isGeneralActionIntent = /\b(add|create|schedule|save|plan|book|tambah|tambahin|tambahkan|buat|jadwalkan|agendakan|masukkan|catat|log|beli|bayar)\b/i.test(message);
 
-    const wantsActionTool = isReceiptIntent || (!isQueryIntent && (isGeneralActionIntent || isNoteActionIntent || isScheduleActionIntent));
-    const explicitScheduleRequest = /\b(jadwal|jadwalkan|agendakan|meeting|rapat|acara|kegiatan|janji|pertemuan|bimbingan)\b/i.test(message);
-    const mentionsTime = /\b(?:jam|pukul)\s*\d{1,2}(?::\d{2})?\b|\b\d{1,2}:\d{2}\b|\b\d{1,2}\s*(?:pagi|siang|sore|malam)\b/i.test(message);
-    const tools = wantsActionTool && !(explicitScheduleRequest && !mentionsTime)
+    const lastAssistantMessage = [...history].reverse().find((m) => m.role === 'assistant')?.content || '';
+    const isAwaitingScheduleAnswer = /jam berapa|kapan acaranya|kapan dimulai|mau dijadwalkan jam berapa/i.test(lastAssistantMessage);
+
+    // Also treat relative times or schedule follow-up answers as schedule actions
+    const hasRelativeScheduleTime = /\b(habis|setelah|sehabis|sesudah|kelar|selesai|sebelum)\b.*\b(matkul|kuliah|kelas|acara|ujian|rapat)\b/i.test(message);
+
+    const isEffectiveScheduleIntent = isScheduleActionIntent || isAwaitingScheduleAnswer || hasRelativeScheduleTime;
+
+    const wantsActionTool = isReceiptIntent || (!isQueryIntent && (isGeneralActionIntent || isNoteActionIntent || isEffectiveScheduleIntent));
+    const tools = wantsActionTool
       ? (isReceiptIntent
         ? [RECEIPT_PROPOSAL_TOOL, EXPENSE_PROPOSAL_TOOL, EVENT_PROPOSAL_TOOL, TASK_PROPOSAL_TOOL, NOTE_PROPOSAL_TOOL]
-        : isScheduleActionIntent
+        : isEffectiveScheduleIntent
           ? [EVENT_PROPOSAL_TOOL, TASK_PROPOSAL_TOOL]
           : [EVENT_PROPOSAL_TOOL, TASK_PROPOSAL_TOOL, EXPENSE_PROPOSAL_TOOL, NOTE_PROPOSAL_TOOL])
       : undefined;
@@ -928,6 +934,27 @@ Deno.serve(async (request) => {
         error: `Omni LLM providers failed: ${summaryMsg}`,
         diagnostics,
       }, 200);
+    }
+
+    // Safety fallback: if model emitted a JSON proposal in prose instead of calling the tool, recover it
+    if (!completion.toolCall && completion.content) {
+      const jsonMatch = completion.content.match(/\{[\s\S]*?"(?:action|name)"\s*:\s*"(?:propose_calendar_event|schedule_event|propose_task|propose_expense|propose_note)"[\s\S]*?\}(?:\s*\})?/);
+      if (jsonMatch) {
+        try {
+          const parsed = JSON.parse(jsonMatch[0]);
+          const fnName = parsed.action || parsed.name;
+          const mappedName = fnName === 'schedule_event' ? 'propose_calendar_event' : fnName;
+          const args = parsed.data || parsed.arguments || parsed.args || parsed;
+          completion.toolCall = { name: mappedName, arguments: args };
+          completion.content = completion.content
+            .replace(/```(?:json)?\s*\{[\s\S]*?"(?:action|name)"\s*:[\s\S]*?\}\s*```/gi, '')
+            .replace(jsonMatch[0], '')
+            .replace(/^\s*\}\s*$/gm, '')
+            .trim();
+        } catch {
+          // ignore parsing error
+        }
+      }
     }
 
     // Handle tool call result

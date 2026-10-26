@@ -174,6 +174,15 @@ export function extractProposalFromResponse(response: AskOmniResponse): Prefille
     }
   };
   pushParsed(response.reply);
+  const codeBlocks = response.reply.match(/```(?:json)?\s*([\s\S]*?)\s*```/gi) || [];
+  for (const block of codeBlocks) {
+    const raw = block.replace(/```(?:json)?/gi, '').replace(/```/g, '').trim();
+    pushParsed(raw);
+  }
+  const actionJsonMatch = response.reply.match(/\{[\s\S]*?"(?:action|name)"\s*:\s*"(?:propose_calendar_event|schedule_event|propose_task|propose_expense|propose_note)"[\s\S]*?\}(?:\s*\})?/g) || [];
+  for (const block of actionJsonMatch) {
+    pushParsed(block);
+  }
   const braceBlocks = response.reply.match(/\{(?:[^{}]|\{[^{}]*\})*\}/g) || [];
   for (const block of braceBlocks) {
     pushParsed(block);

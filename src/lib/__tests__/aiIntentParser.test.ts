@@ -50,6 +50,16 @@ describe('aiIntentParser Unit Tests', () => {
     });
   });
 
+  it('recovers propose_calendar_event JSON embedded in prose reply (relative time follow-up)', () => {
+    const result = extractProposalFromResponse({
+      reply: `Untuk besok (Selasa, 27 Oktober 2026), mata kuliah terakhirmu adalah Transformasi Digital yang selesai pada jam 09:00.\n\nSaya jadwalkan kerja kelompok Capstone-nya tepat setelah itu ya. Silakan dikonfirmasi:\n\n{\n  "action": "propose_calendar_event",\n  "data": {\n    "title": "Kerja Kelompok Capstone",\n    "date": "2026-10-27",\n    "startTime": "09:00",\n    "endTime": "11:00"\n  }\n}`,
+    });
+    expect(result).toMatchObject({
+      type: 'event', title: 'Kerja Kelompok Capstone',
+      date: '2026-10-27', startTime: '09:00', endTime: '11:00',
+    });
+  });
+
   // 1. ISO Date parsing
   it('case 1: parseProposalFromText parses ISO date (YYYY-MM-DD)', () => {
     const text =
