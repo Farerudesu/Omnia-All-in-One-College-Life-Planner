@@ -12,6 +12,7 @@ import {
   validateProposal,
   extractProposalFromResponse,
 } from '../aiIntentParser';
+import { mapProposedActionToPrefilled } from '../proposalValidator';
 import { buildNotesContext } from '../utils/notesContext';
 import type { ImageAttachment } from '../types';
 
@@ -159,6 +160,9 @@ export function useOmniChat(options?: UseOmniChatOptions) {
 
       let aiPrefilled: PrefilledData | undefined = undefined;
 
+      if (response.proposedAction) {
+        aiPrefilled = mapProposedActionToPrefilled(response.proposedAction);
+      }
       if (response.proposedActions && response.proposedActions.length > 0) {
         const mapped = response.proposedActions
           .map((action) => extractProposalFromResponse({ ...response, proposedActions: [action] }))
@@ -177,10 +181,12 @@ export function useOmniChat(options?: UseOmniChatOptions) {
         }
       }
 
-      let saveConfirmation = '';
       if (aiPrefilled) {
-        const saved = await saveProposalToOmnia(aiPrefilled);
-        saveConfirmation = `\n\n✓ ${saved.confirmationText}`;
+        setPrefilledModal({
+          data: { ...aiPrefilled },
+          messageId: (Date.now() + 1).toString(),
+        });
+        setPrefilledError('');
       }
 
       let resolvedNoteSource = response.noteSource;
@@ -199,13 +205,13 @@ export function useOmniChat(options?: UseOmniChatOptions) {
         .replace(/\[propose_note[\s\S]*?\]/gi, '')
         .replace(/\b(?:title|content|tanggal|tags|mode)\s*=\s*"[^"]*"/gi, '')
         .replace(/\n{3,}/g, '\n\n')
-        .trim() + saveConfirmation;
+        .trim();
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: cleanReply,
-        prefilledData: undefined,
+        prefilledData: aiPrefilled || undefined,
         noteSource: resolvedNoteSource,
       };
 
