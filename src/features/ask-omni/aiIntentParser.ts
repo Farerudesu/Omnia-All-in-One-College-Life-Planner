@@ -198,6 +198,16 @@ export function extractProposalFromResponse(response: AskOmniResponse): Prefille
         paymentMethod: typeof args.paymentMethod === 'string' ? args.paymentMethod : 'QRIS',
       };
     }
+    if (name === 'propose_task' && typeof args.title === 'string') {
+      return {
+        type: 'task', title: args.title.trim(),
+        date: typeof args.dueDate === 'string' ? args.dueDate : typeof args.date === 'string' ? args.date : undefined,
+        dueTime: typeof args.dueTime === 'string' ? args.dueTime : undefined,
+        courseId: typeof args.courseId === 'string' ? args.courseId : undefined,
+        priority: args.priority === 'low' || args.priority === 'high' ? args.priority : 'medium',
+        notes: typeof args.notes === 'string' ? args.notes : undefined,
+      };
+    }
   }
 
   const noteMatch = response.reply.match(/\[propose_note\s+title="([\s\S]*?)"\s+content="([\s\S]*?)"(?:\s+tanggal:\s*([^"\]]+))?(?:\s+tags=\[([^\]]*)\])?\s+mode="(create|append)"\s*\]/i);
