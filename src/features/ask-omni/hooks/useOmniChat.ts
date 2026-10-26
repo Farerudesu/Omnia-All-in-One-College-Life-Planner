@@ -24,9 +24,9 @@ function loadChatHistory(): Message[] {
       (message: Message) =>
         !(
           message.role === 'assistant' &&
-          /having trouble replying|unable to reach|failed to send request|try again in a moment/i.test(
+          (/having trouble replying|unable to reach|failed to send request|try again in a moment|\[propose_note|\[Saved:/i.test(
             message.content
-          )
+          ))
         )
     );
   } catch {
@@ -196,10 +196,17 @@ export function useOmniChat(options?: UseOmniChatOptions) {
         }
       }
 
+      const cleanReply = response.reply
+        .replace(/\[Saved:\s*[^\]]+\]/gi, '')
+        .replace(/\[propose_note[\s\S]*?\]/gi, '')
+        .replace(/\b(?:title|content|tanggal|tags|mode)\s*=\s*"[^"]*"/gi, '')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: response.reply,
+        content: cleanReply,
         prefilledData: aiPrefilled || undefined,
         noteSource: resolvedNoteSource,
       };
